@@ -1,0 +1,115 @@
+$brewery-width: 260px;
+
+.breweries {
+  > li {
+    display: inline-block;
+    vertical-align: top;
+    width: $brewery-width;
+
+    > h2 {
+      text-align: center;
+      font-size: 22px;
+      color: $fg;
+    }
+  }
+
+  > li + li {
+    margin-left: 20px;
+  }
+
+  > :not(.add-one) {
+    > h2 {
+      line-height: 40px;
+      padding-bottom: 2px;
+    }
+
+    > .beers {
+      > li {
+        margin-top: 6px;
+      }
+
+      > :not(.add-one) {
+        padding: 16px;
+        > h3 {
+          color: $beer-name;
+          margin-bottom: 6px;
+          font-size: 16px;
+        }
+      }
+
+      > .add-one > h2 > span {
+        display: inline-block;
+        vertical-align: top;
+
+        &:first-child {
+          font-size: 16px;
+          padding-left: 16px;
+          line-height: 40px;
+          padding-bottom: 2px;
+          width: $brewery-width - 42px;
+        }
+        &:nth-child(2) {
+          text-align: center;
+          line-height: 40px;
+          font-size: 36px;
+          height: 42px;
+          width: 42px;
+          background-color: $bg-action;
+        }
+      }
+    }
+
+    &:nth-child(even) {
+      > h2 {
+        background-color: $brewery-even;
+      }
+      > .beers > li {
+        background-color: $beer-even;
+
+        &.add-one > h2 > span:nth-child(2) {
+          color: $beer-even;
+        }
+      }
+    }
+
+    &:nth-child(odd) {
+      > h2 {
+        background-color: $brewery-odd;
+      }
+      > .beers > li {
+        background-color: $beer-odd;
+
+        &.add-one > h2 > span:nth-child(2) {
+          color: $beer-odd;
+        }
+      }
+    }
+  }
+
+  > .add-one {
+    > h2 > span {
+      display: inline-block;
+      vertical-align: top;
+
+      &:first-child {
+        background-color: $bg-action;
+        width: $brewery-width - 42px;
+        line-height: 40px;
+        padding-bottom: 2px;
+      }
+      &:nth-child(2) {
+        width: 42px;
+        color: $bg-action;
+        font-size: 36px;
+        line-height: 40px;
+        height: 42px;
+      }
+    }
+    &:nth-child(even) > h2 > span:nth-child(2) {
+      background-color: $beer-even;
+    }
+    &:nth-child(odd) > h2 > span:nth-child(2) {
+      background-color: $beer-odd;
+    }
+  }
+}

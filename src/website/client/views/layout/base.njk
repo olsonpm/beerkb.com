@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>BeerKB</title>
+    <link rel="stylesheet" type="text/css" href="./assets/css/index.css">
+  </head>
+
+  <body>
+    {% import '../macros/global.njk' as gm %}
+
+    <div id="site-container">
+      {% include '../partial/header.njk' %}
+
+      {% block content %}{% endblock %}
+    </div>
+
+    {% if isDev %}
+      <script src="//localhost:35729/livereload.js"></script>
+    {% endif %}
+    <script src="js/index.js"></script>
+  </body>
+
+</html>

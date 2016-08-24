@@ -1,0 +1,27 @@
+@mixin per-size($prop-list, $xxs, $xs, $sm, $md, $lg, $unit: null) {
+  @media (max-width: $screen-xxs-max) {
+    @each $prop in $prop-list {
+      #{$prop}: #{$xxs}#{$unit};
+    }
+  }
+  @media (min-width: $screen-xs-min) and (max-width: $screen-xs-max) {
+    @each $prop in $prop-list {
+      #{$prop}: #{$xs}#{$unit};
+    }
+  }
+  @media (min-width: $screen-sm-min) and (max-width: $screen-sm-max) {
+    @each $prop in $prop-list {
+      #{$prop}: #{$sm}#{$unit};
+    }
+  }
+  @media (min-width: $screen-md-min) and (max-width: $screen-md-max) {
+    @each $prop in $prop-list {
+      #{$prop}: #{$md}#{$unit};
+    }
+  }
+  @media (min-width: $screen-lg-min) {
+    @each $prop in $prop-list {
+      #{$prop}: #{$lg}#{$unit};
+    }
+  }
+}

@@ -1,0 +1,42 @@
+// sizes
+
+$site-width: 1190px;
+$font-base: 15px;
+
+
+// colors
+
+$bg: #d59d60;
+$bg-action: #7b6449;
+$fg: #f9f4ef;
+$fg-off: #feddb5;
+$bg-bubble: #e4af74;
+$brewery-odd: #b07434;
+$brewery-even: #cc8030;
+$beer-odd: #fce3c4;
+$beer-even: $fg;
+$beer-name: $brewery-odd;
+$general-text: #492e11;
+
+
+// slightly modified from bootstrap
+
+$screen-xs-min: 480px;
+$screen-sm-min: 768px;
+$screen-md-min: 992px;
+$screen-lg-min: 1200px;
+
+$screen-xxs-max: ($screen-xs-min - 1);
+$screen-xs-max: ($screen-sm-min - 1);
+$screen-sm-max: ($screen-md-min - 1);
+$screen-md-max: ($screen-lg-min - 1);
+
+
+// general purpose element spacing
+
+$xl: ($font-base * 4);
+$lg: ($font-base * 3);
+$md: ($font-base * 2);
+$sm: $font-base + ($font-base / 2);
+$xs: $font-base;
+$xxs: ($font-base / 2);
