@@ -743,6 +743,114 @@ var dom_attr = Object.freeze({
     removeAttr: removeAttr
   });
 
+  /**
+   * Append each element in the collection to the specified element(s).
+   *
+   * @param {Node|NodeList|Object} element What to append the element(s) to. Clones elements as necessary.
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').appendTo(container);
+   */
+
+  var appendTo = function (element) {
+    var context = typeof element === 'string' ? $$2(element) : element;
+    append.call(context, this);
+    return this;
+  };
+
+  /*
+   * Empty each element in the collection.
+   *
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').empty();
+   */
+
+  var empty = function () {
+    return each(this, function (element) {
+      return element.innerHTML = '';
+    });
+  };
+
+  /**
+   * Remove the collection from the DOM.
+   *
+   * @return {Array} Array containing the removed elements
+   * @example
+   *     $('.item').remove();
+   */
+
+  var remove = function () {
+    return each(this, function (element) {
+      if (element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
+    });
+  };
+
+  /**
+   * Replace each element in the collection with the provided new content, and return the array of elements that were replaced.
+   *
+   * @return {Array} Array containing the replaced elements
+   */
+
+  var replaceWith = function () {
+    return before.apply(this, arguments).remove();
+  };
+
+  /**
+   * Get the `textContent` from the first, or set the `textContent` of each element in the collection.
+   *
+   * @param {String} [value]
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').text('New content');
+   */
+
+  var text = function (value) {
+
+    if (value === undefined) {
+      return this[0].textContent;
+    }
+
+    return each(this, function (element) {
+      return element.textContent = '' + value;
+    });
+  };
+
+  /**
+   * Get the `value` from the first, or set the `value` of each element in the collection.
+   *
+   * @param {String} [value]
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('input.firstName').value('New value');
+   */
+
+  var val = function (value) {
+
+    if (value === undefined) {
+      return this[0].value;
+    }
+
+    return each(this, function (element) {
+      return element.value = value;
+    });
+  };
+
+var dom_extra = Object.freeze({
+    appendTo: appendTo,
+    empty: empty,
+    remove: remove,
+    replaceWith: replaceWith,
+    text: text,
+    val: val
+  });
+
   var api = {};
   var $ = {};
 
@@ -753,7 +861,7 @@ var dom_attr = Object.freeze({
   }
 
   extend($);
-  extend(api, array, dom_attr, dom);
+  extend(api, array, dom_attr, dom, dom_extra);
 
   $.fn = api;
 

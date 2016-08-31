@@ -7,7 +7,7 @@
 
 const r = require('ramda')
   , rUtils = require('./r-utils')
-  , $ = require('./external/domtastic')
+  , $ = require('./external/domtastic.custom')
   ;
 
 
@@ -34,11 +34,16 @@ const getRoundedRectangleProps = r.pipe(
   , r.map(Math.round)
 );
 
+const getRandomIntBetween = r.curry(
+  (min, max) => Math.floor(Math.random()*(max - min + 1) + min)
+);
+
 
 //---------//
 // Exports //
 //---------//
 
 module.exports = {
-  getRoundedRectangleProps
+  getRandomIntBetween
+  , getRoundedRectangleProps
 };

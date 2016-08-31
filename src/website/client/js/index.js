@@ -5,11 +5,11 @@
 // Imports //
 //---------//
 
-const $ = require('./external/domtastic')
+const $ = require('./external/domtastic.custom')
   , velocity = require('velocity-animate')
   , r = require('./external/ramda.custom')
   , template = require('lodash.template')
-  , utils = require('./utils')
+  , bubbleGenerator = require('./bubble-generator')
   ;
 
 
@@ -17,10 +17,13 @@ const $ = require('./external/domtastic')
 // Init //
 //------//
 
-const {
-    getRoundedRectangleProps
-  } = utils
+const clientHeight = document.body.clientHeight
   , styleTpl = getStyleTpl()
+  // these width values are taken from _variables.scss
+  , width = {
+    small: 480
+    , large: 992
+  }
   ;
 
 
@@ -32,52 +35,70 @@ const {
 const bubbleLayer = $(document.createElement('div')).attr({ id: 'bubble-layer' });
 $(document.body).prepend(bubbleLayer);
 
-const worker = new Worker('js/bubble-worker.js');
-
-worker.onmessage = e => {
-  displayBubble(e.data);
-};
-
-const initialData = {
-  clientWidth: document.body.clientWidth
-  , clientHeight: document.body.clientHeight
-  , h1pLoc: getRoundedRectangleProps('h1 + p')
-  , headerLoc: getRoundedRectangleProps('header')
-};
-worker.postMessage(initialData);
+bubbleGenerator.run({
+  bubbleDiameterRange: getBubbleDiameterRange(document.body.clientWidth)
+  , clientHeight
+  , clientWidth: document.body.clientWidth
+  , fizzRateRange: [200, 700] // ms
+  , fizzSpeedRange: [4, 15] // 1px/<x>ms
+  , onBubbleCreate: createBubble
+});
 
 
 //-------------//
 // Helper Fxns //
 //-------------//
 
-const delay = r.partial(
-  ms => new Promise(resolve => setTimeout(resolve, ms))
-  , [200]
-);
+function createBubble({ x, duration, diameter }) {
+  const bubbleDiv = getBubbleDiv(x, diameter);
+  bubbleLayer.append(bubbleDiv);
+  const easing = 'easeInQuart';
 
-let showBubble = Promise.resolve();
-function displayBubble(aBubble) {
-  showBubble = showBubble.then(() => {
-      const bubbleDiv = getBubbleDiv(aBubble.loc, aBubble.diameter);
-      bubbleLayer.append(bubbleDiv);
-      velocity(bubbleDiv, { opacity: 1 }, { duration: 200 });
-    })
-    .then(delay)
-    ;
+  velocity(
+    bubbleDiv
+    , {
+      translateZ: 0 // Force HA by animating a 3D property
+      , translateY: -(clientHeight + (diameter * 2)) + 'px'
+    }
+    // , { top: -diameter + 'px' }
+    , { duration, complete, easing }
+  );
+
+  // scoped helper fxns
+
+  function complete() {
+    bubbleDiv.remove();
+  }
 }
 
-function getBubbleDiv(loc, diameter) {
+function getBubbleDiv(x, diameter) {
+  const y = clientHeight + diameter;
   return $(document.createElement('div'))
     .attr({
       class: 'bubble'
-      , style: styleTpl({diameter, loc})
+      , style: styleTpl({ x, y, diameter })
     });
 }
 
 function getStyleTpl() {
   return template(
-    'width: <%= diameter %>px; height: <%= diameter %>px; left: <%= loc.x %>px;'
-    + ' top: <%= loc.y %>px;"></div>'
+    'width: <%= diameter %>px; height: <%= diameter %>px; left: <%= x %>px;'
+    + ' top: <%= y %>px;"></div>'
   );
+}
+
+function getBubbleDiameterRange(clientWidth) {
+  return [
+    getLinearSlope(15, 30, clientWidth)
+    , getLinearSlope(50, 70, clientWidth)
+  ];
+}
+
+function getLinearSlope(min, max, clientWidth) {
+  const slope = (max - min)/(width.large - width.small)
+    , yIntercept = max - (width.large * slope)
+    , res = Math.round(slope * clientWidth + yIntercept)
+    ;
+
+  return r.clamp(min, max, res);
 }
