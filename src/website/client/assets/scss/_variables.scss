@@ -10,13 +10,18 @@ $bg: #d59d60;
 $bg-action: #7b6449;
 $fg: #f9f4ef;
 $fg-off: #feddb5;
-$bg-bubble: #e4af74;
 $brewery-odd: #b07434;
 $brewery-even: #cc8030;
 $beer-odd: #fce3c4;
 $beer-even: $fg;
 $beer-name: $brewery-odd;
 $general-text: #492e11;
+
+// bubble colors
+
+$bubble-color-sm: darken(#e4af74, 2%);
+$bubble-color-med: #e4af74;
+$bubble-color-lg: lighten(#e4af74, 2%);
 
 
 // slightly modified from bootstrap

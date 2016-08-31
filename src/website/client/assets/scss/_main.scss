@@ -44,7 +44,10 @@ a {
   > .bubble {
     position: absolute;
     z-index: -1;
-    background-color: $bg-bubble;
     border-radius: 50%;
+
+    &.small { background-color: $bubble-color-sm; }
+    &.medium { background-color: $bubble-color-med; }
+    &.large { background-color: $bubble-color-lg; }
   }
 }

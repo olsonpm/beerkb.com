@@ -6,6 +6,7 @@
 //---------//
 
 const r = require('./external/ramda.custom')
+  , rUtils = require('./r-utils')
   , utils = require('./utils')
   ;
 
@@ -14,7 +15,9 @@ const r = require('./external/ramda.custom')
 // Init //
 //------//
 
-const { getRandomIntBetween } = utils;
+const { getRandomIntBetween } = utils
+  , { betweenI, betweenRange, staticCond } = rUtils
+  ;
 
 
 //------//
@@ -32,7 +35,9 @@ const run = ({
 
   const getRandomDiameter = r.partial(getRandomIntBetween, bubbleDiameterRange)
     , getRandomFizzSpeed = r.partial(getRandomIntBetween, fizzSpeedRange)
-    , getRandomFizzRate = r.partial(getRandomIntBetween, fizzRateRange);
+    , getRandomFizzRate = r.partial(getRandomIntBetween, fizzRateRange)
+    , getSize = createGetSize(bubbleDiameterRange)
+    ;
 
   createBubblesUntilStop();
 
@@ -53,11 +58,29 @@ const run = ({
       , radius = Math.round(diameter / 2)
       , duration = (getRandomFizzSpeed() * (clientHeight + diameter))
       , x = getRandomIntBetween(-radius, clientWidth + radius)
+      , size = getSize(diameter)
       ;
 
-    onBubbleCreate({ x, duration, diameter });
+    onBubbleCreate({ x, duration, diameter, size });
   }
 };
+
+
+//-------------//
+// Helper Fxns //
+//-------------//
+
+function createGetSize([diameterMin, diameterMax]) {
+  const diameterDifference = r.subtract(diameterMax, diameterMin)
+    , aThird = Math.round(diameterDifference / 3)
+    ;
+
+  return staticCond([
+    [betweenRange(diameterMin, diameterMin + aThird), 'small']
+    , [betweenRange(diameterMin + aThird, diameterMax - aThird), 'medium']
+    , [betweenI(diameterMax - aThird, diameterMax), 'large']
+  ]);
+}
 
 
 //---------//

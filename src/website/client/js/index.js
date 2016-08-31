@@ -49,8 +49,8 @@ bubbleGenerator.run({
 // Helper Fxns //
 //-------------//
 
-function createBubble({ x, duration, diameter }) {
-  const bubbleDiv = getBubbleDiv(x, diameter);
+function createBubble({ x, duration, diameter, size }) {
+  const bubbleDiv = getBubbleDiv(x, diameter, size);
   bubbleLayer.append(bubbleDiv);
   const easing = 'easeInQuart';
 
@@ -71,11 +71,11 @@ function createBubble({ x, duration, diameter }) {
   }
 }
 
-function getBubbleDiv(x, diameter) {
+function getBubbleDiv(x, diameter, size) {
   const y = clientHeight + diameter;
   return $(document.createElement('div'))
     .attr({
-      class: 'bubble'
+      class: 'bubble ' + size
       , style: styleTpl({ x, y, diameter })
     });
 }

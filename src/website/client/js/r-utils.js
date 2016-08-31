@@ -15,19 +15,14 @@ const r = require('./external/ramda.custom');
 
 // short
 
-const lte = r.flip(r.lte)
+const betweenI = getBetween('inclusive')
+  , betweenRange = getBetween('range')
+  , [lte, subtract] = r.map(r.flip, [r.lte, r.subtract])
   , square = x => x * x
   ;
 
 
 // longer
-
-const between = r.curry(
-  (low, high, val) => {
-    if (low > high) [low, high] = [high, low];
-    return r.gte(val, low) && r.lt(val, high);
-  }
-);
 
 const invoke = r.curry(
   (prop, obj) => r.pipe(r.prop, r.bind(r.__, obj), r.call)(prop, obj)
@@ -141,6 +136,13 @@ const size = r.pipe(
   , r.length
 );
 
+const staticCond = r.curry(
+  (conds, val) => r.pipe(
+    r.find(aCond => r.head(aCond)(val))
+    , r.last
+  )(conds)
+);
+
 const _toNumberCases = {
   Number: r.identity
   , String: str => parseInt(str, 10)
@@ -161,12 +163,31 @@ const transform = r.curry(
 );
 
 
+//-------------//
+// Helper Fxns //
+//-------------//
+
+function getBetween(type) {
+  const ltFn = (type === 'inclusive')
+    ? r.lte
+    : r.lt;
+
+  return r.curry(
+    (low, high, val) => {
+      if (low > high) [low, high] = [high, low];
+      return r.gte(val, low) && ltFn(val, high);
+    }
+  );
+}
+
+
 //---------//
 // Exports //
 //---------//
 
 module.exports = {
-  between
+  betweenI
+  , betweenRange
   , invoke
   , isUndefined
   , lte
@@ -182,6 +203,8 @@ module.exports = {
   , shallowClone
   , size
   , square
+  , staticCond
+  , subtract
   , toNumber
   , transform
 };
