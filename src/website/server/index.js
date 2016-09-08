@@ -8,7 +8,7 @@
 const bPromise = require('bluebird')
   , bFs = bPromise.promisifyAll(require('fs'))
   , chalk = require('chalk')
-  , http2 = require('http2')
+  , https = require('https')
   , Koa = require('koa')
   , koaCompress = require('koa-compress')
   , koaNunjucks = require('koa-nunjucks-2')
@@ -17,7 +17,14 @@ const bPromise = require('bluebird')
   , minimist = require('minimist')
   , path = require('path')
   , portfinder = bPromise.promisifyAll(require('portfinder'))
+  , r = require('ramda')
+  , request = require('request')
+  , bRequest = require('request-promise')
+  , rUtils = require('./r-utils')
+  , sqliteToRestServer = require('../../internal-rest-api/server')
   , ssl = require('../../../ssl')
+  , utils = require('../../../lib/utils')
+  , viewModels = require('./view-models')
   ;
 
 
@@ -30,15 +37,14 @@ const app = new Koa()
   , isDev = !!argv.dev
   , distDir = path.resolve(path.join(__dirname, '../../../dist'))
   , highlight = chalk.green
-  , http2Options = ssl.credentials
-  , sqliteToRestPort = (isDev)
-    ? 8085
-    : process.env.sqliteToRest_port
+  , httpsOptions = ssl.credentials
+  , { mutableMerge } = rUtils
+  , { isUndefined } = utils
   ;
 
 let router = koaRouter();
 
-runSanityCheck(http2Options);
+runSanityCheck(httpsOptions);
 
 
 //------//
@@ -46,51 +52,54 @@ runSanityCheck(http2Options);
 //------//
 
 const start = () => {
-  app.use(koaCompress())
-    .use(koaStatic('./dist/static'));
+  return sqliteToRestServer.run()
+    .then(sqliteToRestPort => {
+      app.use(koaCompress())
+        .use(koaStatic('./dist/static'));
 
-  if (isDev) {
-    app.use((ctx, next) => {
-      return next()
-        .catch(err => {
-          if (ctx.status === 500) {
-            console.error(err);
-            ctx.type = 'html';
-            ctx.body = bFs.createReadStream(path.join(__dirname, '../../dist/views/errors/500.html'));
-            ctx.status = 200;
-          } else {
-            throw err;
-          }
+      if (isDev) {
+        app.use((ctx, next) => {
+          return next()
+            .catch(err => {
+              if (ctx.status === 500) {
+                console.error(err);
+                ctx.type = 'html';
+                ctx.body = bFs.createReadStream(path.join(__dirname, '../../dist/views/errors/500.html'));
+                ctx.status = 200;
+              } else {
+                throw err;
+              }
+            });
         });
-    });
-  }
-
-  app.use(
-    koaNunjucks({
-      path: path.join(distDir, 'views')
-      , nunjucksConfig: {
-        noCache: isDev
-        , throwOnUndefined: true
-        , watch: isDev
       }
-    })
-  );
 
-  router = setupRoutes(router);
+      app.use(
+        koaNunjucks({
+          path: path.join(distDir, 'views')
+          , nunjucksConfig: {
+            noCache: isDev
+            , throwOnUndefined: true
+            , watch: isDev
+          }
+        })
+      );
 
-  app.use(router.routes())
-    .use(router.allowedMethods());
+      router = setupRoutes(router, sqliteToRestPort);
 
-  return portfinder.getPortAsync()
-    .then(port => {
-      http2.createServer(
-          http2Options
-          , app.callback()
-        )
-        .listen(port);
+      app.use(router.routes())
+        .use(router.allowedMethods());
 
-      console.log('listening on port ' + highlight(port));
-      return port;
+      return portfinder.getPortAsync()
+        .then(port => {
+          https.createServer(
+              httpsOptions
+              , app.callback()
+            )
+            .listen(port);
+
+          console.log('beerkb.com backend listening on port ' + highlight(port));
+          return port;
+        });
     });
 };
 
@@ -106,45 +115,79 @@ function runSanityCheck({ key, cert }) {
     throw new Error("cert must be truthy: " + cert);
 }
 
-function setupRoutes(router) {
+function setupRoutes(router, sqliteToRestPort) {
+  const engine = createViewModelAndApiEngine(sqliteToRestPort);
+
+  router = createApiRoutes(router, engine.getApiResponse);
+
   return router.get('/', (ctx, next) => {
-      ctx.render(
-        'home'
-        , { isDev }
+    return engine.getVm('home')
+      .then(vm => ctx.render('home', vm))
+      .then(next);
+  });
+}
+
+function createApiRoutes(router, getApiResponse) {
+  r.forEach(
+    ([method, item]) => {
+      router[method](
+        '/api/' + item
+        , (ctx, next) => {
+
+          ctx.body = getApiResponse(method, item, ctx);
+          return next();
+        }
       );
-      return next();
-    })
+    }
+    , getMethodItemPairs()
+  );
 
-    .post('/api/beer/:id', (ctx, next) => {
-      ctx.body = '/api/beer posted!\nctx.params.id: ' + ctx.params.id;
-      return next();
-    })
+  return router;
+}
 
-    .post('/api/brewery/:id', (ctx, next) => {
-      ctx.body = '/api/brewery posted!\nctx.params.id: ' + ctx.params.id;
-      return next();
-    })
+function getMethodItemPairs() {
+  return r.xprod(['get', 'post', 'delete'], ['brewery', 'beer']);
+}
 
-    .delete('/api/beer/:id', (ctx, next) => {
-      ctx.body = '/api/beer deleted!\nctx.params.id: ' + ctx.params.id;
-      return next();
-    })
+const createGetItem = r.curry(r.memoize(
+  (usePromise, port, itemName) => {
+    const uri = `http://localhost:${port}/${itemName}`;
+    return r.pipe(
+      mutableMerge({ uri, json: true })
+      , usePromise
+        ? bRequest
+        : request
+    );
+  }
+));
 
-    .delete('/api/brewery/:id', (ctx, next) => {
-      ctx.body = '/api/brewery delete!\nctx.params.id: ' + ctx.params.id;
-      return next();
-    })
-
-    .get('/api/beer', (ctx, next) => {
-      ctx.body = '/api/beer got!\nctx.querystring: ' + ctx.querystring;
-      return next();
-    })
-
-    .delete('/api/brewery', (ctx, next) => {
-      ctx.body = '/api/brewery got!\nctx.querystring: ' + ctx.querystring;
-      return next();
-    })
+function createViewModelAndApiEngine(sqliteToRestPort) {
+  const getItem = createGetItem(false, sqliteToRestPort)
+    , getBItem = createGetItem(true, sqliteToRestPort)
     ;
+
+  const vm = viewModels.createAll({ getBItem });
+
+  return {
+    getVm: viewName => vm[viewName].get()
+      .then(r.pipe(
+        r.assoc('vm', r.__, {})
+        , mutableMerge({ isDev, viewName })
+      ))
+    , getApiResponse: (method, item, ctx) =>
+      getItem(item)(getApiRequestOpts(method, item, ctx, sqliteToRestPort))
+  };
+}
+
+function getApiRequestOpts(method, item, ctx, sqliteToRestPort) {
+  return r.reject(
+    isUndefined
+    , {
+      method: method.toUpperCase()
+      , uri: `http://localhost:${sqliteToRestPort}/${item}${ctx.search}`
+      , body: ctx.body
+    }
+  );
 }
 
 

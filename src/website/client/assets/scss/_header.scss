@@ -12,7 +12,7 @@
   }
 
   > h1 {
-    font-size: 36px;
+    font-size: $font-xl;
     @include per-size('margin-bottom', 6, 6, 10, 20, 30, px);
   }
   > p {
@@ -20,11 +20,10 @@
     display: inline-block;
   }
   > h1 + p {
-    font-size: 22px;
+    font-size: $font-lg;
     @include per-size('margin-bottom', 6, 6, 10, 20, 30, px);
   }
   > p + p {
-    font-size: 16px;
     text-transform: none;
     color: $fg-off;
     @include per-size('margin-bottom', 10, 10, 20, 30, 50, px);

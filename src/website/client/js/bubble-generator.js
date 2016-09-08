@@ -16,7 +16,8 @@ const r = require('./external/ramda.custom')
 //------//
 
 const { getRandomIntBetween } = utils
-  , { betweenI, betweenRange, staticCond } = rUtils
+  , { betweenI, betweenRange, staticCond, mutableMerge } = rUtils
+  , state = {}
   ;
 
 
@@ -24,30 +25,37 @@ const { getRandomIntBetween } = utils
 // Main //
 //------//
 
+const updateClientDimensions = ({ clientWidth, clientHeight }) => {
+  mutableMerge(state, { clientWidth, clientHeight });
+  updateBubbleDiameterRange();
+};
+
 const run = ({
     clientWidth
     , clientHeight
-    , bubbleDiameterRange
+    , clientWidthRange // controls the bubble diameter range
     , fizzRateRange // ms
     , fizzSpeedRange // 1px/<x>ms
     , onBubbleCreate
+    , scrollY
   }) => {
 
-  const getRandomDiameter = r.partial(getRandomIntBetween, bubbleDiameterRange)
+  initializeState({ clientWidth, clientHeight, clientWidthRange, scrollY });
+
+  const getRandomDiameter = () => r.apply(getRandomIntBetween, state.bubbleDiameterRange)
     , getRandomFizzSpeed = r.partial(getRandomIntBetween, fizzSpeedRange)
     , getRandomFizzRate = r.partial(getRandomIntBetween, fizzRateRange)
-    , getSize = createGetSize(bubbleDiameterRange)
     ;
 
-  createBubblesUntilStop();
+  createInfiniteBubbles();
 
   // scoped helper fxns
 
-  function createBubblesUntilStop() {
+  function createInfiniteBubbles() {
     setTimeout(
       () => {
         createBubble();
-        createBubblesUntilStop();
+        createInfiniteBubbles();
       }
       , getRandomFizzRate()
     );
@@ -55,13 +63,14 @@ const run = ({
 
   function createBubble() {
     const diameter = getRandomDiameter()
+      , y = (state.scrollY + state.clientHeight + diameter)
       , radius = Math.round(diameter / 2)
-      , duration = (getRandomFizzSpeed() * (clientHeight + diameter))
-      , x = getRandomIntBetween(-radius, clientWidth + radius)
-      , size = getSize(diameter)
+      , duration = (getRandomFizzSpeed() * y)
+      , x = getRandomIntBetween(-radius, state.clientWidth + radius)
+      , size = state.getSize(diameter)
       ;
 
-    onBubbleCreate({ x, duration, diameter, size });
+    onBubbleCreate({ x, y, duration, diameter, size });
   }
 };
 
@@ -70,16 +79,47 @@ const run = ({
 // Helper Fxns //
 //-------------//
 
-function createGetSize([diameterMin, diameterMax]) {
-  const diameterDifference = r.subtract(diameterMax, diameterMin)
+function updateGetSize() {
+  const [diameterMin, diameterMax] = state.bubbleDiameterRange
+    , diameterDifference = r.subtract(diameterMax, diameterMin)
     , aThird = Math.round(diameterDifference / 3)
     ;
 
-  return staticCond([
+  state.getSize = staticCond([
     [betweenRange(diameterMin, diameterMin + aThird), 'small']
     , [betweenRange(diameterMin + aThird, diameterMax - aThird), 'medium']
     , [betweenI(diameterMax - aThird, diameterMax), 'large']
   ]);
+}
+
+function updateBubbleDiameterRange() {
+  const [minWidth, maxWidth] = state.clientWidthRange;
+  state.bubbleDiameterRange = [
+    getLinearSlope(15, 30, state.clientWidth)
+    , getLinearSlope(50, 70, state.clientWidth)
+  ];
+
+  updateGetSize();
+
+  // scoped helper fxns
+  function getLinearSlope(min, max) {
+    const slope = (max - min)/(maxWidth - minWidth)
+      , yIntercept = max - (maxWidth * slope)
+      , res = Math.round(slope * state.clientWidth + yIntercept)
+      ;
+
+    return r.clamp(min, max, res);
+  }
+}
+
+function initializeState({ clientHeight, clientWidth, clientWidthRange, scrollY }) {
+  state.clientWidthRange = clientWidthRange;
+  state.scrollY = scrollY;
+  updateClientDimensions({ clientHeight, clientWidth });
+}
+
+function updateScrollY(scrollY) {
+  state.scrollY = scrollY;
 }
 
 
@@ -87,4 +127,8 @@ function createGetSize([diameterMin, diameterMax]) {
 // Exports //
 //---------//
 
-module.exports = { run };
+module.exports = {
+  run
+  , updateClientDimensions
+  , updateScrollY
+};

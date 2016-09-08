@@ -1,0 +1,46 @@
+{% extends "layout/base.njk" %}
+
+{% block content %}
+
+<ul data-items="brewery">
+
+  {% for breweryId, brewery in vm.brewery -%}
+    <li data-item-id="{{ breweryId }}" class="collapsed">
+      <h2>
+        <span>{{ brewery.name }}</span><span class="collapse-indicator"></span>
+      </h2>
+      <div class="shadow"></div>
+      <div class="panel">
+        <div class="more-data">
+          <p>{{ brewery.city_name }}, {{ brewery.state }}</p>
+        </div>
+        {{ gm.options('brewery') }}
+        <ul data-items="beer">
+          {% for beerId, beer in brewery.beer -%}
+            <li data-item-id="{{ beerId }}" class="collapsed">
+              <h3>
+                <span>{{ beer.name }}</span><span class="collapse-indicator"></span>
+              </h3>
+              <div class="shadow"></div>
+              <div class="panel">
+                <div class="more-data">
+                  <p class="style">{{ beer.style }}</p>
+                  <p>{{ beer.description }}</p>
+                </div>
+                {{ gm.options('beer') }}
+              </div>
+            </li>
+          {%- endfor %}
+        </ul>
+      </div>
+    </li>
+  {%- endfor %}
+
+  <li class="add-one">
+    <h2>
+      <span>Add Brewery</span><!--
+      --><span>+</span>
+    </h2>
+  </li>
+</ul>
+{% endblock %}

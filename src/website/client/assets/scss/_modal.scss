@@ -1,0 +1,69 @@
+#modal-backlight
+, #modal-window
+, #modal-dialog {
+
+  opacity: 0;
+  display: none;
+}
+
+#modal-window
+, #modal-dialog {
+
+  box-shadow: 0 0 12px;
+  z-index: 5;
+  position: fixed;
+  background-color: $fg;
+  border-radius: 8px;
+  text-align: center;
+
+  > h2 {
+    text-transform: none;
+    text-align: center;
+    @include per-size('margin-bottom', $xs2, $xs2, $xs2, $xs, $xs);
+  }
+
+  > p {
+    @include per-size('margin-bottom', $xs2, $xs2, $xs2, $xs, $xs);
+
+    > .item {
+      font-weight: bold;
+    }
+  }
+
+  > button + button {
+    margin-left: $sm;
+  }
+}
+
+#modal-backlight {
+  left: 0; right: 0; top: 0; bottom: 0;
+  position: fixed;
+  z-index: 4;
+  background-color: rgba(0,0,0,0.5);
+  width: 100%;
+  height: 100%;
+}
+
+#modal-window {
+  max-height: 80%;
+  min-height: 50%;
+  @include per-size('margin-top', 10, 10, 20, 30, 50, px);
+  width: 96%;
+  left: 50%;
+  margin-left: -48%;
+  max-width: $site-width - (2 * $lg);
+
+  @media (min-width: $screen-lg-min) {
+    margin-left: -(($site-width - (2 * $lg)) / 2);
+  }
+}
+
+#modal-dialog {
+  @include per-size('padding', $xs, $xs, $sm, $md, $md);
+
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%,-50%);
+}

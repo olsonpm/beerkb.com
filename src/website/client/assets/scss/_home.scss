@@ -1,115 +1,274 @@
 $brewery-width: 260px;
 
-.breweries {
+ul[data-items="brewery"] {
+  h2, h3, li {
+    transition: background-color 0.2s;
+  }
+
+  h2, h3 {
+    cursor: pointer;
+    position: relative;
+  }
+
+  h3 {
+    font-size: $font-base;
+  }
+
+  li {
+    position: relative;
+  }
+
+  li.add-one > h2 > span {
+    transition: background-color 0.2s;
+  }
+
+  .panel, .shadow {
+    position: relative;
+  }
+  .panel {
+    padding: 0 2px 2px;
+    z-index: 0;
+
+    > .more-data {
+      padding-top: 16px;
+      padding-right: 16px;
+      padding-left: 16px;
+    }
+
+    > .options {
+      padding: 12px 16px;
+
+      > li {
+        display: inline-block;
+        text-align: center;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+        cursor: pointer;
+
+        > svg {
+          height: 32px;
+        }
+      }
+    }
+  }
+  .shadow {
+    position: absolute;
+    width: 100%;
+    z-index: 1;
+  }
+
+  li.collapsed {
+    > .panel, > .shadow {
+      display: none;
+    }
+  }
+
+  li > .shadow {
+    height: 8px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%,rgba(0,0,0,0) 100%)
+  }
+
+  li[data-item-id] {
+    overflow: hidden;
+  }
+
   > li {
     display: inline-block;
     vertical-align: top;
     width: $brewery-width;
 
     > h2 {
-      text-align: center;
-      font-size: 22px;
+      font-size: $font-lg;
       color: $fg;
     }
-  }
 
-  > li + li {
-    margin-left: 20px;
-  }
-
-  > :not(.add-one) {
-    > h2 {
-      line-height: 40px;
-      padding-bottom: 2px;
+    > .more-data {
+      color: $fg;
     }
 
-    > .beers {
-      > li {
-        margin-top: 6px;
-      }
+    + li {
+      margin-left: 20px;
+    }
 
-      > :not(.add-one) {
-        padding: 16px;
+    > .panel {
+      color: $fg;
+
+      > ul[data-items="beer"] > li {
+        + li {
+          margin-top: 6px;
+        }
+
         > h3 {
-          color: $beer-name;
-          margin-bottom: 6px;
-          font-size: 16px;
+          padding: 12px;
+        }
+
+        > .panel {
+          > .options > li {
+            width: 45%;
+
+            + li {
+              margin-left: 10%;
+            }
+          }
+
+          > .more-data {
+            > * + * {
+              margin-top: 8px;
+            }
+          }
         }
       }
 
-      > .add-one > h2 > span {
-        display: inline-block;
-        vertical-align: top;
+      > .options > li {
+        width: 28%;
 
         &:first-child {
-          font-size: 16px;
-          padding-left: 16px;
-          line-height: 40px;
-          padding-bottom: 2px;
-          width: $brewery-width - 42px;
+          margin-left: 1%;
         }
-        &:nth-child(2) {
-          text-align: center;
-          line-height: 40px;
-          font-size: 36px;
-          height: 42px;
-          width: 42px;
-          background-color: $bg-action;
+
+        + li {
+          margin-left: 7%;
+        }
+
+        > svg {
+          fill: $fg;
         }
       }
     }
 
-    &:nth-child(even) {
+    &:not(.add-one) {
       > h2 {
-        background-color: $brewery-even;
+        padding: 8px 12px 10px;
       }
-      > .beers > li {
-        background-color: $beer-even;
 
-        &.add-one > h2 > span:nth-child(2) {
-          color: $beer-even;
+      &:nth-child(odd) {
+        @include hover($brewery-odd);
+
+        &.collapsed > h2 {
+          border: 1px solid rgba($brewery-odd, 0.5);
+        }
+        &:not(.collapsed) > h2 {
+          border-top: 1px solid rgba($brewery-odd, 0.5);
+          border-right: 1px solid rgba($brewery-odd, 0.5);
+          border-left: 1px solid rgba($brewery-odd, 0.5);
+        }
+
+        > .panel {
+          border-right: 1px solid rgba($brewery-odd, 0.5);
+          border-bottom: 1px solid rgba($brewery-odd, 0.5);
+          border-left: 1px solid rgba($brewery-odd, 0.5);
+
+          > [data-items="beer"] > li {
+            @include hover($bg-color: $brewery-odd-beer, $hover-bg: white);
+
+            > h3 {
+              color: $brewery-odd;
+            }
+            > .panel {
+              color: $general-text;
+
+              > .options {
+                > li.hovered {
+                  background-color: darken($brewery-odd-beer, 14%);
+                }
+                svg {
+                  fill: $general-text;
+                }
+              }
+            }
+          }
+
+          > .options > li.hovered {
+            background-color: lighten($brewery-odd, 10%);
+          }
+        }
+      }
+
+      &:nth-child(even) {
+        @include hover($brewery-even, 'saturate', 14%);
+
+        &.collapsed > h2 {
+          border: 1px solid rgba($brewery-even, 0.5);
+        }
+        &:not(.collapsed) > h2 {
+          border-top: 1px solid rgba($brewery-even, 0.5);
+          border-right: 1px solid rgba($brewery-even, 0.5);
+          border-left: 1px solid rgba($brewery-even, 0.5);
+        }
+
+        > .panel {
+          border-right: 1px solid rgba($brewery-even, 0.5);
+          border-bottom: 1px solid rgba($brewery-even, 0.5);
+          border-left: 1px solid rgba($brewery-even, 0.5);
+
+          > ul[data-items="beer"] > li {
+            @include hover($brewery-even-beer, 'darken');
+
+            > h3, > .panel {
+              color: $fg;
+
+              > .options {
+                > li.hovered {
+                  background-color: lighten($brewery-even-beer, 10%);
+                }
+
+                svg {
+                  fill: $fg;
+                }
+              }
+            }
+          }
+
+          > .options > li.hovered {
+            background-color: darken($brewery-even, 10%);
+          }
         }
       }
     }
 
-    &:nth-child(odd) {
+    &.add-one {
       > h2 {
-        background-color: $brewery-odd;
-      }
-      > .beers > li {
-        background-color: $beer-odd;
+        &.hovered > span:first-child {
+          background-color: lighten($secondary, 10%);
+        }
+        &.hovered > span:nth-child(2) {
+          background-color: lighten($tertiary, 10%);
+        }
 
-        &.add-one > h2 > span:nth-child(2) {
-          color: $beer-odd;
+        > span {
+          display: inline-block;
+          vertical-align: top;
+
+          &:first-child {
+            background-color: $secondary;
+            background-clip: padding-box;
+
+            border-left: 1px solid rgba($secondary, 0.5);
+            border-top: 1px solid rgba($secondary, 0.5);
+            border-bottom: 1px solid rgba($secondary, 0.5);
+
+            width: $brewery-width - 42px;
+            padding: 8px 12px 10px;
+          }
+          &:nth-child(2) {
+            background-color: $tertiary;
+            background-clip: padding-box;
+
+            border-right: 1px solid rgba($tertiary, 0.5);
+            border-top: 1px solid rgba($tertiary, 0.5);
+            border-bottom: 1px solid rgba($tertiary, 0.5);
+
+            width: 42px;
+            color: $secondary;
+            font-size: $font-xl;
+            text-align: center;
+            line-height: 40px;
+            height: 45px;
+          }
         }
       }
-    }
-  }
-
-  > .add-one {
-    > h2 > span {
-      display: inline-block;
-      vertical-align: top;
-
-      &:first-child {
-        background-color: $bg-action;
-        width: $brewery-width - 42px;
-        line-height: 40px;
-        padding-bottom: 2px;
-      }
-      &:nth-child(2) {
-        width: 42px;
-        color: $bg-action;
-        font-size: 36px;
-        line-height: 40px;
-        height: 42px;
-      }
-    }
-    &:nth-child(even) > h2 > span:nth-child(2) {
-      background-color: $beer-even;
-    }
-    &:nth-child(odd) > h2 > span:nth-child(2) {
-      background-color: $beer-odd;
     }
   }
 }

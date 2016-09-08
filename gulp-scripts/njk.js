@@ -6,9 +6,11 @@
 //---------//
 
 const bPromise = require('bluebird')
+  , bFs = bPromise.promisifyAll(require('fs'))
   , gulp = require('gulp')
   , mkdirpAsync = bPromise.promisify(require('mkdirp'))
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
+  , nunjucks = require('nunjucks')
   , path = require('path')
   , rimrafAsync = bPromise.promisify(require('rimraf'))
   , utils = require('../lib/utils')
@@ -19,10 +21,12 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const inDir = './src/website/client/views'
+const browserCompiledTemplatesIn = './src/website/server/browser-templates'
+  , browserCompiledTemplatesOut = './src/website/client/js/precompiled-templates.js'
+  , inDir = './src/website/server/views'
   , outDir = './dist/views'
-  , { streamToPromise } = utils
   , refresh = global.refresh
+  , { streamToPromise } = utils
   ;
 
 
@@ -42,10 +46,22 @@ gulp.task('njk-build', build)
 
 function build() {
   return clean()
+    .then(compileBrowserTemplates)
     .then(() => mkdirpAsync(inDir))
     .then(() => ncpAsync(inDir, outDir))
     .then(() => refresh.reload())
     ;
+}
+
+function compileBrowserTemplates() {
+  const contents = nunjucks.precompile(
+    browserCompiledTemplatesIn
+    , {
+      include: [/.*/]
+      , wrapper
+    }
+  );
+  return bFs.writeFileAsync(browserCompiledTemplatesOut, contents);
 }
 
 function clean() {
@@ -54,8 +70,30 @@ function clean() {
 
 function watch() {
   return streamToPromise(
-    gulp.watch(path.join(inDir, '**/*'), ['njk-build'])
+    gulp.watch([path.join(inDir, '**/*'), path.join(browserCompiledTemplatesIn, '**/*')], ['njk-build'])
   );
+}
+
+function wrapper(templates, opts) {
+  let out = ''
+    , name
+    , template
+    , eol
+    ;
+
+  opts = opts || {};
+  eol = opts.eol || '\n';
+
+  for ( var i = 0; i < templates.length; i++ ) {
+    name = JSON.stringify(templates[i].name);
+    template = templates[i].template;
+
+    out += 'module.exports[' + name.replace('.njk', '') + '] = ' +
+      '(function() {' + eol + template + eol +
+      '})();' + eol;
+  }
+
+  return out;
 }
 
 

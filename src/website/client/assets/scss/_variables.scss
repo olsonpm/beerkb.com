@@ -1,27 +1,33 @@
-// sizes
-
 $site-width: 1190px;
-$font-base: 15px;
+$font-base: 16px;
+
+
+// font sizes
+$font-med: $font-base + 2px;
+$font-lg: $font-base + 6px;
+$font-xl: $font-base + 20px;
 
 
 // colors
 
-$bg: #d59d60;
-$bg-action: #7b6449;
-$fg: #f9f4ef;
-$fg-off: #feddb5;
-$brewery-odd: #b07434;
-$brewery-even: #cc8030;
-$beer-odd: #fce3c4;
-$beer-even: $fg;
-$beer-name: $brewery-odd;
-$general-text: #492e11;
+$primary: #eb7639;
+$secondary: #7c4f36;
+$tertiary: #ffe0c7;
+
+$bg: mix(white, $primary, 20%);
+$fg: mix(white, $primary, 90%);
+$fg-off: $tertiary;
+$brewery-odd: mix(black, $primary, 28%);
+$brewery-even: mix(black, $primary, 8%);
+$brewery-odd-beer: $tertiary;
+$brewery-even-beer: darken($brewery-even, 10%);
+$general-text: mix(black, $secondary, 50%);
 
 // bubble colors
-
-$bubble-color-sm: darken(#e4af74, 2%);
-$bubble-color-med: #e4af74;
-$bubble-color-lg: lighten(#e4af74, 2%);
+$bubble: mix($tertiary, $bg, 30%);
+$bubble-color-sm: mix(black, $bubble, 3%);
+$bubble-color-med: $bubble;
+$bubble-color-lg: mix(white, $bubble, 3%);
 
 
 // slightly modified from bootstrap
@@ -44,4 +50,6 @@ $lg: ($font-base * 3);
 $md: ($font-base * 2);
 $sm: $font-base + ($font-base / 2);
 $xs: $font-base;
-$xxs: ($font-base / 2);
+$xs2: ($font-base / 2);
+$xs3: ($font-base / 3);
+$xs4: ($font-base / 4);

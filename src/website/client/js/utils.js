@@ -5,9 +5,11 @@
 // Imports //
 //---------//
 
-const r = require('ramda')
-  , rUtils = require('./r-utils')
-  , $ = require('./external/domtastic.custom')
+const $ = require('./external/domtastic.custom')
+  , duration = require('./constants/duration')
+  , hoverIntent = require('hoverintent')
+  , r = require('ramda')
+  , velocity = require('velocity-animate')
   ;
 
 
@@ -15,28 +17,52 @@ const r = require('ramda')
 // Init //
 //------//
 
-const rectangleProps = ['top', 'right', 'bottom', 'left']
-  , {
-    invoke
-  } = rUtils
-  ;
+const hoverIntentWrapper = r.curry(
+  (el, elDt) => hoverIntent(el, onEnter(elDt), onLeave(elDt))
+);
 
 
 //------//
 // Main //
 //------//
 
-const getRoundedRectangleProps = r.pipe(
-  $
-  , r.head
-  , invoke('getBoundingClientRect')
-  , r.pick(rectangleProps)
-  , r.map(Math.round)
-);
+const addHovered = el => hoverIntentWrapper(el, $(el))
+  , addHoveredDt = dt => dt.forEach(el => hoverIntentWrapper(el, $(el)))
+  , addHoveredToParent = el => hoverIntentWrapper(el, $(el).parent());
 
 const getRandomIntBetween = r.curry(
-  (min, max) => Math.floor(Math.random()*(max - min + 1) + min)
+  (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
 );
+
+const removeDt = elDt => {
+  return velocity(
+      elDt[0]
+      , {
+        'margin-top': 0
+        , 'margin-bottom': 0
+        , 'padding-top': 0
+        , 'padding-bottom': 0
+        , 'border-top': 0
+        , 'border-bottom': 0
+        , height: 0
+        , opacity: 0
+      }
+      , { duration: duration.medium }
+    )
+    .then(elDt.remove.bind(elDt));
+};
+
+
+//-------------//
+// Helper Fxns //
+//-------------//
+
+function onEnter(dt) {
+  return () => dt.addClass('hovered');
+}
+function onLeave(dt) {
+  return () => dt.removeClass('hovered');
+}
 
 
 //---------//
@@ -44,6 +70,9 @@ const getRandomIntBetween = r.curry(
 //---------//
 
 module.exports = {
-  getRandomIntBetween
-  , getRoundedRectangleProps
+  addHovered
+  , addHoveredDt
+  , addHoveredToParent
+  , getRandomIntBetween
+  , removeDt
 };

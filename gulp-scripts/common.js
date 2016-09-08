@@ -7,7 +7,6 @@
 
 const bPromise = require('bluebird')
   , fs = require('fs')
-  , fp = require('lodash/fp')
   , path = require('path')
   , rimrafAsync = bPromise.promisify(require('rimraf'))
   ;
@@ -17,7 +16,9 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const bFs = fp.bindAll(['mkdirAsync'], bPromise.promisifyAll(fs));
+const bFs = bPromise.promisifyAll(fs)
+  , mkdirAsync = bFs.mkdirAsync.bind(bFs)
+  ;
 
 
 //------//
@@ -28,7 +29,7 @@ const cleanDir = dir => {
   dir = path.resolve(dir);
   return rimrafAsync(dir)
     .thenReturn(dir)
-    .then(bFs.mkdirAsync);
+    .then(mkdirAsync);
 };
 
 

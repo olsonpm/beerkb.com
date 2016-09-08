@@ -25,3 +25,27 @@
     }
   }
 }
+
+@mixin hover($bg-color, $fn: 'lighten', $amt: 10%, $hover-bg: null) {
+  // Don't know why I have to initialize this variable, but sass errors
+  //   if I don't
+  @if not($hover-bg) {
+    @if $fn == 'darken' {
+      $hover-bg: darken($bg-color, $amt);
+    } @else if $fn == 'saturate' {
+      $hover-bg: saturate($bg-color, $amt);
+    } @else {
+      $hover-bg: lighten($bg-color, $amt);
+    }
+  }
+
+  background-color: $bg-color;
+  > h2 { background-color: $bg-color; }
+  > h3 { background-color: $bg-color; }
+
+  &.hovered {
+    background-color: $hover-bg;
+    > h2 { background-color: $hover-bg; }
+    > h3 { background-color: $hover-bg; }
+  }
+}

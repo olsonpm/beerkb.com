@@ -81,6 +81,20 @@
     return target;
   };
 
+  /**
+   * Return the collection without duplicates
+   *
+   * @param collection Collection to remove duplicates from
+   * @return {Node|NodeList|Array}
+   * @private
+   */
+
+  var uniq = function (collection) {
+    return collection.filter(function (item, index) {
+      return collection.indexOf(item) === index;
+    });
+  };
+
   var isPrototypeSet = false;
 
   var reFragment = /^\s*<(\w+|!)[^>]*>/;
@@ -514,6 +528,79 @@ var array = Object.freeze({
     return BaseClass;
   }
 
+  var isNumeric = function (value) {
+    return !isNaN(parseFloat(value)) && isFinite(value);
+  };
+
+  var camelize = function (value) {
+    return value.replace(/-([\da-z])/gi, function (matches, letter) {
+      return letter.toUpperCase();
+    });
+  };
+
+  var dasherize = function (value) {
+    return value.replace(/([a-z\d])([A-Z])/g, '$1-$2').toLowerCase();
+  };
+
+  /**
+   * Get the value of a style property for the first element, or set one or more style properties for each element in the collection.
+   *
+   * @param {String|Object} key The name of the style property to get or set. Or an object containing key-value pairs to set as style properties.
+   * @param {String} [value] The value of the style property to set.
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').css('padding-left'); // get
+   *     $('.item').css('color', '#f00'); // set
+   *     $('.item').css({'border-width': '1px', display: 'inline-block'}); // set multiple
+   */
+
+  var css = function (key, value) {
+
+    var styleProps = void 0,
+        prop = void 0,
+        val = void 0;
+
+    if (typeof key === 'string') {
+      key = camelize(key);
+
+      if (typeof value === 'undefined') {
+        var element = this.nodeType ? this : this[0];
+        if (element) {
+          val = element.style[key];
+          return isNumeric(val) ? parseFloat(val) : val;
+        }
+        return undefined;
+      }
+
+      styleProps = {};
+      styleProps[key] = value;
+    } else {
+      styleProps = key;
+      for (prop in styleProps) {
+        val = styleProps[prop];
+        delete styleProps[prop];
+        styleProps[camelize(prop)] = val;
+      }
+    }
+
+    each(this, function (element) {
+      for (prop in styleProps) {
+        if (styleProps[prop] || styleProps[prop] === 0) {
+          element.style[prop] = styleProps[prop];
+        } else {
+          element.style.removeProperty(dasherize(prop));
+        }
+      }
+    });
+
+    return this;
+  };
+
+var css$1 = Object.freeze({
+    css: css
+  });
+
   var forEach$1 = Array.prototype.forEach;
 
   /**
@@ -744,6 +831,97 @@ var dom_attr = Object.freeze({
   });
 
   /**
+   * Add a class to the element(s)
+   *
+   * @param {String} value Space-separated class name(s) to add to the element(s).
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').addClass('bar');
+   *     $('.item').addClass('bar foo');
+   */
+
+  var addClass = function (value) {
+    if (value && value.length) {
+      each(value.split(' '), _each$1.bind(this, 'add'));
+    }
+    return this;
+  };
+
+  /**
+   * Remove a class from the element(s)
+   *
+   * @param {String} value Space-separated class name(s) to remove from the element(s).
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.items').removeClass('bar');
+   *     $('.items').removeClass('bar foo');
+   */
+
+  var removeClass = function (value) {
+    if (value && value.length) {
+      each(value.split(' '), _each$1.bind(this, 'remove'));
+    }
+    return this;
+  };
+
+  /**
+   * Toggle a class at the element(s)
+   *
+   * @param {String} value Space-separated class name(s) to toggle at the element(s).
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').toggleClass('bar');
+   *     $('.item').toggleClass('bar foo');
+   */
+
+  var toggleClass = function (value) {
+    if (value && value.length) {
+      each(value.split(' '), _each$1.bind(this, 'toggle'));
+    }
+    return this;
+  };
+
+  /**
+   * Check if the element(s) have a class.
+   *
+   * @param {String} value Check if the DOM element contains the class name. When applied to multiple elements,
+   * returns `true` if _any_ of them contains the class name.
+   * @return {Boolean} Whether the element's class attribute contains the class name.
+   * @example
+   *     $('.item').hasClass('bar');
+   */
+
+  var hasClass = function (value) {
+    return (this.nodeType ? [this] : this).some(function (element) {
+      return element.classList.contains(value);
+    });
+  };
+
+  /**
+   * Specialized iteration, applying `fn` of the classList API to each element.
+   *
+   * @param {String} fnName
+   * @param {String} className
+   * @private
+   */
+
+  var _each$1 = function (fnName, className) {
+    return each(this, function (element) {
+      return element.classList[fnName](className);
+    });
+  };
+
+var dom_class = Object.freeze({
+    addClass: addClass,
+    removeClass: removeClass,
+    toggleClass: toggleClass,
+    hasClass: hasClass
+  });
+
+  /**
    * Append each element in the collection to the specified element(s).
    *
    * @param {Node|NodeList|Object} element What to append the element(s) to. Clones elements as necessary.
@@ -851,6 +1029,227 @@ var dom_extra = Object.freeze({
     val: val
   });
 
+  /*
+   * Get the HTML contents of the first element, or set the HTML contents for each element in the collection.
+   *
+   * @param {String} [fragment] HTML fragment to set for the element. If this argument is omitted, the HTML contents are returned.
+   * @return {Object} The wrapped collection
+   * @chainable
+   * @example
+   *     $('.item').html();
+   *     $('.item').html('<span>more</span>');
+   */
+
+  var html = function (fragment) {
+
+    if (typeof fragment !== 'string') {
+      var element = this.nodeType ? this : this[0];
+      return element ? element.innerHTML : undefined;
+    }
+
+    return each(this, function (element) {
+      return element.innerHTML = fragment;
+    });
+  };
+
+var dom_html = Object.freeze({
+    html: html
+  });
+
+  /**
+   * Return the closest element matching the selector (starting by itself) for each element in the collection.
+   *
+   * @param {String} selector Filter
+   * @param {Object} [context] If provided, matching elements must be a descendant of this element
+   * @return {Object} New wrapped collection (containing zero or one element)
+   * @chainable
+   * @example
+   *     $('.selector').closest('.container');
+   */
+
+  var closest = function () {
+
+    var closest = function (selector, context) {
+      var nodes = [];
+      each(this, function (node) {
+        while (node && node !== context) {
+          if (matches(node, selector)) {
+            nodes.push(node);
+            break;
+          }
+          node = node.parentElement;
+        }
+      });
+      return $$2(uniq(nodes));
+    };
+
+    return typeof Element === 'undefined' || !Element.prototype.closest ? closest : function (selector, context) {
+      var _this = this;
+
+      if (!context) {
+        var _ret = function () {
+          var nodes = [];
+          each(_this, function (node) {
+            var n = node.closest(selector);
+            if (n) {
+              nodes.push(n);
+            }
+          });
+          return {
+            v: $$2(uniq(nodes))
+          };
+        }();
+
+        if (typeof _ret === "object") return _ret.v;
+      } else {
+        return closest.call(this, selector, context);
+      }
+    };
+  }();
+
+var selector_closest = Object.freeze({
+    closest: closest
+  });
+
+  /**
+   * Return children of each element in the collection, optionally filtered by a selector.
+   *
+   * @param {String} [selector] Filter
+   * @return {Object} New wrapped collection
+   * @chainable
+   * @example
+   *     $('.selector').children();
+   *     $('.selector').children('.filter');
+   */
+
+  var children = function (selector) {
+    var nodes = [];
+    each(this, function (element) {
+      if (element.children) {
+        each(element.children, function (child) {
+          if (!selector || selector && matches(child, selector)) {
+            nodes.push(child);
+          }
+        });
+      }
+    });
+    return $$2(nodes);
+  };
+
+  /**
+   * Return child nodes of each element in the collection, including text and comment nodes.
+   *
+   * @return {Object} New wrapped collection
+   * @example
+   *     $('.selector').contents();
+   */
+
+  var contents = function () {
+    var nodes = [];
+    each(this, function (element) {
+      return nodes.push.apply(nodes, toArray(element.childNodes));
+    });
+    return $$2(nodes);
+  };
+
+  /**
+   * Return a collection containing only the one at the specified index.
+   *
+   * @param {Number} index
+   * @return {Object} New wrapped collection
+   * @chainable
+   * @example
+   *     $('.items').eq(1)
+   *     // The second item; result is the same as doing $($('.items')[1]);
+   */
+
+  var eq = function (index) {
+    return slice.call(this, index, index + 1);
+  };
+
+  /**
+   * Return the DOM element at the specified index.
+   *
+   * @param {Number} index
+   * @return {Node} Element at the specified index
+   * @example
+   *     $('.items').get(1)
+   *     // The second element; result is the same as doing $('.items')[1];
+   */
+
+  var get = function (index) {
+    return this[index];
+  };
+
+  /**
+   * Return the parent elements of each element in the collection, optionally filtered by a selector.
+   *
+   * @param {String} [selector] Filter
+   * @return {Object} New wrapped collection
+   * @chainable
+   * @example
+   *     $('.selector').parent();
+   *     $('.selector').parent('.filter');
+   */
+
+  var parent = function (selector) {
+    var nodes = [];
+    each(this, function (element) {
+      if (!selector || selector && matches(element.parentNode, selector)) {
+        nodes.push(element.parentNode);
+      }
+    });
+    return $$2(nodes);
+  };
+
+  /**
+   * Return the sibling elements of each element in the collection, optionally filtered by a selector.
+   *
+   * @param {String} [selector] Filter
+   * @return {Object} New wrapped collection
+   * @chainable
+   * @example
+   *     $('.selector').siblings();
+   *     $('.selector').siblings('.filter');
+   */
+
+  var siblings = function (selector) {
+    var nodes = [];
+    each(this, function (element) {
+      return each(element.parentNode.children, function (sibling) {
+        if (sibling !== element && (!selector || selector && matches(sibling, selector))) {
+          nodes.push(sibling);
+        }
+      });
+    });
+    return $$2(nodes);
+  };
+
+  /**
+   * Create a new, sliced collection.
+   *
+   * @param {Number} start
+   * @param {Number} end
+   * @return {Object} New wrapped collection
+   * @example
+   *     $('.items').slice(1, 3)
+   *     // New wrapped collection containing the second, third, and fourth element.
+   */
+
+  var slice = function (start, end) {
+    return $$2([].slice.apply(this, arguments));
+  };
+
+var selector_extra = Object.freeze({
+    children: children,
+    contents: contents,
+    eq: eq,
+    get: get,
+    parent: parent,
+    siblings: siblings,
+    slice: slice
+  });
+
   var api = {};
   var $ = {};
 
@@ -861,7 +1260,7 @@ var dom_extra = Object.freeze({
   }
 
   extend($);
-  extend(api, array, dom_attr, dom, dom_extra);
+  extend(api, array, css$1, dom_attr, dom, dom_class, dom_extra, dom_html, selector_closest, selector_extra);
 
   $.fn = api;
 

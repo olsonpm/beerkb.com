@@ -10,9 +10,20 @@
     {% import '../macros/global.njk' as gm %}
 
     <div id="site-container">
+      <div id="modal-backlight">
+        <div id="modal-window"></div>
+        <div id="modal-dialog"></div>
+      </div>
+
       {% include '../partial/header.njk' %}
 
-      {% block content %}{% endblock %}
+      <div id="view-{{ viewName }}">
+        <script type="application/json" class="vm">
+          {{ vm | dump | safe }}
+        </script>
+
+        {% block content %}{% endblock %}
+      </div>
     </div>
 
     {% if isDev %}

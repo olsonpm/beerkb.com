@@ -4,15 +4,22 @@ body, html {
   font-family: 'Open Sans', sans-serif !important;
   font-weight: 600;
   font-size: $font-base;
+}
+
+html {
   height: 100%;
 }
 
 body {
   position: relative;
   z-index: -2;
+  min-height: 100%;
+
+  @include per-size('padding-bottom', 10, 10, 20, 30, 50, px);
 }
 
 #site-container {
+  position: relative;
   margin: 0 auto;
   max-width: $site-width;
 
@@ -34,6 +41,7 @@ a {
 }
 
 #bubble-layer {
+  z-index: -1;
   overflow: hidden;
   width: 100%;
   height: 100%;
@@ -43,11 +51,55 @@ a {
 
   > .bubble {
     position: absolute;
-    z-index: -1;
     border-radius: 50%;
 
     &.small { background-color: $bubble-color-sm; }
     &.medium { background-color: $bubble-color-med; }
     &.large { background-color: $bubble-color-lg; }
+  }
+}
+
+.collapse-indicator {
+  position: absolute;
+  right: 12px;
+  top: 11px;
+  width: 0;
+  height: 0;
+  font-size: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid;
+}
+
+//
+// Buttons
+//
+
+button {
+  font-weight: bold;
+  font-size: $font-med;
+  border: 1px solid;
+  transition: background-color 0.2s;
+  cursor: pointer;
+
+  @include per-size(('padding-top', 'padding-bottom'), $xs4, $xs4, $xs3, $xs2, $xs2);
+  @include per-size(('padding-right', 'padding-left'), $xs3, $xs3, $xs2, $xs, $xs);
+
+  &[data-action="delete"] {
+    background-color: $secondary;
+    border-color: $secondary;
+    color: $fg;
+
+    &.hovered {
+      background-color: lighten($secondary, 14%);
+    }
+  }
+  &[data-action="cancel"] {
+    background-color: $fg;
+    border-color: $general-text;
+
+    &.hovered {
+      background-color: lighten($primary, 24%);
+    }
   }
 }
