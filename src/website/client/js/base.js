@@ -64,7 +64,7 @@ function initBubbleGenerator() {
     clientHeight: document.body.clientHeight
     , clientWidth: document.body.clientWidth
     , clientWidthRange: [480, 992] // values taken from _variables.scss
-    , fizzRateRange: [200, 700] // ms
+    , fizzRateRange: [400, 800] // ms
     , fizzSpeedRange: [4, 15] // 1px/<x>ms
     , onBubbleCreate: createBubble
     , scrollY: window.scrollY

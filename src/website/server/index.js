@@ -23,7 +23,6 @@ const bPromise = require('bluebird')
   , rUtils = require('./r-utils')
   , sqliteToRestServer = require('../../internal-rest-api/server')
   , ssl = require('../../../ssl')
-  , utils = require('../../../lib/utils')
   , viewModels = require('./view-models')
   ;
 
@@ -38,8 +37,7 @@ const app = new Koa()
   , distDir = path.resolve(path.join(__dirname, '../../../dist'))
   , highlight = chalk.green
   , httpsOptions = ssl.credentials
-  , { mutableMerge } = rUtils
-  , { isUndefined } = utils
+  , { mutableMerge, isDefined } = rUtils
   ;
 
 let router = koaRouter();
@@ -180,8 +178,8 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
 }
 
 function getApiRequestOpts(method, item, ctx, sqliteToRestPort) {
-  return r.reject(
-    isUndefined
+  return r.filter(
+    isDefined
     , {
       method: method.toUpperCase()
       , uri: `http://localhost:${sqliteToRestPort}/${item}${ctx.search}`

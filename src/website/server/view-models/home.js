@@ -12,8 +12,7 @@
 //       , state: <string>
 //       , beer: {
 //         (beer id): {
-//           category: <string>
-//           , description: <string>
+//           description: <string>
 //           , name: <string>
 //           , style: <string>
 //         }

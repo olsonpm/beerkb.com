@@ -1,0 +1,39 @@
+form {
+  > label {
+    margin-bottom: 4px;
+    display: inline-block;
+
+    &:not(:first-child) {
+      @include per-size('margin-top', $xs2, $xs2, $xs2, $xs, $xs);
+    }
+  }
+
+  .error {
+    color: $error;
+    opacity: 0;
+    @include per-size('margin-left', $xs4, $xs3, $xs3, $xs2, $xs2);
+  }
+
+  input
+  , textarea
+  , select {
+
+    display: block;
+  }
+
+  input[type="text"]
+  , textarea {
+
+    width: 100%;
+    font-weight: normal;
+    padding: 0.4em;
+  }
+
+  textarea {
+    height: 5em;
+  }
+
+  button {
+    @include per-size('margin-top', $xs, $xs, $sm, $md, $md);
+  }
+}

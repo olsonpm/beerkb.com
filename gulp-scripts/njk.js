@@ -84,7 +84,7 @@ function wrapper(templates, opts) {
   opts = opts || {};
   eol = opts.eol || '\n';
 
-  for ( var i = 0; i < templates.length; i++ ) {
+  for (var i = 0; i < templates.length; i++) {
     name = JSON.stringify(templates[i].name);
     template = templates[i].template;
 

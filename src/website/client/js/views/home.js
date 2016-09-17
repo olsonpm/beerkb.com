@@ -5,6 +5,8 @@
 // - Some vars have the abbreviation 'dt', which means 'domtastic' and
 //   represents a domtastic wrapped element
 //
+// TODO: extract the button handling to a separate file(s)
+//
 
 
 //---------//
@@ -13,10 +15,13 @@
 
 const $ = require('../external/domtastic.custom')
   , duration = require('../constants/duration')
+  , formData = require('../services/form-data')
   , modal = require('../services/modal')
-  , r = require('../external/ramda.custom')
+  , modalForms = require('../modal-forms')
   , request = require('../services/request')
+  , r = require('../external/ramda.custom')
   , rUtils = require('../r-utils')
+  , schemas = require('../../../shared/schemas')
   , utils = require('../utils')
   , velocity = require('velocity-animate')
   ;
@@ -27,8 +32,14 @@ const $ = require('../external/domtastic.custom')
 //------//
 
 const optionData = getOptionData()
-  , { mutableMerge } = rUtils
+  , { mutableMerge, size } = rUtils
   , { addHovered, addHoveredDt, addHoveredToParent, removeDt } = utils
+  , schemaErrorMessages = {
+    inStyleList: 'Required'
+    , inStateList: 'Required'
+    , isLaden: 'Required'
+    , startsWithUppercase: 'The first letter must be uppercase'
+  }
   ;
 
 let vm;
@@ -78,8 +89,9 @@ function createOptionOnClick(optionDt) {
         .attr('data-item-id');
     }
 
-    const option = optionData[action];
-    const showArgs = option.getShowArgs(data);
+    const option = optionData[action]
+      , showArgs = option.getShowArgs(data);
+
     option.modal.show(showArgs);
   };
 }
@@ -115,19 +127,20 @@ function getOptionData() {
         const myself = this;
 
         const itemData = vm.getItemData({ id, brewery_id, itemType })
-          , content = 'Are you sure you want to delete <span class="item">' + itemData.name + '</span>?';
+          , content = 'Are you sure you want to delete <span class="item">' + itemData.name + '</span>?'
+          , title = 'Delete ' + itemData.name;
 
         return {
           ctx: {
-            title: 'Delete ' + itemData.name
-            , content: content
+            title
+            , content
             , btns: [
-              { text: 'You Bet', action: 'delete' }
+              { text: 'You Bet', action: 'submit' }
               , { text: 'Cancel', action: 'cancel' }
             ]
           }
           , cbs: {
-            delete: () => {
+            submit: () => {
               // return request.delete[itemType](id)
               //   .then(myself.modal.hide)
               return myself.modal.hide()
@@ -139,12 +152,76 @@ function getOptionData() {
       }
     }
     , edit: {
-      modal: modal.window
-      , getShowArgs: r.always(undefined)
+      modal: modal.form
+      , getShowArgs({ id, brewery_id, itemType }) {
+        const myself = this
+          , itemData = vm.getItemData({ id, brewery_id, itemType })
+          , ctx = mutableMerge({
+              title: 'Edit ' + itemData.name
+            }
+            , modalForms[itemType](itemData)
+          );
+
+        return {
+          ctx
+          , cbs: {
+            submit() {
+              return myself.modal.hide()
+                .then(() => { console.log('Submitted edit of ' + itemData.name); });
+            }
+            , cancel() {
+              return myself.modal.hide()
+                .then(() => { console.log('Cancelled edit of ' + itemData.name); });
+            }
+          }
+        };
+      }
     }
     , 'add-beer': {
-      modal: modal.window
-      , getShowArgs: r.always(undefined)
+      modal: modal.form
+      , getShowArgs({ id }) {
+        const myself = this
+          , itemData = vm.brewery[id]
+          , title = 'Add A Beer To ' + itemData.name
+          ;
+
+        let getCtx = mutableMerge({ title });
+
+        return {
+          ctx: getCtx(modalForms.beer({}))
+          , cbs: {
+            submit() {
+              const beerData = formData.get(myself.modal.dt)
+                , errors = schemas.beer.validate(schemaErrorMessages, beerData);
+
+              if (size(errors)) {
+                const errorKeys = r.keys(errors)
+                  , hasError = el => r.contains(el.getAttribute('data-for'), errorKeys)
+                  , allErrorEls = myself.modal.dt.find('.error[data-for]')
+                  , activeErrorEls = allErrorEls.filter(hasError)
+                  , inactiveErrorEls = allErrorEls.filter(r.complement(hasError))
+                  ;
+
+                // set error text to the first error
+                activeErrorEls.forEach(el => el.innerHTML = errors[el.getAttribute('data-for')][0]);
+
+                const velocityPromises = activeErrorEls.map(el => velocity(el, { opacity: 1 }, { duration: duration.small }))
+                  .concat(inactiveErrorEls.map(el => velocity(el, { opacity: 0 }, { duration: duration.small })))
+                  ;
+
+                return Promise.all(velocityPromises);
+              } else {
+                return myself.modal.hide()
+                  .then(() => { console.log('Submitted beer addition to ' + itemData.name); });
+              }
+            }
+            , cancel() {
+              return myself.modal.hide()
+                .then(() => { console.log('Cancelled beer addition to ' + itemData.name); });
+            }
+          }
+        };
+      }
     }
   };
 }

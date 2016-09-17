@@ -1,4 +1,6 @@
 #site-container > header {
+  svg { height: 100px; }
+
   @include per-size('padding-top', 10, 10, 20, 30, 50, px);
   text-align: center;
 

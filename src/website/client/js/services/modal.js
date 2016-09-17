@@ -7,6 +7,7 @@
 
 const $ = require('../external/domtastic.custom')
   , duration = require('../constants/duration')
+  , r = require('../external/ramda.custom')
   , render = require('../services/render')
   , utils = require('../utils')
   , velocity = require('velocity-animate')
@@ -20,6 +21,10 @@ const $ = require('../external/domtastic.custom')
 const modalBacklightDt = $('#modal-backlight')
   , modalBacklight = modalBacklightDt[0]
   , { addHoveredDt } = utils
+  , postModalRender = {
+    form: postFormRender
+    , dialog: r.always(undefined)
+  }
   ;
 
 
@@ -28,7 +33,7 @@ const modalBacklightDt = $('#modal-backlight')
 //------//
 
 const exportMe = {
-  window: createModal('window')
+  form: createModal('form')
   , dialog: createModal('dialog')
 };
 
@@ -39,25 +44,32 @@ const exportMe = {
 
 function createModal(type) {
   const aModalDt = $('#modal-' + type)
-    , renderModal = getRenderer(type)
+    , renderModal = getRenderer(type, aModalDt)
     ;
 
   return {
     show({ ctx, cbs }) {
+      const myself = this;
+
       aModalDt.css('display', 'block');
-      renderModal(aModalDt, ctx);
+      renderModal(ctx);
 
       modalBacklightDt.css('display', 'block');
-
       aModalDt.find('button').forEach(assignCb(cbs));
 
       velocity(
-        [aModalDt[0], modalBacklight]
-        , { opacity: 1 }
-        , { duration: duration.small }
-      );
+          [aModalDt[0], modalBacklight]
+          , { opacity: 1 }
+          , { duration: duration.small }
+        )
+        .then(() => {
+           modalBacklightDt.on('click', e => {
+             if (e.target === modalBacklight) return myself.hide();
+           });
+        });
     }
     , hide() {
+      modalBacklightDt.off('click');
       return velocity(
           [aModalDt[0], modalBacklight]
           , { opacity: 0 }
@@ -70,13 +82,22 @@ function createModal(type) {
           modalBacklightDt.css('display', 'none');
         });
     }
+    , dt: aModalDt
   };
 }
 
-function getRenderer(type) {
-  return (modalDt, ctx) => {
+function getRenderer(type, modalDt) {
+  return ctx => {
     modalDt.html(render('modal-' + type, ctx));
     addHoveredDt(modalDt.find('button'));
+    postModalRender[type](modalDt);
+  };
+}
+
+function postFormRender(modalDt) {
+  modalDt.find('form')[0].onsubmit = e => {
+    e.preventDefault();
+    return false;
   };
 }
 

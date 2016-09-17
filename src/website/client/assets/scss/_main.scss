@@ -85,7 +85,7 @@ button {
   @include per-size(('padding-top', 'padding-bottom'), $xs4, $xs4, $xs3, $xs2, $xs2);
   @include per-size(('padding-right', 'padding-left'), $xs3, $xs3, $xs2, $xs, $xs);
 
-  &[data-action="delete"] {
+  &[data-action="submit"] {
     background-color: $secondary;
     border-color: $secondary;
     color: $fg;
