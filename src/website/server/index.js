@@ -9,7 +9,7 @@ const bPromise = require('bluebird')
   , bFs = bPromise.promisifyAll(require('fs'))
   , bRequest = require('request-promise')
   , chalk = require('chalk')
-  , https = require('https')
+  , http = require('http')
   , Koa = require('koa')
   , koaCompress = require('koa-compress')
   , koaJsonBody = require('koa-json-body')
@@ -93,10 +93,7 @@ const start = () => {
 
       return portfinder.getPortAsync()
         .then(port => {
-          https.createServer(
-              httpsOptions
-              , app.callback()
-            )
+          http.createServer(app.callback())
             .listen(port);
 
           console.log('beerkb.com backend listening on port ' + highlight(port));
