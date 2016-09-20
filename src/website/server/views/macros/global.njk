@@ -1,6 +1,6 @@
-{% macro link(text, href) %}
+{%- macro link(text, href) %}
   <a href="{{ href }}" target="_blank">{{ text }}</a>
-{% endmacro %}
+{% endmacro -%}
 
 {% macro options(item) %}
   <ul class="options">

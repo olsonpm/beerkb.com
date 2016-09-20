@@ -16,6 +16,9 @@ const $ = require('./external/domtastic.custom')
 // Init //
 //------//
 
+let bodyHeight = document.body.clientHeight
+  , bodyWidth = document.body.clientWidth;
+
 window.onresize = handleWindowResize;
 
 
@@ -43,8 +46,8 @@ function createBubble({ x, y, duration, diameter, size }) {
   return velocity(
       bubbleDiv
       , {
-        translateZ: 0 // Force HA by animating a 3D property
-        , translateY: -(document.body.clientHeight + (diameter * 2)) + 'px'
+        translateZ: 0
+        , translateY: -(bodyHeight + (diameter * 2)) + 'px'
       }
       , { duration, easing }
     )
@@ -61,8 +64,8 @@ function getBubbleDiv(x, y, diameter, size) {
 
 function initBubbleGenerator() {
   bubbleGenerator.run({
-    clientHeight: document.body.clientHeight
-    , clientWidth: document.body.clientWidth
+    clientHeight: bodyHeight
+    , clientWidth: bodyWidth
     , clientWidthRange: [480, 992] // values taken from _variables.scss
     , fizzRateRange: [400, 800] // ms
     , fizzSpeedRange: [4, 15] // 1px/<x>ms
@@ -72,9 +75,12 @@ function initBubbleGenerator() {
 }
 
 function handleWindowResize() {
+  bodyHeight = document.body.clientHeight;
+  bodyWidth = document.body.clientHeight;
+
   bubbleGenerator.updateClientDimensions({
-    clientHeight: document.body.clientHeight
-    , clientWidth: document.body.clientWidth
+    clientHeight: bodyHeight
+    , clientWidth: bodyWidth
   });
 }
 

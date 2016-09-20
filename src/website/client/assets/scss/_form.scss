@@ -4,14 +4,14 @@ form {
     display: inline-block;
 
     &:not(:first-child) {
-      @include per-size('margin-top', $xs2, $xs2, $xs2, $xs, $xs);
+      @include res-aware-element-spacing('margin-top', 'sm');
     }
   }
 
   .error {
     color: $error;
     opacity: 0;
-    @include per-size('margin-left', $xs4, $xs3, $xs3, $xs2, $xs2);
+    @include res-aware-element-spacing('margin-left', 'xs');
   }
 
   input
@@ -30,10 +30,10 @@ form {
   }
 
   textarea {
-    height: 5em;
+    height: 6em;
   }
 
   button {
-    @include per-size('margin-top', $xs, $xs, $sm, $md, $md);
+    @include res-aware-element-spacing('margin-top', 'lg');
   }
 }

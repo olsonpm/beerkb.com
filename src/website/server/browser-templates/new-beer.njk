@@ -1,0 +1,15 @@
+{% import 'global-macros' as gm %}
+
+<li data-item-id="{{ id }}" class="collapsed">
+  <h3>
+    <span data-prop="name">{{ name }}</span><span class="collapse-indicator"></span>
+  </h3>
+  <div class="shadow"></div>
+  <div class="panel">
+    <div class="more-data">
+      <p data-prop="style">{{ style }}</p>
+      <p data-prop="description">{{ description }}</p>
+    </div>
+    {{ gm.options('beer') }}
+  </div>
+</li>

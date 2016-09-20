@@ -1,33 +1,28 @@
 #site-container > header {
-  svg { height: 100px; }
-
-  @include per-size('padding-top', 10, 10, 20, 30, 50, px);
+  @include res-aware-element-spacing('padding-top', 'xl');
   text-align: center;
 
-  > h1, > p {
-    line-height: 1;
-  }
-
-  > h1, > h1 + p {
-    text-transform: uppercase;
-    color: $fg;
-  }
-
-  > h1 {
-    font-size: $font-xl;
-    @include per-size('margin-bottom', 6, 6, 10, 20, 30, px);
+  > svg {
+    @include per-size('height', 58, 72, 80, 90, 100, px);
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    @include res-aware-element-spacing('margin-bottom', 'lg');
   }
   > p {
+    line-height: 1.1;
     font-weight: 700;
     display: inline-block;
   }
-  > h1 + p {
-    font-size: $font-lg;
-    @include per-size('margin-bottom', 6, 6, 10, 20, 30, px);
+  > svg + p {
+    @include res-aware-font-size('lg');
+    text-transform: uppercase;
+    color: $fg;
+    @include res-aware-element-spacing('margin-bottom', 'lg');
   }
   > p + p {
     text-transform: none;
-    color: $fg-off;
-    @include per-size('margin-bottom', 10, 10, 20, 30, 50, px);
+    color: $tertiary;
+    @include res-aware-element-spacing('margin-bottom', 'xl');
   }
 }

@@ -1,0 +1,19 @@
+{% import 'global-macros' as gm %}
+
+<li data-item-id="{{ id }}" class="collapsed">
+  <h2>
+    <span data-prop="name">{{ name }}</span><span class="collapse-indicator"></span>
+  </h2>
+  <div class="shadow"></div>
+  <div class="panel">
+    <div class="more-data">
+      <p>
+        <span data-prop="city_name">{{ city_name }}</span>,
+        <span data-prop="state">{{ state }}</span>
+      </p>
+    </div>
+    {{ gm.options('brewery') }}
+
+    <ul data-items="beer"></ul>
+  </div>
+</li>

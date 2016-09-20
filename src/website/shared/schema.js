@@ -105,9 +105,11 @@ function toFailedValidations(obj) {
 }
 
 function toErrorMessageList(errs) {
-  return failedValidations => r.map(
-    r.pipe(r.prop('_name'), r.prop(r.__, errs))
-    , failedValidations
+  return r.map(
+    failedValidationFn => {
+      const name = failedValidationFn._name;
+      return r.propOr(name, name, errs);
+    }
   );
 }
 

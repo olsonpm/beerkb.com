@@ -5,8 +5,7 @@
 // Imports //
 //---------//
 
-const kebabCase = require('lodash.kebabcase')
-  , r = require('../external/ramda.custom')
+const r = require('../external/ramda.custom')
   , rUtils = require('../r-utils')
   , schemas = require('../../../shared/schemas')
   , startCase = require('lodash.startcase')
@@ -42,7 +41,7 @@ module.exports = {
           , selected: keyToList[key] && item[key]
           , errors: keyToErrors[key]
           , label: keyToLabel[key] || startCase(key)
-          , id: keyToId[key] || kebabCase(key)
+          , id: keyToId[key] || key
         })
       )
       , r.map(r.pickBy(isDefined))

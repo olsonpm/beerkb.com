@@ -32,6 +32,7 @@
     "koa-compress": "^2.0.0",
     "koa-convert": "^1.2.0",
     "koa-hbs": "^0.8.1",
+    "koa-json-body": "^5.0.0",
     "koa-nunjucks-2": "github:olsonpm/koa-nunjucks-2#v3-distributable",
     "koa-router": "^7.0.1",
     "koa-static": "^3.0.0",

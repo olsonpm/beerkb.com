@@ -1,6 +1,17 @@
 $brewery-width: 260px;
 
 ul[data-items="brewery"] {
+  text-align: center;
+
+  > li { text-align: left; }
+
+  li[data-item-id] {
+    > h2 > span:first-child
+    , > h3 > span:first-child {
+      padding-right: 40px;
+    }
+  }
+
   h2, h3, li {
     transition: background-color 0.2s;
   }
@@ -11,7 +22,7 @@ ul[data-items="brewery"] {
   }
 
   h3 {
-    font-size: $font-base;
+    @include res-aware-font-size('med');
   }
 
   li {
@@ -80,7 +91,7 @@ ul[data-items="brewery"] {
     width: $brewery-width;
 
     > h2 {
-      font-size: $font-lg;
+      @include res-aware-font-size('lg');
       color: $fg;
     }
 
@@ -88,8 +99,44 @@ ul[data-items="brewery"] {
       color: $fg;
     }
 
-    + li {
-      margin-left: 20px;
+    @media (min-width: $screen-lg-min) {
+      &:nth-child(4n+2)
+      , &:nth-child(4n+3)
+      , &:nth-child(4n+4) {
+
+        margin-left: 18px;
+      }
+
+      &:nth-child(n+5) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'lg')#{$px}; }
+    }
+    @media (min-width: $screen-md-min) and (max-width: $screen-md-max) {
+      &:nth-child(3n+2)
+      , &:nth-child(3n+3) {
+
+        margin-left: 50px;
+      }
+
+      &:nth-child(n+4) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'md')#{$px}; }
+    }
+    @media (min-width: $screen-sm-min) and (max-width: $screen-sm-max) {
+      margin-left: 30px;
+      margin-right: 30px;
+
+      &:nth-child(n+3) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'sm')#{$px}; }
+    }
+    @media (min-width: $screen-xs-min) and (max-width: $screen-xs-max) {
+      &:nth-child(even) {
+        margin-left: 40px;
+      }
+
+      &:nth-child(n+3) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'sm')#{$px}; }
+    }
+    @media (max-width: $screen-xxs-max) {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+
+      &:nth-child(n+2) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'xs')#{$px}; }
     }
 
     > .panel {
@@ -101,7 +148,7 @@ ul[data-items="brewery"] {
         }
 
         > h3 {
-          padding: 12px;
+          padding: 10px;
         }
 
         > .panel {
@@ -139,27 +186,13 @@ ul[data-items="brewery"] {
     }
 
     &:not(.add-one) {
-      > h2 {
-        padding: 8px 12px 10px;
-      }
+
+      > h2 { @include brewery-name-padding(); }
 
       &:nth-child(odd) {
         @include hover($brewery-odd);
 
-        &.collapsed > h2 {
-          border: 1px solid rgba($brewery-odd, 0.5);
-        }
-        &:not(.collapsed) > h2 {
-          border-top: 1px solid rgba($brewery-odd, 0.5);
-          border-right: 1px solid rgba($brewery-odd, 0.5);
-          border-left: 1px solid rgba($brewery-odd, 0.5);
-        }
-
         > .panel {
-          border-right: 1px solid rgba($brewery-odd, 0.5);
-          border-bottom: 1px solid rgba($brewery-odd, 0.5);
-          border-left: 1px solid rgba($brewery-odd, 0.5);
-
           > [data-items="beer"] > li {
             @include hover($bg-color: $brewery-odd-beer, $hover-bg: white);
 
@@ -189,20 +222,7 @@ ul[data-items="brewery"] {
       &:nth-child(even) {
         @include hover($brewery-even, 'saturate', 14%);
 
-        &.collapsed > h2 {
-          border: 1px solid rgba($brewery-even, 0.5);
-        }
-        &:not(.collapsed) > h2 {
-          border-top: 1px solid rgba($brewery-even, 0.5);
-          border-right: 1px solid rgba($brewery-even, 0.5);
-          border-left: 1px solid rgba($brewery-even, 0.5);
-        }
-
         > .panel {
-          border-right: 1px solid rgba($brewery-even, 0.5);
-          border-bottom: 1px solid rgba($brewery-even, 0.5);
-          border-left: 1px solid rgba($brewery-even, 0.5);
-
           > ul[data-items="beer"] > li {
             @include hover($brewery-even-beer, 'darken');
 
@@ -229,44 +249,33 @@ ul[data-items="brewery"] {
     }
 
     &.add-one {
-      > h2 {
-        &.hovered > span:first-child {
-          background-color: lighten($secondary, 10%);
+      &.hovered > h2 > span {
+        &:first-child { background-color: lighten($secondary, 10%); }
+        &:nth-child(2) { background-color: lighten($tertiary, 10%); }
+      }
+      > h2 > span {
+        display: inline-block;
+        vertical-align: top;
+
+        &:first-child {
+          background-color: $secondary;
+          background-clip: padding-box;
+
+          @include per-size('width', $brewery-width - 36, $brewery-width - 38, $brewery-width - 41, $brewery-width - 43, $brewery-width - 43);
+
+          @include brewery-name-padding();
         }
-        &.hovered > span:nth-child(2) {
-          background-color: lighten($tertiary, 10%);
-        }
+        &:nth-child(2) {
+          background-color: $tertiary;
+          background-clip: padding-box;
 
-        > span {
-          display: inline-block;
-          vertical-align: top;
-
-          &:first-child {
-            background-color: $secondary;
-            background-clip: padding-box;
-
-            border-left: 1px solid rgba($secondary, 0.5);
-            border-top: 1px solid rgba($secondary, 0.5);
-            border-bottom: 1px solid rgba($secondary, 0.5);
-
-            width: $brewery-width - 42px;
-            padding: 8px 12px 10px;
-          }
-          &:nth-child(2) {
-            background-color: $tertiary;
-            background-clip: padding-box;
-
-            border-right: 1px solid rgba($tertiary, 0.5);
-            border-top: 1px solid rgba($tertiary, 0.5);
-            border-bottom: 1px solid rgba($tertiary, 0.5);
-
-            width: 42px;
-            color: $secondary;
-            font-size: $font-xl;
-            text-align: center;
-            line-height: 40px;
-            height: 45px;
-          }
+          color: $secondary;
+          @include res-aware-font-size('xl');
+          text-align: center;
+          // the following hard-coded pixel sizes are a result of using a larger
+          //   font-size for the plus instead of an svg which would be simpler
+          @include per-size('line-height', 34, 37, 40, 41, 41, px);
+          @include per-size(('height', 'width'), 36, 38, 41, 43, 43, px);
         }
       }
     }

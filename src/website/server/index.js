@@ -7,10 +7,12 @@
 
 const bPromise = require('bluebird')
   , bFs = bPromise.promisifyAll(require('fs'))
+  , bRequest = require('request-promise')
   , chalk = require('chalk')
   , https = require('https')
   , Koa = require('koa')
   , koaCompress = require('koa-compress')
+  , koaJsonBody = require('koa-json-body')
   , koaNunjucks = require('koa-nunjucks-2')
   , koaRouter = require('koa-router')
   , koaStatic = require('koa-static')
@@ -19,8 +21,8 @@ const bPromise = require('bluebird')
   , portfinder = bPromise.promisifyAll(require('portfinder'))
   , r = require('ramda')
   , request = require('request')
-  , bRequest = require('request-promise')
   , rUtils = require('./r-utils')
+  , schemas = require('../shared/schemas')
   , sqliteToRestServer = require('../../internal-rest-api/server')
   , ssl = require('../../../ssl')
   , viewModels = require('./view-models')
@@ -37,7 +39,7 @@ const app = new Koa()
   , distDir = path.resolve(path.join(__dirname, '../../../dist'))
   , highlight = chalk.green
   , httpsOptions = ssl.credentials
-  , { mutableMerge, isDefined } = rUtils
+  , { isDefined, mutableMerge, size } = rUtils
   ;
 
 let router = koaRouter();
@@ -53,7 +55,9 @@ const start = () => {
   return sqliteToRestServer.run()
     .then(sqliteToRestPort => {
       app.use(koaCompress())
-        .use(koaStatic('./dist/static'));
+        .use(koaStatic('./dist/static'))
+        .use(koaJsonBody())
+        ;
 
       if (isDev) {
         app.use((ctx, next) => {
@@ -172,8 +176,20 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
         r.assoc('vm', r.__, {})
         , mutableMerge({ isDev, viewName })
       ))
-    , getApiResponse: (method, item, ctx) =>
-      getItem(item)(getApiRequestOpts(method, item, ctx, sqliteToRestPort))
+    , getApiResponse: (method, item, ctx) => {
+      if (ctx.request.body) { // need to validate body if it's passed
+        var propertyToFailedValidators = schemas[item].validate({}, r.pick(schemas[item].keys, ctx.request.body));
+        if (size(propertyToFailedValidators)) {
+          ctx.status = 400;
+          return {
+            msg: 'The following properties failed their respective validators'
+            , propertyToFailedValidators
+          };
+        }
+      }
+
+      return getItem(item)(getApiRequestOpts(method, item, ctx, sqliteToRestPort));
+    }
   };
 }
 
@@ -183,7 +199,7 @@ function getApiRequestOpts(method, item, ctx, sqliteToRestPort) {
     , {
       method: method.toUpperCase()
       , uri: `http://localhost:${sqliteToRestPort}/${item}${ctx.search}`
-      , body: ctx.body
+      , body: ctx.request.body
     }
   );
 }

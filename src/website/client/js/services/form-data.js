@@ -5,9 +5,7 @@
 // Imports //
 //---------//
 
-const rUtils = require('../r-utils')
-  , snakeCase = require('lodash.snakecase')
-  ;
+const rUtils = require('../r-utils');
 
 
 //------//
@@ -32,7 +30,7 @@ const exportMe = {
 
 function get(ctxDt) {
   return ctxDt.find('[data-form]').reduce(
-    (res, el) => mutableAssoc(snakeCase(el.id), el.value, res)
+    (res, { id, value }) => mutableAssoc(id, value, res)
     , {}
   );
 }

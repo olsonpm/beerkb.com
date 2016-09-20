@@ -1,12 +1,4 @@
 $site-width: 1190px;
-$font-base: 16px;
-
-
-// font sizes
-$font-med: $font-base + 2px;
-$font-lg: $font-base + 6px;
-$font-xl: $font-base + 20px;
-
 
 // colors
 
@@ -17,7 +9,6 @@ $error: #cc0000;
 
 $bg: mix(white, $primary, 20%);
 $fg: mix(white, $primary, 90%);
-$fg-off: $tertiary;
 $brewery-odd: mix(black, $primary, 28%);
 $brewery-even: mix(black, $primary, 8%);
 $brewery-odd-beer: $tertiary;
@@ -33,24 +24,17 @@ $bubble-color-lg: mix(white, $bubble, 3%);
 
 // slightly modified from bootstrap
 
-$screen-xs-min: 480px;
+$screen-xs-min: 620px;
 $screen-sm-min: 768px;
 $screen-md-min: 992px;
-$screen-lg-min: 1200px;
+$screen-lg-min: $site-width;
 
 $screen-xxs-max: ($screen-xs-min - 1);
 $screen-xs-max: ($screen-sm-min - 1);
 $screen-sm-max: ($screen-md-min - 1);
 $screen-md-max: ($screen-lg-min - 1);
 
-
-// general purpose element spacing
-
-$xl: ($font-base * 4);
-$lg: ($font-base * 3);
-$md: ($font-base * 2);
-$sm: $font-base + ($font-base / 2);
-$xs: $font-base;
-$xs2: ($font-base / 2);
-$xs3: ($font-base / 3);
-$xs4: ($font-base / 4);
+// can't figure out why I need to interpolate 'px' in order to get it concatenating
+//   with values properly (e.g. map-get(<some map>, <some key>)px results in
+//   an invalid "<val> px" as opposed to "<val>px"
+$px: px;

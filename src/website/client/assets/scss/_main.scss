@@ -3,7 +3,7 @@ body, html {
   color: $general-text;
   font-family: 'Open Sans', sans-serif !important;
   font-weight: 600;
-  font-size: $font-base;
+  @include res-aware-font-size('base');
 }
 
 html {
@@ -15,7 +15,7 @@ body {
   z-index: -2;
   min-height: 100%;
 
-  @include per-size('padding-bottom', 10, 10, 20, 30, 50, px);
+  @include res-aware-element-spacing('padding-bottom', 'xl');
 }
 
 #site-container {
@@ -23,11 +23,7 @@ body {
   margin: 0 auto;
   max-width: $site-width;
 
-  @include per-size(('padding-left', 'padding-right'), $xs, $xs, $sm, $md, $lg);
-}
-
-p {
-  line-height: 1.2;
+  @include res-aware-element-spacing(('padding-left', 'padding-right'), 'xl');
 }
 
 h1, h2, h3 {
@@ -37,7 +33,7 @@ h1, h2, h3 {
 }
 
 a {
-  color: $fg-off;
+  color: $tertiary;
 }
 
 #bubble-layer {
@@ -50,6 +46,7 @@ a {
   left: 0;
 
   > .bubble {
+    will-change: transform;
     position: absolute;
     border-radius: 50%;
 
@@ -61,14 +58,24 @@ a {
 
 .collapse-indicator {
   position: absolute;
-  right: 12px;
-  top: 11px;
   width: 0;
   height: 0;
   font-size: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-left: 10px solid;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-style: solid;
+  border-right: none;
+  right: 12px;
+}
+
+h2 > .collapse-indicator {
+  @include per-size('top', 9, 10, 10, 11, 11, px);
+  @include per-size('border-width', 9, 9, 10, 10, 10, px);
+}
+
+h3 > .collapse-indicator {
+  @include per-size('top', 10, 11, 10, 11, 11, px);
+  @include per-size('border-width', 8, 8, 9, 9, 9, px);
 }
 
 //
@@ -77,13 +84,15 @@ a {
 
 button {
   font-weight: bold;
-  font-size: $font-med;
+  @include res-aware-font-size('med');
   border: 1px solid;
   transition: background-color 0.2s;
   cursor: pointer;
 
-  @include per-size(('padding-top', 'padding-bottom'), $xs4, $xs4, $xs3, $xs2, $xs2);
-  @include per-size(('padding-right', 'padding-left'), $xs3, $xs3, $xs2, $xs, $xs);
+  @include res-aware-element-spacing(('padding-top', 'padding-bottom'), 'xs');
+  @include res-aware-element-spacing(('padding-right', 'padding-left'), 'sm');
+  // @include per-size(('padding-top', 'padding-bottom'), $xs4, $xs4, $xs3, $xs2, $xs2);
+  // @include per-size(('padding-right', 'padding-left'), $xs3, $xs3, $xs2, $xs, $xs);
 
   &[data-action="submit"] {
     background-color: $secondary;
@@ -94,7 +103,8 @@ button {
       background-color: lighten($secondary, 14%);
     }
   }
-  &[data-action="cancel"] {
+  &[data-action="cancel"]
+  , &[data-action="ok"] {
     background-color: $fg;
     border-color: $general-text;
 

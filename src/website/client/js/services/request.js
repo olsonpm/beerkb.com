@@ -16,7 +16,7 @@ const axios = require('axios')
 //------//
 
 const items = ['beer', 'brewery']
-  , instance = axios.create({
+  , axiosInst = axios.create({
     baseURL: window.location.origin + '/api/'
   })
   , itemMethods = getItemMethods()
@@ -36,7 +36,14 @@ const exportMe = createBeerAndBreweryMethods(items);
 
 function getItemMethods() {
   return {
-    delete: r.curry((itemType, id) => instance.delete(itemType, { params: { id } }))
+    delete: r.curry((itemType, id) => axiosInst.delete(itemType, { params: { id } }))
+    , edit: r.curry((itemType, data, id) => axiosInst({
+      method: 'post'
+      , url: itemType
+      , params: { id }
+      , data
+    }))
+    , create: r.curry((itemType, data) => axiosInst.post(itemType, data))
   };
 }
 

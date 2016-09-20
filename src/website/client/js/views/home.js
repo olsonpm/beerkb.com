@@ -20,6 +20,7 @@ const $ = require('../external/domtastic.custom')
   , modalForms = require('../modal-forms')
   , request = require('../services/request')
   , r = require('../external/ramda.custom')
+  , render = require('../services/render')
   , rUtils = require('../r-utils')
   , schemas = require('../../../shared/schemas')
   , utils = require('../utils')
@@ -31,15 +32,19 @@ const $ = require('../external/domtastic.custom')
 // Init //
 //------//
 
-const optionData = getOptionData()
+const addToVm = getAddToVm()
+  , optionData = getOptionData()
   , { mutableMerge, size } = rUtils
-  , { addHovered, addHoveredDt, addHoveredToParent, removeDt } = utils
+  , { addHovered, addHoveredDt, addHoveredToParent, directFind, directFindAll, removeDt } = utils
   , schemaErrorMessages = {
     inStyleList: 'Required'
     , inStateList: 'Required'
     , isLaden: 'Required'
     , startsWithUppercase: 'The first letter must be uppercase'
   }
+  , sendRequest = getSendRequest()
+  , updateVm = getUpdateVm()
+  , viewDt = $('#view-home')
   ;
 
 let vm;
@@ -50,7 +55,7 @@ let vm;
 //------//
 
 const run = vm_ => {
-  vm = initVm(vm_);
+  vm = vm_;
   initBreweryAndBeerHandlers();
 };
 
@@ -61,8 +66,39 @@ const run = vm_ => {
 
 function initBreweryAndBeerHandlers() {
   $('ul[data-items="brewery"] > li:not(.add-one), ul[data-items="beer"] > li:not(.add-one)').forEach(handleItemEl);
-  $('ul[data-items="brewery"] > li.add-one > h2').forEach(addHovered);
-  $('ul.options > li').forEach(handleOptions);
+  handleNewBrewery($('ul[data-items="brewery"] > li.add-one'));
+}
+
+function handleNewBrewery(newBreweryDt) {
+  const newBrewery = newBreweryDt[0];
+  addHovered(newBrewery);
+  newBrewery.onclick = () => {
+    const ctx = mutableMerge({
+        title: 'Add A Brewery'
+      }
+      , modalForms.brewery({})
+    );
+
+    return modal.form.show({
+      ctx
+      , cbs: {
+        submit() {
+          const breweryData = formData.get(modal.form.dt)
+            , errors = schemas.brewery.validate(schemaErrorMessages, breweryData);
+
+          if (size(errors)) return handleErrors(modal.form.dt, errors);
+
+          return modal.form.hide()
+            .then(() => sendRequest.create('brewery', breweryData))
+            ;
+        }
+        , cancel() {
+          console.log('cancelled new brewery');
+          return modal.form.hide();
+        }
+      }
+    });
+  };
 }
 
 function handleOptions(option) {
@@ -102,6 +138,7 @@ function handleItemEl(itemEl) {
     , itemHeader = itemHeaderDt[0]
     ;
 
+  directFind(itemDt, ['.panel', 'ul.options', 'li']).forEach(handleOptions);
   addHoveredToParent(itemHeader);
   itemHeader.onclick = createItemOnClick(itemDt);
 }
@@ -126,7 +163,7 @@ function getOptionData() {
       , getShowArgs({ id, brewery_id, itemType, itemDt }) {
         const myself = this;
 
-        const itemData = vm.getItemData({ id, brewery_id, itemType })
+        const itemData = getItemData({ id, brewery_id, itemType })
           , content = 'Are you sure you want to delete <span class="item">' + itemData.name + '</span>?'
           , title = 'Delete ' + itemData.name;
 
@@ -140,13 +177,12 @@ function getOptionData() {
             ]
           }
           , cbs: {
-            submit: () => {
-              // return request.delete[itemType](id)
-              //   .then(myself.modal.hide)
-              return myself.modal.hide()
+            submit() {
+              return request.delete[itemType](id)
+                .then(myself.modal.hide)
                 .then(removeDt(itemDt));
             }
-            , cancel: () => myself.modal.hide()
+            , cancel() { myself.modal.hide(); }
           }
         };
       }
@@ -155,7 +191,7 @@ function getOptionData() {
       modal: modal.form
       , getShowArgs({ id, brewery_id, itemType }) {
         const myself = this
-          , itemData = vm.getItemData({ id, brewery_id, itemType })
+          , itemData = getItemData({ id, brewery_id, itemType })
           , ctx = mutableMerge({
               title: 'Edit ' + itemData.name
             }
@@ -166,13 +202,25 @@ function getOptionData() {
           ctx
           , cbs: {
             submit() {
+              const newData = formData.get(myself.modal.dt)
+                , errors = schemas[itemType].validate(schemaErrorMessages, newData)
+                ;
+
+              if (size(errors)) return handleErrors(myself.modal.dt, errors);
+
               return myself.modal.hide()
-                .then(() => { console.log('Submitted edit of ' + itemData.name); });
+                .then(() => {
+                  const oldDataWithFormKeys = r.pick(r.keys(newData), itemData)
+                    , changed = !r.equals(newData, oldDataWithFormKeys)
+                    ;
+
+                  if (!changed) return;
+
+                  return sendRequest.edit(itemType, newData, itemData.name, brewery_id, id);
+                })
+                ;
             }
-            , cancel() {
-              return myself.modal.hide()
-                .then(() => { console.log('Cancelled edit of ' + itemData.name); });
-            }
+            , cancel() { return myself.modal.hide(); }
           }
         };
       }
@@ -180,8 +228,9 @@ function getOptionData() {
     , 'add-beer': {
       modal: modal.form
       , getShowArgs({ id }) {
-        const myself = this
-          , itemData = vm.brewery[id]
+        const brewery_id = id
+          , myself = this
+          , itemData = vm.brewery[brewery_id]
           , title = 'Add A Beer To ' + itemData.name
           ;
 
@@ -194,31 +243,13 @@ function getOptionData() {
               const beerData = formData.get(myself.modal.dt)
                 , errors = schemas.beer.validate(schemaErrorMessages, beerData);
 
-              if (size(errors)) {
-                const errorKeys = r.keys(errors)
-                  , hasError = el => r.contains(el.getAttribute('data-for'), errorKeys)
-                  , allErrorEls = myself.modal.dt.find('.error[data-for]')
-                  , activeErrorEls = allErrorEls.filter(hasError)
-                  , inactiveErrorEls = allErrorEls.filter(r.complement(hasError))
-                  ;
+              if (size(errors)) return handleErrors(myself.modal.dt, errors);
 
-                // set error text to the first error
-                activeErrorEls.forEach(el => el.innerHTML = errors[el.getAttribute('data-for')][0]);
-
-                const velocityPromises = activeErrorEls.map(el => velocity(el, { opacity: 1 }, { duration: duration.small }))
-                  .concat(inactiveErrorEls.map(el => velocity(el, { opacity: 0 }, { duration: duration.small })))
-                  ;
-
-                return Promise.all(velocityPromises);
-              } else {
-                return myself.modal.hide()
-                  .then(() => { console.log('Submitted beer addition to ' + itemData.name); });
-              }
-            }
-            , cancel() {
               return myself.modal.hide()
-                .then(() => { console.log('Cancelled beer addition to ' + itemData.name); });
+                .then(() => sendRequest.create('beer', mutableMerge(beerData, { brewery_id })))
+                ;
             }
+            , cancel() { return myself.modal.hide(); }
           }
         };
       }
@@ -226,21 +257,14 @@ function getOptionData() {
   };
 }
 
-function initVm(vm_) {
-  return mutableMerge(
-    vm_
-    , {
-      getItemData({ id, brewery_id, itemType }) {
-        return (itemType === 'brewery')
-          ? vm.brewery[id]
-          : vm.brewery[brewery_id].beer[id];
-      }
-    }
-  );
+function getItemData({ id, brewery_id, itemType }) {
+  return (itemType === 'brewery')
+    ? vm.brewery[id]
+    : vm.brewery[brewery_id].beer[id];
 }
 
 function showPanel(itemDt) {
-  const collapseIndicator = itemDt.find('h2 > .collapse-indicator')
+  const collapseIndicator = directFindAll(itemDt)([['h2', '.collapse-indicator'], ['h3', '.collapse-indicator']])[0]
     , panel = itemDt.children('.panel')[0];
 
   itemDt.removeClass('collapsed');
@@ -249,9 +273,9 @@ function showPanel(itemDt) {
   panel.style['margin-top'] = -panel.clientHeight + 'px';
   panel.style.display = '';
 
-  return Promise.all([showPanel(), rotateIndicator()]);
+  return Promise.all([_showPanel(), rotateIndicator()]);
 
-  function showPanel() {
+  function _showPanel() {
     return velocity(
       panel
       , { 'margin-top': 0 }
@@ -272,7 +296,7 @@ function showPanel(itemDt) {
 }
 
 function hidePanel(itemDt) {
-  const collapseIndicator = itemDt.find('h2 > .collapse-indicator')
+  const collapseIndicator = directFindAll(itemDt)([['h2', '.collapse-indicator'], ['h3', '.collapse-indicator']])[0]
     , panel = itemDt.children('.panel')[0];
 
   itemDt.addClass('collapsing');
@@ -297,6 +321,191 @@ function hidePanel(itemDt) {
       , { duration: duration.medium }
     );
   }
+}
+
+function handleErrors(modalDt, errors) {
+  const errorKeys = r.keys(errors)
+    , hasError = el => r.contains(el.getAttribute('data-for'), errorKeys)
+    , allErrorEls = modalDt.find('.error[data-for]')
+    , activeErrorEls = allErrorEls.filter(hasError)
+    , inactiveErrorEls = allErrorEls.filter(r.complement(hasError))
+    ;
+
+  // set error text to the first error
+  activeErrorEls.forEach(el => el.innerHTML = errors[el.getAttribute('data-for')][0]);
+
+  const velocityPromises = activeErrorEls.map(el => velocity(el, { opacity: 1 }, { duration: duration.small }))
+    .concat(inactiveErrorEls.map(el => velocity(el, { opacity: 0 }, { duration: duration.small })))
+    ;
+
+  return Promise.all(velocityPromises);
+}
+
+const itemSelector = {
+  beer: (brewery_id, id) => 'ul[data-items="brewery"] > li[data-item-id="' + brewery_id + '"] '
+    + 'ul[data-items="beer"] > li[data-item-id="' + id + '"]'
+  , brewery: id => 'ul[data-items="brewery"] > li[data-item-id="' + id + '"]'
+};
+
+const propCtx = [['h2'], ['h3'], ['.panel', '.more-data']];
+
+const propSelectors = r.reduce(
+  (res, cur) => r.assoc(cur, getPropSelectors(cur), res)
+  , {}
+  , ['beer', 'brewery']
+);
+
+function getPropSelectors(itemType) {
+  return r.pipe(
+    r.path([itemType, 'keys'])
+    , r.map(prop => '*[data-prop="' + prop + '"]')
+    , r.join(', ')
+  )(schemas);
+}
+
+const addToDom = {
+  beer(beerList, data) {
+    const collection = beerList[0];
+
+    beerList.append(render('new-beer', data));
+
+    const newItem = beerList.children().pop()
+      , newItemDt = $(newItem)
+      , newHeight = collection.clientHeight
+      ;
+
+    handleItemEl(newItem);
+    newItemDt.css('display', 'none');
+
+    return velocity(
+        collection
+        , { height: newHeight }
+        , { duration: duration.medium }
+      )
+      .then(() => {
+        beerList.css('height', 'auto');
+        newItemDt.css({ display: 'block', opacity: 0 });
+
+        return velocity(
+          newItem
+          , { opacity: 1 }
+          , { duration: duration.small }
+        );
+      });
+  }
+  , brewery(breweryList, data) {
+    breweryList.append(render('new-brewery', data));
+
+    // from stackoverflow - removes whitespace.  This would be unnecessary if
+    //   I designed the code properly and re-rendered upon a data change
+    breweryList.contents().forEach(el => {
+      if (el.nodeType === 3 && !r.trim(el.nodeValue)) {
+        $(el).remove();
+      }
+    });
+
+    const newItem = breweryList.children().pop()
+      , newItemDt = $(newItem);
+
+    handleItemEl(newItem);
+    newItemDt.css('opacity', '0');
+
+    return velocity(
+      newItem
+      , { opacity: 1 }
+      , { duration: duration.medium }
+    );
+  }
+};
+
+function updateDom(itemDt, data, itemType) {
+  r.pipe(
+    directFindAll(itemDt)
+    , r.map(dt => dt.find(propSelectors[itemType]))
+    , r.forEach(dt => dt.forEach(updateProp(data)))
+  )(propCtx);
+}
+
+function updateProp(data) {
+  return el => {
+    const elDt = $(el)
+      , newText = data[elDt.attr('data-prop')];
+
+    elDt.text(newText);
+  };
+}
+
+function getAddToVm() {
+  return {
+    beer: data => {
+      const vmData = r.omit(['id', 'brewery_id'], data);
+      vm.brewery[data.brewery_id].beer[data.id] = vmData;
+      return addToDom.beer(viewDt.find('ul[data-items="brewery"] > li[data-item-id="'
+        + data.brewery_id + '"] ul[data-items="beer"]'), data
+      );
+    }
+    , brewery: data => {
+      const vmData = r.pipe(
+        r.omit(['id'])
+        , r.assoc('beer', {})
+      )(data);
+
+      vm.brewery[data.id] = vmData;
+      return addToDom.brewery(viewDt.find('ul[data-items="brewery"]'), data);
+    }
+  };
+}
+
+function getUpdateVm() {
+  return {
+    beer: ({ data, brewery_id, id }) => {
+      mutableMerge(vm.brewery[brewery_id].beer[id], data);
+      updateDom(viewDt.find(itemSelector.beer(brewery_id, id)), data, 'beer');
+    }
+    , brewery: ({ data, id }) => {
+      mutableMerge(vm.brewery[id], data);
+      updateDom(viewDt.find(itemSelector.brewery(id)), data, 'brewery');
+    }
+  };
+}
+
+function getErrorContent(name, methoding) {
+  return 'Very sorry, but an error occurred preventing you from '
+    + methoding + ' ' + name + '.';
+}
+
+function handleRequestError(name, methoding) {
+  return err => {
+    console.error(err);
+
+    return modal.dialog.show({
+      ctx: {
+        title: 'Error'
+        , content: getErrorContent(name, methoding)
+        , btns: [{ action: 'ok', text: 'I forgive you' }]
+      }
+      , cbs: { ok() { return modal.dialog.hide(); } }
+    });
+  };
+}
+
+function getSendRequest() {
+  return {
+    edit(itemType, data, oldName, brewery_id, id) {
+      return request.edit[itemType](data, id)
+        .then(res => updateVm[itemType]({
+          data: r.pick(r.keys(data), res.data) // the server provides keys we don't need such as 'id'
+          , brewery_id
+          , id
+        }))
+        .catch(handleRequestError(oldName || data.name, 'editing'));
+    }
+    , create(itemType, data) {
+      return request.create[itemType](data)
+        .then(res => addToVm[itemType](res.data))
+        .catch(handleRequestError(data.name, 'creating'));
+    }
+  };
 }
 
 

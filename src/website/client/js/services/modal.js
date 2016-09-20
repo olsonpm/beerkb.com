@@ -51,13 +51,13 @@ function createModal(type) {
     show({ ctx, cbs }) {
       const myself = this;
 
+      modalBacklightDt.css('display', 'block');
       aModalDt.css('display', 'block');
       renderModal(ctx);
 
-      modalBacklightDt.css('display', 'block');
       aModalDt.find('button').forEach(assignCb(cbs));
 
-      velocity(
+      return velocity(
           [aModalDt[0], modalBacklight]
           , { opacity: 1 }
           , { duration: duration.small }
@@ -70,6 +70,7 @@ function createModal(type) {
     }
     , hide() {
       modalBacklightDt.off('click');
+
       return velocity(
           [aModalDt[0], modalBacklight]
           , { opacity: 0 }
@@ -86,10 +87,30 @@ function createModal(type) {
   };
 }
 
+function verticallyCenter(modalDt) {
+  const modal = modalDt[0];
+  const yOffset = Math.round((document.documentElement.clientHeight - modal.clientHeight) / 2);
+  modalDt.css('top', yOffset + 'px');
+  return modalDt;
+}
+
+function horizontallyCenter(modalDt) {
+  const modal = modalDt[0];
+  const xOffset = Math.round((document.documentElement.clientWidth - modal.clientWidth) / 2);
+  modalDt.css('left', xOffset + 'px');
+  return modalDt;
+}
+
+const center = {
+  form: verticallyCenter
+  , dialog: r.pipe(verticallyCenter, horizontallyCenter)
+};
+
 function getRenderer(type, modalDt) {
   return ctx => {
     modalDt.html(render('modal-' + type, ctx));
     addHoveredDt(modalDt.find('button'));
+    center[type](modalDt);
     postModalRender[type](modalDt);
   };
 }
