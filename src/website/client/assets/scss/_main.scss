@@ -81,35 +81,53 @@ h3 > .collapse-indicator {
 //
 // Buttons
 //
-
 button {
+  position: relative;
   font-weight: bold;
   @include res-aware-font-size('med');
   border: 1px solid;
-  transition: background-color 0.2s;
   cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    transition: opacity $duration-fast;
+  }
+
+  &.hovered::after {
+    opacity: 1;
+  }
 
   @include res-aware-element-spacing(('padding-top', 'padding-bottom'), 'xs');
   @include res-aware-element-spacing(('padding-right', 'padding-left'), 'sm');
-  // @include per-size(('padding-top', 'padding-bottom'), $xs4, $xs4, $xs3, $xs2, $xs2);
-  // @include per-size(('padding-right', 'padding-left'), $xs3, $xs3, $xs2, $xs, $xs);
 
   &[data-action="submit"] {
     background-color: $secondary;
     border-color: $secondary;
     color: $fg;
 
-    &.hovered {
-      background-color: lighten($secondary, 14%);
+    &::after {
+      box-shadow: 0 0 0 2px $fg, 0 0 10px 3px $secondary;
     }
+
+    &:focus { box-shadow: 0 0 0 1px $fg, 0 0 10px 2px $secondary; }
   }
   &[data-action="cancel"]
   , &[data-action="ok"] {
+
     background-color: $fg;
     border-color: $general-text;
 
-    &.hovered {
-      background-color: lighten($primary, 24%);
+    &::after {
+      box-shadow: 0 0 12px 1px $secondary;
     }
+
+    &:focus { box-shadow: 0 0 10px 1px $secondary; }
   }
 }

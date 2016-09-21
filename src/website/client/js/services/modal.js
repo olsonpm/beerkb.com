@@ -9,6 +9,7 @@ const $ = require('../external/domtastic.custom')
   , duration = require('../constants/duration')
   , r = require('../external/ramda.custom')
   , render = require('../services/render')
+  , tabbable = require('tabbable')
   , utils = require('../utils')
   , velocity = require('velocity-animate')
   ;
@@ -20,7 +21,7 @@ const $ = require('../external/domtastic.custom')
 
 const modalBacklightDt = $('#modal-backlight')
   , modalBacklight = modalBacklightDt[0]
-  , { addHoveredDt } = utils
+  , { addHoveredDt, keycodes } = utils
   , postModalRender = {
     form: postFormRender
     , dialog: r.always(undefined)
@@ -56,6 +57,12 @@ function createModal(type) {
       renderModal(ctx);
 
       aModalDt.find('button').forEach(assignCb(cbs));
+
+      const escapableTargets = aModalDt.find('input, textbox, button').map(r.identity);
+
+      aModalDt.on('keyup', e => {
+        if (r.contains(e.target, escapableTargets) && e.keyCode === keycodes.esc) myself.hide();
+      });
 
       return velocity(
           [aModalDt[0], modalBacklight]
@@ -109,6 +116,7 @@ const center = {
 function getRenderer(type, modalDt) {
   return ctx => {
     modalDt.html(render('modal-' + type, ctx));
+    tabbable(modalDt[0])[0].focus();
     addHoveredDt(modalDt.find('button'));
     center[type](modalDt);
     postModalRender[type](modalDt);

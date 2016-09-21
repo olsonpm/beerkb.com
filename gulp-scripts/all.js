@@ -85,12 +85,6 @@ function listen() {
     basePath: './dist'
     , reloadPage: '/'
   };
-
-  if (hasSsl) {
-    opts = fp.assign(
-      opts
-      , ssl.credentials
-    );
-  }
+  
   refresh.listen(opts);
 }

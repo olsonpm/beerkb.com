@@ -19,7 +19,9 @@ const $ = require('./external/domtastic.custom')
 //------//
 
 const hoverIntentWrapper = r.curry(
-    (el, elDt) => hoverIntent(el, onEnter(elDt), onLeave(elDt))
+    (el, elDt) => {
+      if (!("ontouchstart" in document.documentElement)) hoverIntent(el, onEnter(elDt), onLeave(elDt));
+    }
   )
   , { size } = rUtils
   ;
@@ -65,6 +67,10 @@ const removeDt = elDt => {
     .then(elDt.remove.bind(elDt));
 };
 
+const keycodes = {
+  esc: 27
+};
+
 
 //-------------//
 // Helper Fxns //
@@ -89,5 +95,6 @@ module.exports = {
   , directFind
   , directFindAll
   , getRandomIntBetween
+  , keycodes
   , removeDt
 };

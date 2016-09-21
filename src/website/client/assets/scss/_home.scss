@@ -12,10 +12,6 @@ ul[data-items="brewery"] {
     }
   }
 
-  h2, h3, li {
-    transition: background-color 0.2s;
-  }
-
   h2, h3 {
     cursor: pointer;
     position: relative;
@@ -27,10 +23,6 @@ ul[data-items="brewery"] {
 
   li {
     position: relative;
-  }
-
-  li.add-one > h2 > span {
-    transition: background-color 0.2s;
   }
 
   .panel, .shadow {
@@ -55,7 +47,7 @@ ul[data-items="brewery"] {
         padding-top: 6px;
         padding-bottom: 6px;
         border-radius: 4px;
-        transition: background-color 0.2s;
+        transition: background-color $duration-fast;
         cursor: pointer;
 
         > svg {
@@ -190,11 +182,11 @@ ul[data-items="brewery"] {
       > h2 { @include brewery-name-padding(); }
 
       &:nth-child(odd) {
-        @include hover($brewery-odd);
+        @include item-bg-and-hover($brewery-odd);
 
         > .panel {
           > [data-items="beer"] > li {
-            @include hover($bg-color: $brewery-odd-beer, $hover-bg: white);
+            @include item-bg-and-hover($brewery-odd-beer, $bubble, 15px, 1px, 1px);
 
             > h3 {
               color: $brewery-odd;
@@ -220,11 +212,11 @@ ul[data-items="brewery"] {
       }
 
       &:nth-child(even) {
-        @include hover($brewery-even, 'saturate', 14%);
+        @include item-bg-and-hover($brewery-even);
 
         > .panel {
           > ul[data-items="beer"] > li {
-            @include hover($brewery-even-beer, 'darken');
+            @include item-bg-and-hover($brewery-even-beer);
 
             > h3, > .panel {
               color: $fg;
@@ -249,10 +241,24 @@ ul[data-items="brewery"] {
     }
 
     &.add-one {
-      &.hovered > h2 > span {
-        &:first-child { background-color: lighten($secondary, 10%); }
-        &:nth-child(2) { background-color: lighten($tertiary, 10%); }
+
+      &::after {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        box-shadow: 0 0 10px $fg;
+        opacity: 0;
+        transition: opacity $duration-fast;
       }
+
+      &.hovered::after {
+        opacity: 1;
+      }
+
       > h2 > span {
         display: inline-block;
         vertical-align: top;

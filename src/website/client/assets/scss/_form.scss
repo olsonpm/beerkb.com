@@ -17,13 +17,18 @@ form {
   input
   , textarea
   , select {
-
+    background-color: $input-bg;
     display: block;
+    outline: none;
+    border: 1px solid $secondary;
+
+    &:focus {
+      box-shadow: 0 0 10px $secondary;
+    }
   }
 
   input[type="text"]
   , textarea {
-
     width: 100%;
     font-weight: normal;
     padding: 0.4em;
@@ -33,7 +38,13 @@ form {
     height: 6em;
   }
 
+  select {
+    @include res-aware-element-spacing(('padding-left', 'padding-right'), 'xs');
+    @include per-size(('height', 'line-height'), 30, 30, 30, 33, 33, 'px');
+  }
+
   button {
+    outline: none;
     @include res-aware-element-spacing('margin-top', 'lg');
   }
 }

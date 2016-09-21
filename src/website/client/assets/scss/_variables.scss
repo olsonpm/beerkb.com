@@ -8,6 +8,7 @@ $tertiary: #ffe0c7;
 $error: #cc0000;
 
 $bg: mix(white, $primary, 20%);
+$input-bg: white;
 $fg: mix(white, $primary, 90%);
 $brewery-odd: mix(black, $primary, 28%);
 $brewery-even: mix(black, $primary, 8%);
@@ -38,3 +39,6 @@ $screen-md-max: ($screen-lg-min - 1);
 //   with values properly (e.g. map-get(<some map>, <some key>)px results in
 //   an invalid "<val> px" as opposed to "<val>px"
 $px: px;
+
+
+$duration-fast: 0.2s;

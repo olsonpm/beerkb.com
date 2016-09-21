@@ -54,6 +54,7 @@
     "request": "^2.74.0",
     "request-promise": "^4.1.1",
     "sqlite-to-rest": "github:olsonpm/sqlite-to-rest",
+    "tabbable": "^1.0.4",
     "task.js": "0.0.18",
     "velocity-animate": "^1.2.3"
   },

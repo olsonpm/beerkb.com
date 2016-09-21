@@ -96,24 +96,16 @@ $element-spacing-map: (
   }
 }
 
-@mixin hover($bg-color, $fn: 'lighten', $amt: 10%, $hover-bg: null) {
-  @if not($hover-bg) {
-    @if $fn == 'darken' {
-      $hover-bg: darken($bg-color, $amt);
-    } @else if $fn == 'saturate' {
-      $hover-bg: saturate($bg-color, $amt);
-    } @else {
-      $hover-bg: lighten($bg-color, $amt);
-    }
-  }
-
+@mixin item-bg-and-hover($bg-color, $shadow-color: $fg, $shadow-size: 10px, $shadow-start: 0, $contrast-border: 0) {
   background-color: $bg-color;
+  border: 1px solid $bg-color;
+
   > h2 { background-color: $bg-color; }
   > h3 { background-color: $bg-color; }
 
+  transition: box-shadow $duration-fast;
+
   &.hovered {
-    background-color: $hover-bg;
-    > h2 { background-color: $hover-bg; }
-    > h3 { background-color: $hover-bg; }
+    box-shadow: 0 0 0 $contrast-border $brewery-odd, 0 0 $shadow-size $shadow-start $shadow-color;
   }
 }
