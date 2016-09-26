@@ -94,9 +94,9 @@ function createModal(type) {
   };
 }
 
-function verticallyCenter(modalDt) {
+function verticallyPosition(modalDt) {
   const modal = modalDt[0];
-  const yOffset = Math.round((document.documentElement.clientHeight - modal.clientHeight) / 2);
+  const yOffset = Math.round((document.documentElement.clientHeight - modal.clientHeight) / 3);
   modalDt.css('top', yOffset + 'px');
   return modalDt;
 }
@@ -109,14 +109,18 @@ function horizontallyCenter(modalDt) {
 }
 
 const center = {
-  form: verticallyCenter
-  , dialog: r.pipe(verticallyCenter, horizontallyCenter)
+  form: verticallyPosition
+  , dialog: r.pipe(verticallyPosition, horizontallyCenter)
 };
 
 function getRenderer(type, modalDt) {
   return ctx => {
     modalDt.html(render('modal-' + type, ctx));
-    tabbable(modalDt[0])[0].focus();
+    if (type === 'form') {
+      tabbable(modalDt[0])[0].focus();
+    } else {
+      modalDt.find('button:not([data-action="delete"])')[0].focus();
+    }
     addHoveredDt(modalDt.find('button'));
     center[type](modalDt);
     postModalRender[type](modalDt);

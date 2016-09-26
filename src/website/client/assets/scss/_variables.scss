@@ -8,12 +8,12 @@ $tertiary: #ffe0c7;
 $error: #cc0000;
 
 $bg: mix(white, $primary, 20%);
-$input-bg: white;
+$bright-bg: white;
 $fg: mix(white, $primary, 90%);
-$brewery-odd: mix(black, $primary, 28%);
-$brewery-even: mix(black, $primary, 8%);
-$brewery-odd-beer: $tertiary;
-$brewery-even-beer: darken($brewery-even, 10%);
+$brewery-dark: mix(black, $primary, 28%);
+$brewery-light: mix(black, $primary, 8%);
+$brewery-dark-beer: $tertiary;
+$brewery-light-beer: darken($brewery-light, 10%);
 $general-text: mix(black, $secondary, 50%);
 
 // bubble colors

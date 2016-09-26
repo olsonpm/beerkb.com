@@ -23,7 +23,17 @@ const hoverIntentWrapper = r.curry(
       if (!("ontouchstart" in document.documentElement)) hoverIntent(el, onEnter(elDt), onLeave(elDt));
     }
   )
-  , { size } = rUtils
+  , { feed, size } = rUtils
+  , screenSizes = {
+    xxsMax: '619px'
+    , xsMin: '620px'
+    , xsMax: '767px'
+    , smMin: '768px'
+    , smMax: '991px'
+    , mdMin: '992px'
+    , mdMax: '1189px'
+    , lgMin: '1190px'
+  }
   ;
 
 
@@ -33,7 +43,8 @@ const hoverIntentWrapper = r.curry(
 
 const addHovered = el => hoverIntentWrapper(el, $(el))
   , addHoveredDt = dt => dt.forEach(el => hoverIntentWrapper(el, $(el)))
-  , addHoveredToParent = el => hoverIntentWrapper(el, $(el).parent());
+  , addHoveredToParent = el => hoverIntentWrapper(el, $(el).parent())
+  ;
 
 const directFind = r.curry(
   (ctxDt, path) => {
@@ -48,6 +59,34 @@ const directFindAll = ctxDt => r.pipe(r.map(directFind(ctxDt)), r.filter(size));
 const getRandomIntBetween = r.curry(
   (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
 );
+
+const joinAdjacentArrays = feed(
+  r.flip(r.append)
+  , r.concat
+  , []
+);
+
+const pairAdjacentElements = feed(
+  r.flip(r.append)
+  , r.pair
+  , []
+);
+
+const keycodes = {
+  esc: 27
+};
+
+const getNumColumns = () => {
+  let res;
+  if (window.matchMedia("(min-width: " + screenSizes.lgMin + ")").matches) {
+    res = 4;
+  } else if(window.matchMedia("(min-width: " + screenSizes.xsMin + ")").matches) {
+    res = 2;
+  } else {
+    res = 1;
+  }
+  return res;
+};
 
 const removeDt = elDt => {
   return velocity(
@@ -67,9 +106,7 @@ const removeDt = elDt => {
     .then(elDt.remove.bind(elDt));
 };
 
-const keycodes = {
-  esc: 27
-};
+const unwrap = r.map(r.identity);
 
 
 //-------------//
@@ -94,7 +131,12 @@ module.exports = {
   , addHoveredToParent
   , directFind
   , directFindAll
+  , getNumColumns
   , getRandomIntBetween
+  , joinAdjacentArrays
   , keycodes
+  , pairAdjacentElements
   , removeDt
+  , screenSizes
+  , unwrap
 };

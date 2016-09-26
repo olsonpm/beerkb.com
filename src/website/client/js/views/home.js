@@ -35,7 +35,10 @@ const $ = require('../external/domtastic.custom')
 const addToVm = getAddToVm()
   , optionData = getOptionData()
   , { mutableMerge, size } = rUtils
-  , { addHovered, addHoveredDt, addHoveredToParent, directFind, directFindAll, removeDt } = utils
+  , {
+    addHovered, addHoveredDt, addHoveredToParent, directFind, directFindAll
+    , getNumColumns, pairAdjacentElements, removeDt, unwrap
+  } = utils
   , schemaErrorMessages = {
     inStyleList: 'Required'
     , inStateList: 'Required'
@@ -47,7 +50,23 @@ const addToVm = getAddToVm()
   , viewDt = $('#view-home')
   ;
 
-let vm;
+let vm
+  , numColumns = getNumColumns()
+  ;
+
+const isOdd = n => n % 2
+  , elIsOdd = (el, idx) => isOdd(idx)
+  , elIsEven = r.complement(elIsOdd);
+
+const columnsToGetFilterFn = {
+  4: col => isOdd(col) ? elIsOdd : elIsEven
+  , 2: col => col === 1 ? elIsOdd : elIsEven
+  , 1: () => elIsEven
+};
+
+setBreweryColors();
+
+window.addEventListener('resize', handleWindowResize);
 
 
 //------//
@@ -148,6 +167,8 @@ function createItemOnClick(itemDt) {
     // just return if animating
     if (itemDt.hasClass('expanding') || itemDt.hasClass('collapsing')) { return; }
 
+    $('li[data-item-id].last-clicked').removeClass('last-clicked');
+
     const action = (itemDt.hasClass('collapsed'))
       ? showPanel
       : hidePanel;
@@ -164,7 +185,7 @@ function getOptionData() {
         const myself = this;
 
         const itemData = getItemData({ id, brewery_id, itemType })
-          , content = 'Are you sure you want to delete <span class="item">' + itemData.name + '</span>?'
+          , content = '<p>Are you sure you want to delete <span class="item">' + itemData.name + '</span>?</p>'
           , title = 'Delete ' + itemData.name;
 
         return {
@@ -172,12 +193,12 @@ function getOptionData() {
             title
             , content
             , btns: [
-              { text: 'You Bet', action: 'submit' }
+              { text: 'You Bet', action: 'delete' }
               , { text: 'Cancel', action: 'cancel' }
             ]
           }
           , cbs: {
-            submit() {
+            delete() {
               return request.delete[itemType](id)
                 .then(myself.modal.hide)
                 .then(removeDt(itemDt));
@@ -264,6 +285,8 @@ function getItemData({ id, brewery_id, itemType }) {
 }
 
 function showPanel(itemDt) {
+  itemDt.addClass('last-clicked');
+
   const collapseIndicator = directFindAll(itemDt)([['h2', '.collapse-indicator'], ['h3', '.collapse-indicator']])[0]
     , panel = itemDt.children('.panel')[0];
 
@@ -410,11 +433,20 @@ const addToDom = {
     handleItemEl(newItem);
     newItemDt.css('opacity', '0');
 
-    return velocity(
-      newItem
-      , { opacity: 1 }
-      , { duration: duration.medium }
-    );
+    setBreweryColors();
+
+    return Promise.all([
+      velocity(
+        newItem
+        , { opacity: 1 }
+        , { duration: duration.medium }
+      )
+      , velocity(
+        newItem
+        , 'scroll'
+        , { duration: duration.long }
+      )
+    ]);
   }
 };
 
@@ -451,7 +483,8 @@ function getAddToVm() {
       )(data);
 
       vm.brewery[data.id] = vmData;
-      return addToDom.brewery(viewDt.find('ul[data-items="brewery"]'), data);
+
+      return addToDom.brewery(findColumnToAddBrewery(), data);
     }
   };
 }
@@ -506,6 +539,71 @@ function getSendRequest() {
         .catch(handleRequestError(data.name, 'creating'));
     }
   };
+}
+
+function getBreweriesPerColumn() {
+  switch (numColumns) {
+    case 4: return $('ul[data-items="brewery"]').map(el => $(el).children());
+    case 2: return r.pipe(
+        unwrap
+        , pairAdjacentElements
+        , r.map(
+          r.reduce((res, cur) => r.concat(res, unwrap($(cur).children())), [])
+        )
+        , r.map($)
+      )($('ul[data-items="brewery"]'));
+    case 1: return [$($('ul[data-items="brewery"]')
+      .map(el => unwrap($(el).children()))
+      .reduce(r.concat))];
+  }
+}
+
+function setBreweryColors() {
+  const getFilterFn = columnsToGetFilterFn[numColumns];
+
+  getBreweriesPerColumn()
+    .forEach((breweries, col) => {
+      breweries.filter(getFilterFn(col))
+        .filter(':not(.add-one)')
+        .removeClass('dark');
+
+      breweries.filter(r.complement(getFilterFn(col)))
+        .filter(':not(.add-one):not(.dark)')
+        .addClass('dark');
+    });
+}
+
+function findColumnToAddBrewery() {
+  let breweries = viewDt.find('ul[data-items="brewery"]')
+    , breweryColumn;
+
+  if (numColumns === 4) {
+    breweryColumn = findEmptyBreweryColumn(breweries)
+      || breweries.map(el => directFind($(el), ['li']))
+        .reduce(r.minBy(r.prop('length')))
+        .parent()[0];
+  } else if (numColumns === 2) {
+    breweryColumn = findEmptyBreweryColumn(breweries)
+      || breweries.filter(elIsOdd)
+        .map(el => directFind($(el), ['li']))
+        .reduce(r.minBy(r.prop('length')))
+        .parent()[0];
+  } else { // numColumns === 1
+    breweryColumn = $(viewDt.find('ul[data-items="brewery"]').pop());
+  }
+
+  return $(breweryColumn);
+}
+
+function findEmptyBreweryColumn(breweries) {
+  return breweries.filter(el => !$(el).children().length)[0];
+}
+
+function handleWindowResize() {
+  if (numColumns !== getNumColumns()) {
+    numColumns = getNumColumns();
+    setBreweryColors();
+  }
 }
 
 

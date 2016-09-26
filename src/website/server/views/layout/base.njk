@@ -10,7 +10,7 @@
   <body>
     {% import '../macros/global.njk' as gm %}
 
-    <div id="site-container">
+    <div class="site-container">
       <div id="modal-backlight">
         <div id="modal-form"></div>
         <div id="modal-dialog"></div>
@@ -26,6 +26,8 @@
         {% block content %}{% endblock %}
       </div>
     </div>
+
+    {% include '../partial/footer.njk' %}
 
     {% if isDev %}
       <script src="//localhost:35729/livereload.js"></script>

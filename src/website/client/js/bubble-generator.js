@@ -65,12 +65,12 @@ const run = ({
     const diameter = getRandomDiameter()
       , y = (state.scrollY + state.clientHeight + diameter)
       , radius = Math.round(diameter / 2)
-      , duration = (getRandomFizzSpeed() * y)
+      , moveDuration = (getRandomFizzSpeed() * y)
       , x = getRandomIntBetween(-radius, state.clientWidth + radius)
       , size = state.getSize(diameter)
       ;
 
-    onBubbleCreate({ x, y, duration, diameter, size });
+    onBubbleCreate({ x, y, moveDuration, diameter, size });
   }
 };
 

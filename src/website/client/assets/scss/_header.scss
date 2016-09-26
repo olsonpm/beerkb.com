@@ -1,9 +1,9 @@
-#site-container > header {
+.site-container > header {
   @include res-aware-element-spacing('padding-top', 'xl');
   text-align: center;
 
   > svg {
-    @include per-size('height', 58, 72, 80, 90, 100, px);
+    @include per-size('height', 70, 78, 86, 94, 100, px);
     display: block;
     margin-left: auto;
     margin-right: auto;

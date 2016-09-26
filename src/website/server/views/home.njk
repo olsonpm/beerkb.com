@@ -2,47 +2,72 @@
 
 {% block content %}
 
-<ul data-items="brewery">
-  <li class="add-one">
-    <h2>
-      <span>Add Brewery</span><!--
-      --><span>+</span>
-    </h2>
-  </li>
-  {%- for breweryId, brewery in vm.brewery -%}
-    <li data-item-id="{{ breweryId }}" class="collapsed">
-      <h2>
-        <span data-prop="name">{{ brewery.name }}</span><span class="collapse-indicator"></span>
-      </h2>
-      <div class="shadow"></div>
-      <div class="panel">
-        <div class="more-data">
-          <p>
-            <span data-prop="city_name">{{ brewery.city_name }}</span>,
-            <span data-prop="state">{{ brewery.state }}</span>
-          </p>
-        </div>
-        {{ gm.options('brewery') }}
+<ul class="column-pairs">
+  {%- for columnPair in vm.pairedColumnsOfBreweryIds -%}
+  {%- set firstPair = loop.first -%}
 
-        <ul data-items="beer">
-          {% for beerId, beer in brewery.beer -%}
-            <li data-item-id="{{ beerId }}" class="collapsed">
-              <h3>
-                <span data-prop="name">{{ beer.name }}</span><span class="collapse-indicator"></span>
-              </h3>
-              <div class="shadow"></div>
-              <div class="panel">
-                <div class="more-data">
-                  <p data-prop="style">{{ beer.style }}</p>
-                  <p data-prop="description">{{ beer.description }}</p>
-                </div>
-                {{ gm.options('beer') }}
+  <li>
+    <ul class="columns">
+      {%- for column in columnPair -%}
+      <li>
+        <ul data-items="brewery">
+
+          {%- if firstPair and loop.index0 == 0 -%}
+          <li class="add-one">
+            <h2>
+              <span>Add Brewery</span><!--
+              --><span>+</span>
+            </h2>
+          </li>
+          {%- endif -%}
+
+          {%- for breweryId in column -%}
+          {%- set brewery = vm.brewery[breweryId] -%}
+
+          <li data-item-id="{{ breweryId }}" class="collapsed dark">
+            <h2>
+              <span data-prop="name">{{ brewery.name }}</span><span class="collapse-indicator"></span>
+            </h2>
+            <div class="shadow"></div>
+            <div class="panel">
+              <div class="more-data">
+                <p>
+                  <span data-prop="city_name">{{ brewery.city_name }}</span>,
+                  <span data-prop="state">{{ brewery.state }}</span>
+                </p>
               </div>
-            </li>
-          {%- endfor %}
+              {{ gm.options('brewery') }}
+
+              <ul data-items="beer">
+                {%- for beerId, beer in brewery.beer -%}
+                  <li data-item-id="{{ beerId }}" class="collapsed">
+                    <h3>
+                      <span data-prop="name">{{ beer.name }}</span><span class="collapse-indicator"></span>
+                    </h3>
+                    <div class="shadow"></div>
+                    <div class="panel">
+                      <div class="more-data">
+                        <p data-prop="style">{{ beer.style }}</p>
+                        <p data-prop="description">{{ beer.description }}</p>
+                      </div>
+                      {{ gm.options('beer') }}
+                    </div>
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
+          </li>
+          {%- endfor -%}
         </ul>
-      </div>
-    </li>
-  {%- endfor %}
+      </li>
+      {%- endfor -%}
+
+    {%- if loop.index0 % 2 == 0 -%}
+    </ul>
+  </li>
+  {%- endif -%}
+
+  {%- endfor -%}
 </ul>
+
 {% endblock %}

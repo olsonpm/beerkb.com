@@ -14,16 +14,24 @@ body {
   position: relative;
   z-index: -2;
   min-height: 100%;
-
-  @include res-aware-element-spacing('padding-bottom', 'xl');
 }
 
-#site-container {
+.site-container {
   position: relative;
   margin: 0 auto;
   max-width: $site-width;
 
   @include res-aware-element-spacing(('padding-left', 'padding-right'), 'xl');
+}
+
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+body > .site-container {
+  flex: 1;
 }
 
 h1, h2, h3 {
@@ -45,7 +53,7 @@ a {
   top: 0;
   left: 0;
 
-  > .bubble {
+  .bubble {
     will-change: transform;
     position: absolute;
     border-radius: 50%;
@@ -100,14 +108,15 @@ button {
     transition: opacity $duration-fast;
   }
 
-  &.hovered::after {
+  &:not(:focus).hovered::after {
     opacity: 1;
   }
 
   @include res-aware-element-spacing(('padding-top', 'padding-bottom'), 'xs');
   @include res-aware-element-spacing(('padding-right', 'padding-left'), 'sm');
 
-  &[data-action="submit"] {
+  &[data-action="submit"]
+  , &[data-action="delete"] {
     background-color: $secondary;
     border-color: $secondary;
     color: $fg;
@@ -130,4 +139,17 @@ button {
 
     &:focus { box-shadow: 0 0 10px 1px $secondary; }
   }
+}
+
+button
+, input
+, textarea
+, select {
+
+  outline: none;
+}
+
+
+.columns {
+  @include cf();
 }

@@ -15,14 +15,21 @@
   position: fixed;
   background-color: $fg;
   border-radius: 8px;
+  line-height: 1.5;
 
-  > h2, > p, ul.errors:last-of-type {
-    @include res-aware-element-spacing('margin-bottom', 'md');
+  a {
+    color: $general-text;
   }
 
   > h2 {
     text-transform: none;
     text-align: center;
+
+    @include res-aware-element-spacing('margin-bottom', 'md');
+  }
+
+  button {
+    @include res-aware-element-spacing('margin-top', 'md');
   }
 
   > p > .item {
@@ -46,10 +53,9 @@
 #modal-form {
   overflow: auto;
   max-height: 80%;
-  min-height: 50%;
-  width: 96%;
+  width: 90%;
   left: 50%;
-  margin-left: -48%;
+  margin-left: -45%;
   max-width: 464px;
 
   @media (min-width: $screen-xs-min) {

@@ -1,25 +1,9 @@
 form {
-  > label {
-    margin-bottom: 4px;
-    display: inline-block;
-
-    &:not(:first-child) {
-      @include res-aware-element-spacing('margin-top', 'sm');
-    }
-  }
-
-  .error {
-    color: $error;
-    opacity: 0;
-    @include res-aware-element-spacing('margin-left', 'xs');
-  }
-
   input
   , textarea
   , select {
-    background-color: $input-bg;
+    background-color: $bright-bg;
     display: block;
-    outline: none;
     border: 1px solid $secondary;
 
     &:focus {
@@ -46,5 +30,27 @@ form {
   button {
     outline: none;
     @include res-aware-element-spacing('margin-top', 'lg');
+  }
+
+  > .label-container {
+    overflow: hidden;
+    margin-bottom: 4px;
+
+    &:not(:first-child) {
+      @include res-aware-element-spacing('margin-top', 'sm');
+    }
+
+    > label {
+      display: block;
+      float: left;
+    }
+
+    > .error {
+      overflow: hidden;
+      color: $error;
+      display: block;
+      opacity: 0;
+      @include res-aware-element-spacing('padding-left', 'sm');
+    }
   }
 }

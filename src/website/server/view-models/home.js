@@ -21,6 +21,11 @@
 //     }
 //     ... id per brewery
 //   }
+//   , pairedColumnsOfBreweryIds: [
+//     [
+//       [(brewery id)... ] x2
+//     ] x2
+//   ]
 // }
 //
 
@@ -39,7 +44,7 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const { mutableAssoc, mutableDissoc, mutableMap, mutablePick } = rUtils;
+const { distribute, mutableAssoc, mutableDissoc, mutableMap, mutablePick, mutableRotate } = rUtils;
 
 
 //------//
@@ -59,6 +64,13 @@ const create = ({ bGetBeers, bGetBreweries }) => ({
           , r.indexBy(r.prop('id'), brewery)
         )
       };
+
+      res.pairedColumnsOfBreweryIds = r.pipe(
+        r.keys
+        , distribute(4)
+        , mutableRotate(1)
+        , r.splitEvery(2)
+      )(res.brewery);
 
       return res;
     })

@@ -1,287 +1,269 @@
 $brewery-width: 259px;
 
-ul[data-items="brewery"] {
+#view-home {
+  vertical-align: top;
   text-align: center;
 
-  > li { text-align: left; }
+  ul.column-pairs
+  , ul.columns {
 
-  li[data-item-id] {
-    > h2 > span:first-child
-    , > h3 > span:first-child {
-      padding-right: 40px;
+    @include cf();
+
+    > li { vertical-align: top; }
+  }
+
+  ul.column-pairs > li {
+    @media (min-width: $screen-xs-min) {
+      width: 50%;
+      display: inline-block;
+
+      &:nth-child(1) > ul { float: right; }
+      &:nth-child(2) > ul { float: left; }
     }
-  }
-
-  h2, h3 {
-    cursor: pointer;
-    position: relative;
-  }
-
-  h3 {
-    @include res-aware-font-size('med');
-  }
-
-  li {
-    position: relative;
-  }
-
-  .panel, .shadow {
-    position: relative;
-  }
-  .panel {
-    padding: 0 2px 2px;
-    z-index: 0;
-
-    > .more-data {
-      padding-top: 16px;
-      padding-right: 16px;
-      padding-left: 16px;
-    }
-
-    > .options {
-      padding: 12px 16px;
-
-      > li {
-        display: inline-block;
-        text-align: center;
-        padding-top: 6px;
-        padding-bottom: 6px;
-        border-radius: 4px;
-        transition: background-color $duration-fast;
-        cursor: pointer;
-
-        > svg {
-          height: 32px;
-        }
-      }
-    }
-  }
-  .shadow {
-    position: absolute;
-    width: 100%;
-    z-index: 1;
-  }
-
-  li.collapsed {
-    > .panel, > .shadow {
-      display: none;
-    }
-  }
-
-  li > .shadow {
-    height: 8px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%,rgba(0,0,0,0) 100%)
-  }
-
-  li[data-item-id] {
-    overflow: hidden;
-  }
-
-  > li {
-    display: inline-block;
-    vertical-align: top;
-    width: $brewery-width;
-
-    > h2 {
-      @include res-aware-font-size('lg');
-      color: $fg;
-    }
-
-    > .more-data {
-      color: $fg;
-    }
-
     @media (min-width: $screen-lg-min) {
-      &:nth-child(4n+2)
-      , &:nth-child(4n+3)
-      , &:nth-child(4n+4) {
-
-        margin-left: 18px;
+      &:nth-child(1) {
+        padding-right: 9px;
       }
-
-      &:nth-child(n+5) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'lg')#{$px}; }
-    }
-    @media (min-width: $screen-md-min) and (max-width: $screen-md-max) {
-      &:nth-child(3n+2)
-      , &:nth-child(3n+3) {
-
-        margin-left: 50px;
+      &:nth-child(2) {
+        padding-left: 9px;
       }
-
-      &:nth-child(n+4) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'md')#{$px}; }
     }
-    @media (min-width: $screen-sm-min) and (max-width: $screen-sm-max) {
-      margin-left: 30px;
-      margin-right: 30px;
+    @media (min-width: $screen-xs-min) and (max-width: $screen-md-max) {
+      &:nth-child(1) {
+        padding-right: 13px;
 
-      &:nth-child(n+3) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'sm')#{$px}; }
-    }
-    @media (min-width: $screen-xs-min) and (max-width: $screen-xs-max) {
-      &:nth-child(even) {
-        margin-left: 40px;
+         > ul { float: right; }
       }
+      &:nth-child(2) {
+        padding-left: 13px;
 
-      &:nth-child(n+3) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'sm')#{$px}; }
+        > ul { float: left; }
+      }
     }
     @media (max-width: $screen-xxs-max) {
       display: block;
+      width: $brewery-width;
       margin-left: auto;
       margin-right: auto;
+      &:nth-child(2) {
+        @include res-aware-element-spacing('margin-top', 'lg');
+      }
+    }
+  }
 
-      &:nth-child(n+2) { margin-top: map-get(map-get($element-spacing-map, 'lg'), 'xs')#{$px}; }
+  ul.columns > li {
+    @media (min-width: $screen-lg-min) {
+      display: inline-block;
+
+      &:nth-child(2) {
+        margin-left: 18px;
+      }
+    }
+    @media (max-width: $screen-md-max) {
+      display: block;
+
+      &:nth-child(2) {
+        @include res-aware-element-spacing('margin-top', 'lg');
+      }
+    }
+  }
+
+  ul[data-items="brewery"] {
+    text-align: left;
+
+    h2, h3 {
+      cursor: pointer;
+      position: relative;
     }
 
-    > .panel {
-      color: $fg;
+    h3 {
+      @include res-aware-font-size('med');
+    }
 
-      > ul[data-items="beer"] > li {
-        + li {
-          margin-top: 6px;
-        }
+    li {
+      position: relative;
 
-        > h3 {
-          padding: 10px;
-        }
+      & + li {
+        @include res-aware-element-spacing('margin-top', 'lg');
+      }
 
-        > .panel {
-          > .options > li {
-            width: 45%;
-
-            + li {
-              margin-left: 10%;
-            }
-          }
-
-          > .more-data {
-            > * + * {
-              margin-top: 8px;
-            }
-          }
+      &.collapsed {
+        > .panel, > .shadow {
+          display: none;
         }
       }
 
-      > .options > li {
-        width: 28%;
+      &[data-item-id] {
+        overflow: hidden;
 
-        &:first-child {
-          margin-left: 1%;
+        > h2 > span:first-child
+        , > h3 > span:first-child {
+          padding-right: 40px;
         }
+      }
 
-        + li {
-          margin-left: 7%;
-        }
-
-        > svg {
-          fill: $fg;
-        }
+      > .shadow {
+        height: 8px;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%,rgba(0,0,0,0) 100%);
       }
     }
 
-    &:not(.add-one) {
+    .panel, .shadow {
+      position: relative;
+    }
+    .panel {
+      padding: 0 2px 2px;
+      z-index: 0;
 
-      > h2 { @include brewery-name-padding(); }
+      > .more-data {
+        padding-top: 16px;
+        padding-right: 16px;
+        padding-left: 16px;
+      }
 
-      &:nth-child(odd) {
-        @include item-bg-and-hover($brewery-odd);
+      > .options {
+        padding: 12px 16px;
 
-        > .panel {
-          > [data-items="beer"] > li {
-            @include item-bg-and-hover($brewery-odd-beer, $bubble, 15px, 1px, 1px);
+        > li {
+          display: inline-block;
+          text-align: center;
+          padding-top: 6px;
+          padding-bottom: 6px;
+          border-radius: 4px;
+          transition: background-color $duration-fast;
+          cursor: pointer;
 
-            > h3 {
-              color: $brewery-odd;
+          > svg {
+            height: 32px;
+          }
+        }
+      }
+    }
+    .shadow {
+      position: absolute;
+      width: 100%;
+      z-index: 1;
+    }
+
+    > li {
+      display: block;
+      vertical-align: top;
+      width: $brewery-width;
+
+      > h2 {
+        @include res-aware-font-size('lg');
+        color: $fg;
+      }
+
+      > .more-data {
+        color: $fg;
+      }
+
+      > .panel {
+        color: $fg;
+
+        > ul[data-items="beer"] > li {
+          + li {
+            margin-top: 6px;
+          }
+
+          > h3 {
+            padding: 10px;
+          }
+
+          > .panel {
+            > .options > li {
+              width: 45%;
+
+              + li {
+                margin-left: 10%;
+              }
             }
-            > .panel {
-              color: $general-text;
 
-              > .options {
-                > li.hovered {
-                  background-color: darken($brewery-odd-beer, 14%);
-                }
-                svg {
-                  fill: $general-text;
-                }
+            > .more-data {
+              > * + * {
+                margin-top: 8px;
               }
             }
           }
+        }
 
-          > .options > li.hovered {
-            background-color: lighten($brewery-odd, 10%);
+        > .options > li {
+          width: 28%;
+
+          &:first-child {
+            margin-left: 1%;
+          }
+
+          + li {
+            margin-left: 7%;
+          }
+
+          > svg {
+            fill: $fg;
           }
         }
       }
 
-      &:nth-child(even) {
-        @include item-bg-and-hover($brewery-even);
-
-        > .panel {
-          > ul[data-items="beer"] > li {
-            @include item-bg-and-hover($brewery-even-beer);
-
-            > h3, > .panel {
-              color: $fg;
-
-              > .options {
-                > li.hovered {
-                  background-color: lighten($brewery-even-beer, 10%);
-                }
-
-                svg {
-                  fill: $fg;
-                }
-              }
-            }
-          }
-
-          > .options > li.hovered {
-            background-color: darken($brewery-even, 10%);
-          }
-        }
-      }
-    }
-
-    &.add-one {
-
-      &::after {
-        content: '';
-        position: absolute;
-        z-index: -1;
-        width: 100%;
-        height: 100%;
-        left: 0;
-        top: 0;
-        box-shadow: 0 0 10px $fg;
-        opacity: 0;
-        transition: opacity $duration-fast;
-      }
-
-      &.hovered::after {
-        opacity: 1;
-      }
-
-      > h2 > span {
-        display: inline-block;
-        vertical-align: top;
-
-        &:first-child {
-          background-color: $secondary;
-          background-clip: padding-box;
-
-          @include per-size('width', $brewery-width - 36, $brewery-width - 38, $brewery-width - 41, $brewery-width - 43, $brewery-width - 43);
-
+      &:not(.add-one) {
+        > h2 {
           @include brewery-name-padding();
         }
-        &:nth-child(2) {
-          background-color: $tertiary;
-          background-clip: padding-box;
 
-          color: $secondary;
-          @include res-aware-font-size('xl');
-          text-align: center;
-          // the following hard-coded pixel sizes are a result of using a larger
-          //   font-size for the plus instead of an svg which would be simpler
-          @include per-size('line-height', 34, 37, 40, 41, 41, px);
-          @include per-size(('height', 'width'), 36, 38, 41, 43, 43, px);
+        &.dark {
+          @include dark-brewery();
+        }
+        &:not(.dark) {
+          @include light-brewery();
+        }
+      }
+
+      &.add-one {
+        top: 0;
+        overflow: visible;
+
+        &::after {
+          content: '';
+          position: absolute;
+          z-index: -1;
+          width: 100%;
+          height: 100%;
+          left: 0;
+          top: 0;
+          box-shadow: 0 0 10px $bright-bg;
+          opacity: 0;
+          transition: opacity $duration-fast;
+        }
+
+        &.hovered::after {
+          opacity: 1;
+        }
+
+        > h2 > span {
+          display: inline-block;
+          vertical-align: top;
+
+          &:first-child {
+            background-color: $secondary;
+            color: $fg;
+            background-clip: padding-box;
+
+            @include per-size('width', $brewery-width - 36, $brewery-width - 38, $brewery-width - 41, $brewery-width - 43, $brewery-width - 43);
+
+            @include brewery-name-padding();
+          }
+          &:nth-child(2) {
+            background-color: $tertiary;
+            background-clip: padding-box;
+
+            color: $secondary;
+            @include res-aware-font-size('xl');
+            text-align: center;
+            // the following hard-coded pixel sizes are a result of using a larger
+            //   font-size for the plus instead of an svg which would be simpler
+            @include per-size('line-height', 34, 37, 40, 41, 41, px);
+            @include per-size(('height', 'width'), 36, 38, 41, 43, 43, px);
+          }
         }
       }
     }

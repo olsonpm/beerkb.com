@@ -7,6 +7,8 @@
 
 const $ = require('./external/domtastic.custom')
   , bubbleGenerator = require('./bubble-generator')
+  , duration = require('./constants/duration')
+  , modal = require('./services/modal')
   , render = require('./services/render')
   , velocity = require('velocity-animate')
   ;
@@ -19,7 +21,8 @@ const $ = require('./external/domtastic.custom')
 let bodyHeight = document.body.clientHeight
   , bodyWidth = document.body.clientWidth;
 
-window.onresize = handleWindowResize;
+window.addEventListener('resize', handleWindowResize);
+$('body > footer .other-credits').on('click', otherCreditsOnClick);
 
 
 //------//
@@ -38,28 +41,44 @@ initScrollHandler();
 // Helper Fxns //
 //-------------//
 
-function createBubble({ x, y, duration, diameter, size }) {
-  const bubbleDiv = getBubbleDiv(x, y, diameter, size);
-  bubbleLayer.append(bubbleDiv);
+function createBubble({ x, y, moveDuration, diameter, size }) {
+  const bubbleWrapper = getBubbleDiv(x, y, diameter, size)
+    , bubbleDiv = bubbleWrapper.children()[0];
+
+  bubbleLayer.append(bubbleWrapper);
   const easing = 'easeInQuart';
 
-  return velocity(
-      bubbleDiv
-      , {
-        translateZ: 0
-        , translateY: -(bodyHeight + (diameter * 2)) + 'px'
-      }
-      , { duration, easing }
-    )
+  return Promise.all([
+      velocity(
+        bubbleDiv
+        , {
+          translateZ: 0
+          , translateY: -(bodyHeight + (diameter * 4)) + 'px'
+        }
+        , { duration: moveDuration, easing }
+      )
+      , velocity(
+        bubbleWrapper
+        , { opacity: 0 }
+        , {
+          delay: moveDuration - duration.small
+          , duration: duration.small
+        }
+      )
+    ])
     .then(bubbleDiv.remove.bind(bubbleDiv));
 }
 
 function getBubbleDiv(x, y, diameter, size) {
   return $(document.createElement('div'))
-    .attr({
-      class: 'bubble ' + size
-      , style: render('bubble-style', { x, y, diameter })
-    });
+    .addClass('bubble-wrapper')
+    .append(
+      $(document.createElement('div'))
+      .attr({
+        class: 'bubble ' + size
+        , style: render('bubble-style', { x, y, diameter })
+      })
+    );
 }
 
 function initBubbleGenerator() {
@@ -87,5 +106,26 @@ function handleWindowResize() {
 function initScrollHandler() {
   window.addEventListener('scroll', () => {
     bubbleGenerator.updateScrollY(window.scrollY);
+  });
+}
+
+function otherCreditsOnClick() {
+  const egor = '<a href="https://www.behance.net/pio-5">Egor Rumyantsev</a>'
+    , freepik = '<a href="http://www.freepik.com/">Freepik</a>'
+    , flaticon = '<a href="www.flaticon.com">www.flaticon.com</a>';
+  const content = ['<ul class="credits">'
+    , '<li>Waste bin icon made by ' + egor + ' from ' + flaticon + '.</li>'
+    , '<li>Pencil icon made by ' + freepik + ' from ' + flaticon + '.</li>'
+    , '</ul>'].join('');
+
+  modal.dialog.show({
+    ctx: {
+      title: 'Other Credits'
+      , content
+      , btns: [{ action: 'ok', text: 'ok' }]
+    }
+    , cbs: {
+      ok: modal.dialog.hide
+    }
   });
 }

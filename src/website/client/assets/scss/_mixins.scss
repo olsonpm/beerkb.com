@@ -34,7 +34,7 @@
 }
 
 $font-size-map: (
-  xxs: (base: 14, med: 16, lg: 16, xl: 30)
+  xxs: (base: 12, med: 14, lg: 16, xl: 28)
   , xs: (base: 14, med: 17, lg: 18, xl: 32)
   , sm: (base: 15, med: 17, lg: 20, xl: 34)
   , md: (base: 16, med: 18, lg: 22, xl: 36)
@@ -96,16 +96,87 @@ $element-spacing-map: (
   }
 }
 
-@mixin item-bg-and-hover($bg-color, $shadow-color: $fg, $shadow-size: 10px, $shadow-start: 0, $contrast-border: 0) {
+@mixin dark-brewery() {
+  @include item-bg-and-hover($brewery-dark);
+
+  > .panel {
+    > [data-items="beer"] > li {
+      @include item-bg-and-hover($brewery-dark-beer, 15px, 1px, 1px);
+
+      > h3 {
+        color: $brewery-dark;
+      }
+      > .panel {
+        color: $general-text;
+
+        > .options {
+          > li.hovered {
+            background-color: darken($brewery-dark-beer, 14%);
+          }
+          svg {
+            fill: $general-text;
+          }
+        }
+      }
+    }
+
+    > .options > li.hovered {
+      background-color: lighten($brewery-dark, 10%);
+    }
+  }
+}
+
+@mixin light-brewery() {
+  @include item-bg-and-hover($brewery-light);
+
+  > .panel {
+    > ul[data-items="beer"] > li {
+      @include item-bg-and-hover($brewery-light-beer);
+
+      > h3, > .panel {
+        color: $fg;
+
+        > .options {
+          > li.hovered {
+            background-color: lighten($brewery-light-beer, 10%);
+          }
+
+          svg {
+            fill: $fg;
+          }
+        }
+      }
+    }
+
+    > .options > li.hovered {
+      background-color: darken($brewery-light , 10%);
+    }
+  }
+}
+
+@mixin item-bg-and-hover($bg-color, $shadow-size: 10px, $shadow-start: 0, $contrast-border: 0) {
   background-color: $bg-color;
-  border: 1px solid $bg-color;
 
   > h2 { background-color: $bg-color; }
   > h3 { background-color: $bg-color; }
 
   transition: box-shadow $duration-fast;
 
-  &.hovered {
-    box-shadow: 0 0 0 $contrast-border $brewery-odd, 0 0 $shadow-size $shadow-start $shadow-color;
+  &.hovered
+  , &.last-clicked {
+    box-shadow: 0 0 0 $contrast-border $brewery-dark, 0 0 $shadow-size $shadow-start $bright-bg;
+  }
+}
+
+
+@mixin cf() {
+  &:before
+  , &:after {
+    content: '';
+    display: table;
+  }
+
+  &:after {
+    clear: both;
   }
 }
