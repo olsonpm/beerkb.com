@@ -10,6 +10,7 @@ const $ = require('./external/domtastic.custom')
   , duration = require('./constants/duration')
   , modal = require('./services/modal')
   , render = require('./services/render')
+  , utils = require('./utils')
   , velocity = require('velocity-animate')
   ;
 
@@ -21,8 +22,11 @@ const $ = require('./external/domtastic.custom')
 let bodyHeight = document.body.clientHeight
   , bodyWidth = document.body.clientWidth;
 
+const { addHoveredDt } = utils;
+
 window.addEventListener('resize', handleWindowResize);
 $('body > footer .other-credits').on('click', otherCreditsOnClick);
+addHoveredDt($('body > footer').find('a, .other-credits'));
 
 
 //------//

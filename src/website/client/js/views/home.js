@@ -44,6 +44,7 @@ const addToVm = getAddToVm()
     , inStateList: 'Required'
     , isLaden: 'Required'
     , startsWithUppercase: 'The first letter must be uppercase'
+    , lte30: 'Limit 30 characters'
   }
   , sendRequest = getSendRequest()
   , updateVm = getUpdateVm()
@@ -64,7 +65,37 @@ const columnsToGetFilterFn = {
   , 1: () => elIsEven
 };
 
+const shouldTruncateName = el => el.getBoundingClientRect().width > 200;
+
+const truncateName = el => {
+  const fullNameText = el.textContent;
+  // must recursively remove characters and test width until the string
+  //   reaches a proper truncation length
+  _truncateName(el);
+
+  // then we need to add the full name into the panel
+  const moreDataDt = directFind($(el).parent().siblings('.panel'), ['.more-data'])
+    , fullNameDt = directFind(moreDataDt, ['.full-name']);
+  if (fullNameDt.length) {
+    fullNameDt.text(fullNameText);
+  } else {
+    moreDataDt.prepend(
+      $(document.createElement('span'))
+        .addClass('full-name')
+        .text(fullNameText)
+    );
+  }
+};
+const _truncateName = el => {
+  el.textContent = el.textContent.slice(0, -1);
+  if (!shouldTruncateName(el)) {
+    el.textContent += '...';
+  }
+  else _truncateName(el);
+};
+
 setBreweryColors();
+initTruncations();
 
 window.addEventListener('resize', handleWindowResize);
 
@@ -399,6 +430,10 @@ const addToDom = {
 
     handleItemEl(newItem);
     newItemDt.css('display', 'none');
+    const name = directFind(newItemDt, ['h3', '[data-prop="name"]'])[0];
+    if (shouldTruncateName(name)) {
+      truncateName(name);
+    }
 
     return velocity(
         collection
@@ -435,6 +470,11 @@ const addToDom = {
 
     setBreweryColors();
 
+    const name = directFind(newItemDt, ['h2', '[data-prop="name"]'])[0];
+    if (shouldTruncateName(name)) {
+      truncateName(name);
+    }
+
     return Promise.all([
       velocity(
         newItem
@@ -456,6 +496,18 @@ function updateDom(itemDt, data, itemType) {
     , r.map(dt => dt.find(propSelectors[itemType]))
     , r.forEach(dt => dt.forEach(updateProp(data)))
   )(propCtx);
+
+  const name = directFindAll(itemDt)([
+      ['h2', '[data-prop="name"]']
+      , ['h3', '[data-prop="name"]']
+    ])[0][0];
+
+  if (shouldTruncateName(name)) {
+    truncateName(name);
+  } else {
+    directFind(itemDt, ['.panel', '.more-data', '.full-name'])
+      .remove();
+  }
 }
 
 function updateProp(data) {
@@ -605,6 +657,22 @@ function handleWindowResize() {
     setBreweryColors();
   }
 }
+
+function initTruncations() {
+  $('.panel').addClass('show');
+
+  directFindAll($('li[data-item-id]'))([
+      ['h2', '[data-prop="name"]']
+      , ['h3', '[data-prop="name"]']
+    ])
+    .map(unwrap)
+    .reduce(r.concat)
+    .filter(shouldTruncateName)
+    .forEach(truncateName);
+
+  $('.panel').removeClass('show');
+}
+
 
 
 //---------//

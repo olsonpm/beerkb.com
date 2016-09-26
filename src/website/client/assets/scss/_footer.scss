@@ -11,6 +11,17 @@ body > footer {
     text-decoration: none;
   }
 
+  a, .other-credits {
+    &.hovered {
+      color: white;
+      opacity: 1;
+
+      path {
+        fill: white;
+      }
+    }
+  }
+
   .designed-by { @include res-aware-element-spacing('margin-right', 'lg'); }
   .other-credits {
     text-decoration: underline;

@@ -4,6 +4,22 @@ $brewery-width: 259px;
   vertical-align: top;
   text-align: center;
 
+  .panel.show {
+    display: block !important;
+  }
+
+  *[data-prop="name"] { white-space: nowrap; }
+
+  .panel > .more-data > * {
+    // from https://kenneth.io/blog/2012/03/04/word-wrapping-hypernation-using-css
+    word-break: break-all;
+    hyphens: auto;
+
+    & + * {
+      margin-top: 8px;
+    }
+  }
+
   ul.column-pairs
   , ul.columns {
 
@@ -83,24 +99,12 @@ $brewery-width: 259px;
     li {
       position: relative;
 
-      & + li {
-        @include res-aware-element-spacing('margin-top', 'lg');
+      &.collapsed > .panel
+      , &.collapsed > .shadow {
+        display: none;
       }
 
-      &.collapsed {
-        > .panel, > .shadow {
-          display: none;
-        }
-      }
-
-      &[data-item-id] {
-        overflow: hidden;
-
-        > h2 > span:first-child
-        , > h3 > span:first-child {
-          padding-right: 40px;
-        }
-      }
+      &[data-item-id] { overflow: hidden; }
 
       > .shadow {
         height: 8px;
@@ -122,8 +126,6 @@ $brewery-width: 259px;
       }
 
       > .options {
-        padding: 12px 16px;
-
         > li {
           display: inline-block;
           text-align: center;
@@ -150,6 +152,10 @@ $brewery-width: 259px;
       vertical-align: top;
       width: $brewery-width;
 
+      & + li {
+        @include res-aware-element-spacing('margin-top', 'lg');
+      }
+
       > h2 {
         @include res-aware-font-size('lg');
         color: $fg;
@@ -172,6 +178,10 @@ $brewery-width: 259px;
           }
 
           > .panel {
+            > .options {
+              padding: 12px 16px;
+            }
+
             > .options > li {
               width: 45%;
 
@@ -179,13 +189,11 @@ $brewery-width: 259px;
                 margin-left: 10%;
               }
             }
-
-            > .more-data {
-              > * + * {
-                margin-top: 8px;
-              }
-            }
           }
+        }
+
+        > .options {
+          padding: 16px 16px;
         }
 
         > .options > li {

@@ -17,9 +17,10 @@ const schema = require('../schema')
 
 const { isLaden, startsWithUppercase } = schema.fns
   , inStateList = r.contains(r.__, stateList)
+  , lte30 = r.pipe(r.length, r.lte(r.__, 30))
   ;
 
-schema.assignName({ inStateList });
+schema.assignName({ inStateList, lte30 });
 
 
 //------//
@@ -28,7 +29,7 @@ schema.assignName({ inStateList });
 
 const definition = {
   name: {
-    namedValidationFns: [isLaden, startsWithUppercase]
+    namedValidationFns: [isLaden, startsWithUppercase, lte30]
   }
   , state: {
     namedValidationFns: [inStateList]
