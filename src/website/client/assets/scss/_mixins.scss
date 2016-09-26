@@ -62,11 +62,11 @@ $font-size-map: (
 // general purpose element spacing
 
 $element-spacing-map: (
-  xxs: (xs: 6, sm: 12, md: 14, lg: 18, xl: 24, xxl: 32)
-  , xs: (xs: 7, sm: 13, md: 16, lg: 22, xl: 30, xxl: 40)
-  , sm: (xs: 7, sm: 13, md: 18, lg: 28, xl: 36, xxl: 48)
-  , md: (xs: 8, sm: 14, md: 20, lg: 32, xl: 42, xxl: 56)
-  , lg: (xs: 8, sm: 14, md: 22, lg: 36, xl: 50, xxl: 64)
+  xxs: (xs: 6, sm: 12, md: 14, lg: 18, xl: 24, xxl: 60)
+  , xs: (xs: 7, sm: 13, md: 16, lg: 22, xl: 30, xxl: 70)
+  , sm: (xs: 7, sm: 13, md: 18, lg: 28, xl: 36, xxl: 80)
+  , md: (xs: 8, sm: 14, md: 20, lg: 32, xl: 42, xxl: 90)
+  , lg: (xs: 8, sm: 14, md: 22, lg: 36, xl: 50, xxl: 100)
 );
 @mixin res-aware-element-spacing($prop-list, $size, $unit: px) {
   @media (max-width: $screen-xxs-max) {

@@ -10,14 +10,8 @@ $brewery-width: 259px;
 
   *[data-prop="name"] { white-space: nowrap; }
 
-  .panel > .more-data > * {
-    // from https://kenneth.io/blog/2012/03/04/word-wrapping-hypernation-using-css
-    word-break: break-all;
-    hyphens: auto;
-
-    & + * {
-      margin-top: 8px;
-    }
+  .panel > .more-data > * + * {
+    margin-top: 8px;
   }
 
   ul.column-pairs

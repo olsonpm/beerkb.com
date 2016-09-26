@@ -4,7 +4,7 @@ body > footer {
   text-align: center;
   opacity: 0.5;
 
-  @include res-aware-element-spacing('margin-top', 'xl');
+  @include res-aware-element-spacing('margin-top', 'xxl');
 
   a.github {
     display: inline-block;

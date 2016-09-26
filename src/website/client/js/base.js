@@ -50,7 +50,7 @@ function createBubble({ x, y, moveDuration, diameter, size }) {
     , bubbleDiv = bubbleWrapper.children()[0];
 
   bubbleLayer.append(bubbleWrapper);
-  const easing = 'easeInQuart';
+  const easing = 'easeInQuad';
 
   return Promise.all([
       velocity(

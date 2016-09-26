@@ -627,16 +627,16 @@ function setBreweryColors() {
 
 function findColumnToAddBrewery() {
   let breweries = viewDt.find('ul[data-items="brewery"]')
-    , breweryColumn;
+    , breweryColumn = findEmptyBreweryColumn(breweries);
+
+  if (breweryColumn) { return $(breweryColumn); }
 
   if (numColumns === 4) {
-    breweryColumn = findEmptyBreweryColumn(breweries)
-      || breweries.map(el => directFind($(el), ['li']))
+    breweryColumn = breweries.map(el => directFind($(el), ['li']))
         .reduce(r.minBy(r.prop('length')))
         .parent()[0];
   } else if (numColumns === 2) {
-    breweryColumn = findEmptyBreweryColumn(breweries)
-      || breweries.filter(elIsOdd)
+    breweryColumn = breweries.filter(elIsOdd)
         .map(el => directFind($(el), ['li']))
         .reduce(r.minBy(r.prop('length')))
         .parent()[0];
