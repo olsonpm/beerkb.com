@@ -25,8 +25,8 @@ let bodyHeight = document.body.clientHeight
 const { addHoveredDt } = utils;
 
 window.addEventListener('resize', handleWindowResize);
-$('body > footer .other-credits').on('click', otherCreditsOnClick);
-addHoveredDt($('body > footer').find('a, .other-credits'));
+$('#soul > footer .other-credits').on('click', otherCreditsOnClick);
+addHoveredDt($('#soul > footer').find('a, .other-credits'));
 
 
 //------//
