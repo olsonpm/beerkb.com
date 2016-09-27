@@ -555,8 +555,8 @@ function getUpdateVm() {
 }
 
 function getErrorContent(name, methoding) {
-  return 'Very sorry, but an error occurred preventing you from '
-    + methoding + ' ' + name + '.';
+  return '<p>Very sorry, but an error occurred preventing you from '
+    + methoding + ' ' + name + '.</p>';
 }
 
 function handleRequestError(name, methoding) {
@@ -666,7 +666,7 @@ function initTruncations() {
       , ['h3', '[data-prop="name"]']
     ])
     .map(unwrap)
-    .reduce(r.concat)
+    .reduce(r.concat, [])
     .filter(shouldTruncateName)
     .forEach(truncateName);
 

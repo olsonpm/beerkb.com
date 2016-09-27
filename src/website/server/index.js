@@ -25,6 +25,7 @@ const bPromise = require('bluebird')
   , schemas = require('../shared/schemas')
   , sqliteToRestServer = require('../../internal-rest-api/server')
   , ssl = require('../../../ssl')
+  , utils = require('../../../lib/utils')
   , viewModels = require('./view-models')
   ;
 
@@ -40,6 +41,7 @@ const app = new Koa()
   , highlight = chalk.green
   , httpsOptions = ssl.credentials
   , { isDefined, mutableMerge, size } = rUtils
+  , { streamToPromise } = utils
   ;
 
 let router = koaRouter();
@@ -132,9 +134,9 @@ function createApiRoutes(router, getApiResponse) {
       router[method](
         '/api/' + item
         , (ctx, next) => {
-
-          ctx.body = getApiResponse(method, item, ctx);
-          return next();
+          return getApiResponse(method, item, ctx)
+            .then(apiResponseStream => { ctx.body = apiResponseStream; })
+            .then(next);
         }
       );
     }
@@ -185,7 +187,32 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
         }
       }
 
-      return getItem(item)(getApiRequestOpts(method, item, ctx, sqliteToRestPort));
+      let res = bPromise.resolve();
+      if (method === 'delete' && item === 'brewery') {
+        const baseUrl = `http://localhost:${sqliteToRestPort}`;
+        let beerIds = [];
+
+        res = res.then(() => {
+            return streamToPromise(
+              request({
+                uri: `${baseUrl}/beer?brewery_id=${ctx.query.id}`
+                , json: true
+                }, (err, incomingMessage, body) => {
+                  beerIds = beerIds.concat(r.map(r.prop('id'), body));
+                }
+              )
+            );
+          })
+          .then(() => {
+            return beerIds;
+          })
+          .then(r.pipe(
+            r.map(id => bRequest.del(`${baseUrl}/beer?id=${id}`))
+            , bPromise.all
+          ));
+      }
+
+      return res.then(() => getItem(item)(getApiRequestOpts(method, item, ctx, sqliteToRestPort)));
     }
   };
 }
