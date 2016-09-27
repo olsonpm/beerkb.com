@@ -10,24 +10,26 @@
   <body>
     {% import '../macros/global.njk' as gm %}
 
-    <div class="site-container">
-      <div id="modal-backlight">
-        <div id="modal-form"></div>
-        <div id="modal-dialog"></div>
+    <div id="modal-backlight"></div>
+    <div id="modal-form"></div>
+    <div id="modal-dialog"></div>
+
+    <div id="soul">
+      <div class="site-container">
+
+        {% include '../partial/header.njk' %}
+
+        <div id="view-{{ viewName }}">
+          <script type="application/json" class="vm">
+            {{ vm | dump | safe }}
+          </script>
+
+          {% block content %}{% endblock %}
+        </div>
       </div>
 
-      {% include '../partial/header.njk' %}
-
-      <div id="view-{{ viewName }}">
-        <script type="application/json" class="vm">
-          {{ vm | dump | safe }}
-        </script>
-
-        {% block content %}{% endblock %}
-      </div>
+      {% include '../partial/footer.njk' %}
     </div>
-
-    {% include '../partial/footer.njk' %}
 
     {% if isDev %}
       <script src="//localhost:35729/livereload.js"></script>

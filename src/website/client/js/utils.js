@@ -25,15 +25,16 @@ const hoverIntentWrapper = r.curry(
   )
   , { feed, size } = rUtils
   , screenSizes = {
-    xxsMax: '619px'
-    , xsMin: '620px'
-    , xsMax: '767px'
-    , smMin: '768px'
-    , smMax: '991px'
-    , mdMin: '992px'
-    , mdMax: '1189px'
-    , lgMin: '1190px'
+    xxsMax: 619
+    , xsMin: 620
+    , xsMax: 767
+    , smMin: 768
+    , smMax: 991
+    , mdMin: 992
+    , mdMax: 1189
+    , lgMin: 1190
   }
+  , screenSizesPx = r.map(size => size + 'px', screenSizes)
   ;
 
 
@@ -78,9 +79,9 @@ const keycodes = {
 
 const getNumColumns = () => {
   let res;
-  if (window.matchMedia("(min-width: " + screenSizes.lgMin + ")").matches) {
+  if (window.matchMedia("(min-width: " + screenSizesPx.lgMin + ")").matches) {
     res = 4;
-  } else if(window.matchMedia("(min-width: " + screenSizes.xsMin + ")").matches) {
+  } else if(window.matchMedia("(min-width: " + screenSizesPx.xsMin + ")").matches) {
     res = 2;
   } else {
     res = 1;
@@ -137,6 +138,6 @@ module.exports = {
   , keycodes
   , pairAdjacentElements
   , removeDt
-  , screenSizes
+  , screenSizesPx
   , unwrap
 };

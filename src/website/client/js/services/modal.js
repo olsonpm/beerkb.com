@@ -21,7 +21,7 @@ const $ = require('../external/domtastic.custom')
 
 const modalBacklightDt = $('#modal-backlight')
   , modalBacklight = modalBacklightDt[0]
-  , { addHoveredDt, keycodes } = utils
+  , { addHoveredDt, getNumColumns, keycodes } = utils
   , postModalRender = {
     form: postFormRender
     , dialog: r.always(undefined)
@@ -47,6 +47,8 @@ function createModal(type) {
   const aModalDt = $('#modal-' + type)
     , renderModal = getRenderer(type, aModalDt)
     ;
+
+  aModalDt.type = type;
 
   return {
     show({ ctx, cbs }) {
@@ -95,8 +97,13 @@ function createModal(type) {
 }
 
 function verticallyPosition(modalDt) {
-  const modal = modalDt[0];
-  const yOffset = Math.round((document.documentElement.clientHeight - modal.clientHeight) / 3);
+  const modal = modalDt[0]
+    , numCols = getNumColumns();
+
+  const yOffset = window.scrollY + ((numCols === 1 && modalDt.type === 'form')
+    ? Math.round(document.documentElement.clientWidth * 0.05)
+    : Math.round((document.documentElement.clientHeight - modal.clientHeight) / 3));
+
   modalDt.css('top', yOffset + 'px');
   return modalDt;
 }
@@ -116,13 +123,13 @@ const center = {
 function getRenderer(type, modalDt) {
   return ctx => {
     modalDt.html(render('modal-' + type, ctx));
+    center[type](modalDt);
+    addHoveredDt(modalDt.find('button'));
     if (type === 'form') {
       tabbable(modalDt[0])[0].focus();
     } else {
       modalDt.find('button:not([data-action="delete"])')[0].focus();
     }
-    addHoveredDt(modalDt.find('button'));
-    center[type](modalDt);
     postModalRender[type](modalDt);
   };
 }
@@ -135,7 +142,7 @@ function postFormRender(modalDt) {
 }
 
 function assignCb(cbs) {
-  return button => button.onclick = cbs[$(button).attr('data-action')];
+  return button => { button.addEventListener('click', cbs[$(button).attr('data-action')]); };
 }
 
 
