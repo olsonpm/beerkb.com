@@ -46,7 +46,7 @@ const addToVm = getAddToVm()
     , startsWithUppercase: 'The first letter must be uppercase'
     , lte30: 'Limit 30 characters'
     , lte50: 'Limit 50 characters'
-    , lte300: 'Limit 300 characters'
+    , lte500: 'Limit 500 characters'
   }
   , sendRequest = getSendRequest()
   , updateVm = getUpdateVm()
@@ -260,9 +260,8 @@ function getOptionData() {
           ctx
           , cbs: {
             submit() {
-              const newData = formData.get(myself.modal.dt)
-                , errors = schemas[itemType].validate(schemaErrorMessages, newData)
-                ;
+              let newData = formData.get(myself.modal.dt);
+              const errors = schemas[itemType].validate(schemaErrorMessages, newData);
 
               if (size(errors)) return handleErrors(myself.modal.dt, errors);
 
@@ -274,6 +273,7 @@ function getOptionData() {
 
                   if (!changed) return;
 
+                  newData = mutableMerge(newData, { brewery_id });
                   return sendRequest.edit(itemType, newData, itemData.name, brewery_id, id, itemDt);
                 })
                 ;

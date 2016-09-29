@@ -18,10 +18,10 @@ const schema = require('../schema')
 const { isLaden, startsWithUppercase } = schema.fns
   , inStyleList = r.contains(r.__, styleList)
   , lte30 = r.pipe(r.length, r.lte(r.__, 30))
-  , lte300 = r.pipe(r.length, r.lte(r.__, 300))
+  , lte500 = r.pipe(r.length, r.lte(r.__, 500))
   ;
 
-schema.assignName({ inStyleList, lte30, lte300 });
+schema.assignName({ inStyleList, lte30, lte500 });
 
 
 //------//
@@ -36,7 +36,7 @@ const definition = {
     namedValidationFns: [inStyleList]
   }
   , description: {
-    namedValidationFns: [isLaden, startsWithUppercase, lte300]
+    namedValidationFns: [isLaden, startsWithUppercase, lte500]
   }
 };
 

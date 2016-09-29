@@ -187,11 +187,13 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
       if (ctx.request.body) { // need to validate body if it's passed
         var propertyToFailedValidators = schemas[item].validate({}, r.pick(schemas[item].keys, ctx.request.body));
         if (size(propertyToFailedValidators)) {
-          ctx.status = 400;
-          return {
-            msg: 'The following properties failed their respective validators'
-            , propertyToFailedValidators
-          };
+          return bPromise.resolve({
+            statusCode: 400
+            , error: {
+              msg: 'The following properties failed their respective validators'
+              , propertyToFailedValidators
+            }
+          });
         }
       }
 
