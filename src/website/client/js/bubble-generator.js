@@ -65,7 +65,9 @@ const run = ({
     const diameter = getRandomDiameter()
       , y = (state.scrollY + state.clientHeight + diameter)
       , radius = Math.round(diameter / 2)
-      , moveDuration = (getRandomFizzSpeed() * y)
+      // * 4 is just an arbitrary distance needed so the bubble disappearing
+      //   animation happens while off-screen.
+      , moveDuration = getRandomFizzSpeed() * (state.clientHeight + (diameter * 4))
       , x = getRandomIntBetween(-radius, state.clientWidth + radius)
       , size = state.getSize(diameter)
       ;
