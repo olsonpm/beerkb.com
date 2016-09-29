@@ -70,6 +70,7 @@
 
 #modal-dialog {
   text-align: center;
+  max-width: round($site-width / 2);
   width: auto;
   height: auto;
 

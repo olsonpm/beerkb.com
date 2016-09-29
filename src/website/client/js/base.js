@@ -91,7 +91,7 @@ function initBubbleGenerator() {
     , clientWidth: bodyWidth
     , clientWidthRange: [480, 992] // values taken from _variables.scss
     , fizzRateRange: [400, 800] // ms
-    , fizzSpeedRange: [4, 15] // 1px/<x>ms
+    , fizzSpeedRange: [3, 9] // 1px/<x>ms
     , onBubbleCreate: createBubble
     , scrollY: window.scrollY
   });
@@ -99,7 +99,7 @@ function initBubbleGenerator() {
 
 function handleWindowResize() {
   bodyHeight = document.body.clientHeight;
-  bodyWidth = document.body.clientHeight;
+  bodyWidth = document.body.clientWidth;
 
   bubbleGenerator.updateClientDimensions({
     clientHeight: bodyHeight

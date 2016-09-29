@@ -73,7 +73,12 @@ function createModal(type) {
         )
         .then(() => {
            modalBacklightDt.on('click', e => {
-             if (e.target === modalBacklight) return myself.hide();
+             if (e.target === modalBacklight) {
+               const backlightClickEmulatesButton = aModalDt.find('button[action="cancel"]')[0]
+                || aModalDt.find('button:last-of-type')[0];
+
+                backlightClickEmulatesButton.click();
+             }
            });
         });
     }

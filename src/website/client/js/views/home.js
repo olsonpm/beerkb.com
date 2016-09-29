@@ -45,6 +45,8 @@ const addToVm = getAddToVm()
     , isLaden: 'Required'
     , startsWithUppercase: 'The first letter must be uppercase'
     , lte30: 'Limit 30 characters'
+    , lte50: 'Limit 50 characters'
+    , lte300: 'Limit 300 characters'
   }
   , sendRequest = getSendRequest()
   , updateVm = getUpdateVm()
@@ -216,7 +218,7 @@ function getOptionData() {
         const myself = this;
 
         const itemData = getItemData({ id, brewery_id, itemType })
-          , content = '<p>Are you sure you want to delete <span class="item">' + itemData.name + '</span>?</p>'
+          , content = '<p>Are you sure you want to delete ' + spanItem(itemData.name) + '?</p>'
           , title = 'Delete ' + itemData.name;
 
         return {
@@ -230,9 +232,13 @@ function getOptionData() {
           }
           , cbs: {
             delete() {
-              return request.delete[itemType](id)
-                .then(myself.modal.hide)
-                .then(removeDt(itemDt));
+              return myself.modal.hide()
+                .then(() => request.delete[itemType](id))
+                .catch(res => {
+                  if (r.path(['response', 'status'], res) !== 404) throw res;
+                })
+                .then(deleteItem.bind(null, itemDt, itemType, id, brewery_id))
+                .catch(handleRequestError(itemData.name, 'deleting'));
             }
             , cancel() { myself.modal.hide(); }
           }
@@ -241,7 +247,7 @@ function getOptionData() {
     }
     , edit: {
       modal: modal.form
-      , getShowArgs({ id, brewery_id, itemType }) {
+      , getShowArgs({ id, brewery_id, itemType, itemDt }) {
         const myself = this
           , itemData = getItemData({ id, brewery_id, itemType })
           , ctx = mutableMerge({
@@ -268,7 +274,7 @@ function getOptionData() {
 
                   if (!changed) return;
 
-                  return sendRequest.edit(itemType, newData, itemData.name, brewery_id, id);
+                  return sendRequest.edit(itemType, newData, itemData.name, brewery_id, id, itemDt);
                 })
                 ;
             }
@@ -429,11 +435,11 @@ const addToDom = {
       ;
 
     handleItemEl(newItem);
-    newItemDt.css('display', 'none');
     const name = directFind(newItemDt, ['h3', '[data-prop="name"]'])[0];
     if (shouldTruncateName(name)) {
       truncateName(name);
     }
+    newItemDt.css('display', 'none');
 
     return velocity(
         collection
@@ -576,18 +582,78 @@ function handleRequestError(name, methoding) {
 
 function getSendRequest() {
   return {
-    edit(itemType, data, oldName, brewery_id, id) {
+    edit(itemType, data, oldName, brewery_id, id, itemDt) {
       return request.edit[itemType](data, id)
         .then(res => updateVm[itemType]({
           data: r.pick(r.keys(data), res.data) // the server provides keys we don't need such as 'id'
           , brewery_id
           , id
         }))
+        .catch(err => {
+          if (r.path(['response', 'data', 'id'], err) === 'brewery_no_longer_exists') {
+            const breweryData = getItemData({ id: brewery_id, itemType: 'brewery' })
+              , breweryDt = viewDt.find('[data-item-id="' + brewery_id + '"]');
+
+            return modal.dialog.show({
+              ctx: {
+                title: 'No Longer Exists'
+                , content: '<p>The brewery ' + spanItem(breweryData.name) + ' has been deleted '
+                   + 'by someone else so you are unable to edit its beer.  This '
+                   + 'application doesn\'t support real-time notifications, so a '
+                   + 'page refresh is necessary to see edits made by others.</p><p>'
+                   + 'The brewery ' + spanItem(breweryData.name) + ' will now be deleted.</p>'
+                , btns: [{ text: 'Sounds good', action: 'ok' }]
+              }
+              , cbs: { ok() {
+                return modal.dialog.hide()
+                  .then(() => deleteItem(breweryDt, 'brewery', brewery_id));
+              }}
+            });
+          } else if (r.path(['response', 'status'], err) === 404) {
+            return modal.dialog.show({
+              ctx: {
+                title: 'No Longer Exists'
+                , content: '<p>' + spanItem(oldName) + ' has been deleted by someone else so '
+                   + 'you are unable to edit it.  This application doesn\'t support '
+                   + 'real-time notifications, so a page refresh is necessary to see '
+                   + 'edits made by others.</p><p>' + spanItem(oldName) + ' will now '
+                   + 'be deleted.</p>'
+                , btns: [{ text: 'Sounds good', action: 'ok' }]
+              }
+              , cbs: { ok() {
+                return modal.dialog.hide()
+                  .then(() => deleteItem(itemDt, itemType, id, brewery_id));
+              }}
+            });
+          } else throw err;
+        })
         .catch(handleRequestError(oldName || data.name, 'editing'));
     }
     , create(itemType, data) {
       return request.create[itemType](data)
         .then(res => addToVm[itemType](res.data))
+        .catch(err => {
+          if (r.path(['response', 'data', 'id'], err) !== 'brewery_no_longer_exists') throw err;
+
+          const breweryData = getItemData({ id: data.brewery_id, itemType: 'brewery' })
+            , breweryDt = viewDt.find('[data-item-id="' + data.brewery_id + '"]');
+
+          return modal.dialog.show({
+            ctx: {
+              title: 'No Longer Exists'
+              , content: '<p>The brewery ' + spanItem(breweryData.name) + ' has been deleted '
+                 + 'by someone else so you are unable to add a beer to it.  This '
+                 + 'application doesn\'t support real-time notifications, so a '
+                 + 'page refresh is necessary to see edits made by others.</p><p>'
+                 + 'The brewery ' + spanItem(breweryData.name) + ' will now be deleted.</p>'
+              , btns: [{ text: 'Sounds good', action: 'ok' }]
+            }
+            , cbs: { ok() {
+              return modal.dialog.hide()
+                .then(() => deleteItem(breweryDt, 'brewery', data.brewery_id));
+            }}
+          });
+        })
         .catch(handleRequestError(data.name, 'creating'));
     }
   };
@@ -673,6 +739,15 @@ function initTruncations() {
   $('.panel').removeClass('show');
 }
 
+function deleteItem(itemDt, itemType, id, brewery_id) {
+  if (itemType === 'brewery') delete vm.brewery[id];
+  else delete vm.brewery[brewery_id].beer[id];
+  return removeDt(itemDt);
+}
+
+function spanItem(name) {
+  return '<span class="item">' + name + '</span>';
+}
 
 
 //---------//

@@ -25,7 +25,6 @@ const bPromise = require('bluebird')
   , schemas = require('../shared/schemas')
   , sqliteToRestServer = require('../../internal-rest-api/server')
   , ssl = require('../../../ssl')
-  , utils = require('../../../lib/utils')
   , viewModels = require('./view-models')
   ;
 
@@ -41,7 +40,6 @@ const app = new Koa()
   , highlight = chalk.green
   , httpsOptions = ssl.credentials
   , { isDefined, mutableMerge, size } = rUtils
-  , { streamToPromise } = utils
   ;
 
 let router = koaRouter();
@@ -136,6 +134,10 @@ function createApiRoutes(router, getApiResponse) {
         , (ctx, next) => {
           return getApiResponse(method, item, ctx)
             .then(apiResponseStream => { ctx.body = apiResponseStream; })
+            .catch(({ statusCode, error }) => {
+              ctx.status = statusCode;
+              ctx.body = error;
+            })
             .then(next);
         }
       );
@@ -153,12 +155,18 @@ function getMethodItemPairs() {
 const createGetItem = r.curry(r.memoize(
   (usePromise, port, itemName) => {
     const uri = `http://localhost:${port}/${itemName}`;
-    return r.pipe(
-      mutableMerge({ uri, json: true })
-      , usePromise
-        ? bRequest
-        : request
-    );
+    return opts => {
+      opts = mutableMerge({ uri, json: true }, opts);
+      if (usePromise) {
+        return bRequest(opts)
+          .catch(err => {
+            if (err.statusCode === 404) return [];
+            throw err;
+          });
+      }
+
+      return request(opts);
+    };
   }
 ));
 
@@ -188,26 +196,38 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
       }
 
       let res = bPromise.resolve();
-      if (method === 'delete' && item === 'brewery') {
-        const baseUrl = `http://localhost:${sqliteToRestPort}`;
-        let beerIds = [];
 
-        res = res.then(() => {
-            return streamToPromise(
-              request({
-                uri: `${baseUrl}/beer?brewery_id=${ctx.query.id}`
-                , json: true
-                }, (err, incomingMessage, body) => {
-                  beerIds = beerIds.concat(r.map(r.prop('id'), body));
-                }
-              )
-            );
-          })
-          .then(() => {
-            return beerIds;
+      // TODO: clean the below if statements.  They are hacks to just git'r'done
+      const baseUrl = `http://localhost:${sqliteToRestPort}`;
+      if (method === 'post' && item === 'beer') {
+        res = res.then(() => bRequest({
+            uri: `${baseUrl}/brewery?id=${ctx.request.body.brewery_id}`
+            , json: true
+          }))
+          .catch(err => {
+            if (err.statusCode === 404) {
+              const name = ctx.request.body.name;
+              err.statusCode = 400;
+              err.error = {
+                msg: 'Unable to create beer ' + name + ' because its '
+                 + 'brewery no longer exists.'
+                , id: 'brewery_no_longer_exists'
+              };
+            }
+            throw err;
+          });
+      }
+      if (method === 'delete' && item === 'brewery') {
+        res = res.then(() => bRequest({
+            uri: `${baseUrl}/beer?brewery_id=${ctx.query.id}`
+            , json: true
+          }))
+          .catch(err => {
+            if (err.statusCode === 404) return [];
+            else throw err;
           })
           .then(r.pipe(
-            r.map(id => bRequest.del(`${baseUrl}/beer?id=${id}`))
+            r.map(aBeer => bRequest.del(`${baseUrl}/beer?id=${aBeer.id}`))
             , bPromise.all
           ));
       }

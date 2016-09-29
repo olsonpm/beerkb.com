@@ -18,9 +18,10 @@ const schema = require('../schema')
 const { isLaden, startsWithUppercase } = schema.fns
   , inStateList = r.contains(r.__, stateList)
   , lte30 = r.pipe(r.length, r.lte(r.__, 30))
+  , lte50 = r.pipe(r.length, r.lte(r.__, 50))
   ;
 
-schema.assignName({ inStateList, lte30 });
+schema.assignName({ inStateList, lte30, lte50 });
 
 
 //------//
@@ -35,7 +36,7 @@ const definition = {
     namedValidationFns: [inStateList]
   }
   , city_name: {
-    namedValidationFns: [isLaden, startsWithUppercase]
+    namedValidationFns: [isLaden, startsWithUppercase, lte50]
   }
   , beer: { flags: ['ignore'] }
 };
