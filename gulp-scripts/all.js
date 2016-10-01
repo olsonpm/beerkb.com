@@ -14,11 +14,14 @@ const refresh = global.refresh = require('gulp-refresh');
 
 const backend = require('../src/website/server')
   , bPromise = require('bluebird')
+  , childProcess = require('child_process')
   , common = require('./common')
   , fp = require('lodash/fp')
   , gulp = require('gulp')
   , minimist = require('minimist')
+  , moment = require('moment')
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
+  , path = require('path')
   , ssl = require('../ssl')
   , tasks = fp.reduce(
     (res, val) => fp.set(val, require('./' + val), res)
@@ -37,6 +40,8 @@ const argv = minimist(process.argv.slice(2), { default: { ssl: true }})
   , hasSsl = argv.ssl
   , isDev = !!argv.dev
   ;
+
+initDailyDbReset();
 
 
 //------//
@@ -85,6 +90,21 @@ function listen() {
     basePath: './dist'
     , reloadPage: '/'
   };
-  
+
   refresh.listen(opts);
+}
+
+function initDailyDbReset() {
+  const dbDir = path.join(__dirname, '../src/internal-rest-api')
+    , resetFile = path.join(dbDir, 'beer.reset.sqlite3')
+    , curFile = path.join(dbDir, 'beer.sqlite3')
+    , msTilMidnight =  moment().add(1, 'day').startOf('day').diff(moment())
+    ;
+
+  setTimeout(() => {
+    resetDb();
+    setInterval(resetDb, 86400000);
+  }, msTilMidnight);
+
+  function resetDb() { childProcess.exec('cp ' + resetFile + ' ' + curFile); }
 }
