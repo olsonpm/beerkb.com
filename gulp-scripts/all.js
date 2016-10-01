@@ -22,6 +22,7 @@ const backend = require('../src/website/server')
   , moment = require('moment')
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
   , path = require('path')
+  , r = require('ramda')
   , ssl = require('../ssl')
   , tasks = fp.reduce(
     (res, val) => fp.set(val, require('./' + val), res)
@@ -38,8 +39,9 @@ const backend = require('../src/website/server')
 const argv = minimist(process.argv.slice(2), { default: { ssl: true }})
   , cleanDir = common.cleanDir
   , hasSsl = argv.ssl
-  , isDev = !!argv.dev
   ;
+
+let isDev = !!argv.dev;
 
 initDailyDbReset();
 
@@ -48,18 +50,29 @@ initDailyDbReset();
 // Main //
 //------//
 
-gulp.task('build', () => clean().then(buildAll))
+gulp.task('build', build)
   .task('clean', clean)
-  .task('serve', ['build'], () => {
-    listen();
-    return backend.start()
-      .then(watchAll);
-  });
+  .task('serve', r.nAry(0, serve));
+
+function serve(isDev_) {
+  isDev = isDev_;
+
+  return build()
+    .then(() => {
+      listen();
+      return backend.start()
+        .then(watchAll);
+    });
+}
 
 
 //-------------//
 // Helper Fxns //
 //-------------//
+
+function build() {
+  return clean().then(buildAll);
+}
 
 function buildAll() {
   return bPromise.all(
@@ -108,3 +121,10 @@ function initDailyDbReset() {
 
   function resetDb() { childProcess.exec('cp ' + resetFile + ' ' + curFile); }
 }
+
+
+//---------//
+// Exports //
+//---------//
+
+module.exports = { serve };

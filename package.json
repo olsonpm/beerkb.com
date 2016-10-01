@@ -1,8 +1,8 @@
 {
-  "name": "beerkb.com",
+  "name": "beerkb.com-dev",
   "version": "0.1.0",
   "description": "An example consumer of the sqlite-to-rest library",
-  "main": "n/a",
+  "main": "index.js",
   "scripts": {
     "serve": "gulp serve",
     "test": "mocha tests"
