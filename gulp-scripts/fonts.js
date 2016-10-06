@@ -18,7 +18,7 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const inDir = path.resolve('./src/website/client/assets/fonts/*')
+const inDir = path.resolve('./src/client/assets/fonts/*')
   , outDir = path.resolve('./dist/static/assets/fonts')
   , { streamToPromise } = utils
   , refresh = global.refresh

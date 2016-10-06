@@ -19,6 +19,7 @@
   "homepage": "https://github.com/olsonpm/beerkb.com#readme",
   "dependencies": {
     "axios": "^0.14.0",
+    "beerkb-internal-s2r": "github:olsonpm/beerkb-internal-s2r",
     "bluebird": "^3.4.1",
     "chalk": "^1.1.3",
     "domtastic": "^0.12.1",

@@ -18,7 +18,7 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const inDir = path.resolve('./src/website/client/js')
+const inDir = path.resolve('./src/client/js')
   , outDir = path.resolve('./dist/static/js')
   , { streamToPromise } = utils
   , refresh = global.refresh

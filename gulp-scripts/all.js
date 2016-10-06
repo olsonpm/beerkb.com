@@ -12,18 +12,14 @@ const refresh = global.refresh = require('gulp-refresh');
 // Imports //
 //---------//
 
-const backend = require('../src/website/server')
+const backend = require('../src/server')
   , bPromise = require('bluebird')
-  , childProcess = require('child_process')
   , common = require('./common')
   , fp = require('lodash/fp')
   , gulp = require('gulp')
   , minimist = require('minimist')
-  , moment = require('moment')
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
-  , path = require('path')
   , r = require('ramda')
-  , ssl = require('../ssl')
   , tasks = fp.reduce(
     (res, val) => fp.set(val, require('./' + val), res)
     , {}
@@ -38,12 +34,9 @@ const backend = require('../src/website/server')
 
 const argv = minimist(process.argv.slice(2), { default: { ssl: true }})
   , cleanDir = common.cleanDir
-  , hasSsl = argv.ssl
   ;
 
 let isDev = !!argv.dev;
-
-initDailyDbReset();
 
 
 //------//
@@ -52,7 +45,8 @@ initDailyDbReset();
 
 gulp.task('build', build)
   .task('clean', clean)
-  .task('serve', r.nAry(0, serve));
+  .task('serve', r.nAry(0, serve))
+  ;
 
 function serve(isDev_) {
   isDev = isDev_;
@@ -65,14 +59,14 @@ function serve(isDev_) {
     });
 }
 
+function build() {
+  return clean().then(buildAll);
+}
+
 
 //-------------//
 // Helper Fxns //
 //-------------//
-
-function build() {
-  return clean().then(buildAll);
-}
 
 function buildAll() {
   return bPromise.all(
@@ -107,24 +101,9 @@ function listen() {
   refresh.listen(opts);
 }
 
-function initDailyDbReset() {
-  const dbDir = path.join(__dirname, '../src/internal-rest-api')
-    , resetFile = path.join(dbDir, 'beer.reset.sqlite3')
-    , curFile = path.join(dbDir, 'beer.sqlite3')
-    , msTilMidnight =  moment().add(1, 'day').startOf('day').diff(moment())
-    ;
-
-  setTimeout(() => {
-    resetDb();
-    setInterval(resetDb, 86400000);
-  }, msTilMidnight);
-
-  function resetDb() { childProcess.exec('cp ' + resetFile + ' ' + curFile); }
-}
-
 
 //---------//
 // Exports //
 //---------//
 
-module.exports = { serve };
+module.exports = { serve, build };

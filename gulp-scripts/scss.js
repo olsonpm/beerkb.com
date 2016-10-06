@@ -23,7 +23,7 @@ const autoprefixer = require('autoprefixer')
 // Init //
 //------//
 
-const inDir = './src/website/client/assets/scss'
+const inDir = './src/client/assets/scss'
   , indexScss = path.join(inDir, 'index.scss')
   , outDir = './dist/static/assets/css'
   , processors = [

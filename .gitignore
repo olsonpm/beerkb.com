@@ -1,4 +1,4 @@
 /test.js
 /node_modules
 /dist
-/src/website/client/js/precompiled-templates.js
+/src/client/js/precompiled-templates.js

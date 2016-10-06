@@ -5,7 +5,8 @@
 // Imports //
 //---------//
 
-const bPromise = require('bluebird')
+const beerkbInternalS2r = require('beerkb-internal-s2r')
+  , bPromise = require('bluebird')
   , bFs = bPromise.promisifyAll(require('fs'))
   , bRequest = require('request-promise')
   , chalk = require('chalk')
@@ -18,13 +19,12 @@ const bPromise = require('bluebird')
   , koaStatic = require('koa-static')
   , minimist = require('minimist')
   , path = require('path')
-  , portfinder = bPromise.promisifyAll(require('portfinder'))
+  , portfinder = require('portfinder')
   , r = require('ramda')
   , request = require('request')
   , rUtils = require('./r-utils')
   , schemas = require('../shared/schemas')
-  , sqliteToRestServer = require('../../internal-rest-api/server')
-  , ssl = require('../../../ssl')
+  , ssl = require('../../ssl')
   , viewModels = require('./view-models')
   ;
 
@@ -35,71 +35,83 @@ const bPromise = require('bluebird')
 
 const app = new Koa()
   , argv = minimist(process.argv.slice(2), { default: { ssl: true }})
-  , isDev = !!argv.dev
-  , distDir = path.resolve(path.join(__dirname, '../../../dist'))
+  , bGetPort = bPromise.promisify(portfinder.getPort)
+  , distDir = path.resolve(path.join(__dirname, '../../dist'))
   , highlight = chalk.green
   , httpsOptions = ssl.credentials
+  , isDev = !!argv.dev
   , { isDefined, mutableMerge, size } = rUtils
   ;
 
 let router = koaRouter();
-
-runSanityCheck(httpsOptions);
 
 
 //------//
 // Main //
 //------//
 
-const start = () => {
-  return sqliteToRestServer.run()
-    .then(sqliteToRestPort => {
-      app.use(koaCompress())
-        .use(koaStatic('./dist/static'))
-        .use(koaJsonBody())
-        ;
+const getApp = (internalS2rPort, letsEncryptStaticDir) => {
+  app.use(koaCompress())
+    .use(koaStatic('./dist/static'))
+    ;
 
-      if (isDev) {
-        app.use((ctx, next) => {
-          return next()
-            .catch(err => {
-              if (ctx.status === 500) {
-                console.error(err);
-                ctx.type = 'html';
-                ctx.body = bFs.createReadStream(path.join(__dirname, '../../dist/views/errors/500.html'));
-                ctx.status = 200;
-              } else {
-                throw err;
-              }
-            });
-        });
-      }
+  if (letsEncryptStaticDir) {
+    app.use(koaStatic(letsEncryptStaticDir));
+  }
 
-      app.use(
-        koaNunjucks({
-          path: path.join(distDir, 'views')
-          , nunjucksConfig: {
-            noCache: isDev
-            , throwOnUndefined: true
-            , watch: isDev
+  app.use(koaJsonBody());
+
+  if (isDev) {
+    app.use((ctx, next) => {
+      return next()
+        .catch(err => {
+          if (ctx.status === 500) {
+            console.error(err);
+            ctx.type = 'html';
+            ctx.body = bFs.createReadStream(path.join(__dirname, '../../dist/views/errors/500.html'));
+            ctx.status = 200;
+          } else {
+            throw err;
           }
-        })
-      );
-
-      router = setupRoutes(router, sqliteToRestPort);
-
-      app.use(router.routes())
-        .use(router.allowedMethods());
-
-      return portfinder.getPortAsync()
-        .then(port => {
-          http.createServer(app.callback())
-            .listen(port);
-
-          console.log('beerkb.com backend listening on port ' + highlight(port));
-          return port;
         });
     });
+  }
+
+  app.use(
+    koaNunjucks({
+      path: path.join(distDir, 'views')
+      , nunjucksConfig: {
+        noCache: isDev
+        , throwOnUndefined: true
+        , watch: isDev
+      }
+    })
+  );
+
+  router = setupRoutes(router, internalS2rPort);
+
+  app.use(router.routes())
+    .use(router.allowedMethods());
+
+  return app;
+};
+
+const start = () => {
+  runSanityCheck(httpsOptions);
+
+  return bPromise.props({
+      internalS2rPort: beerkbInternalS2r.run()
+      , beerkbPort: bGetPort()
+    })
+    .then(({ internalS2rPort, beerkbPort }) => {
+      const app = getApp(internalS2rPort);
+      http.createServer(app.callback())
+        .listen(beerkbPort);
+
+      console.log('beerkb.com backend listening on port ' + highlight(beerkbPort));
+      return beerkbPort;
+    })
+    ;
 };
 
 
@@ -114,8 +126,8 @@ function runSanityCheck({ key, cert }) {
     throw new Error("cert must be truthy: " + cert);
 }
 
-function setupRoutes(router, sqliteToRestPort) {
-  const engine = createViewModelAndApiEngine(sqliteToRestPort);
+function setupRoutes(router, internalS2rPort) {
+  const engine = createViewModelAndApiEngine(internalS2rPort);
 
   router = createApiRoutes(router, engine.getApiResponse);
 
@@ -170,9 +182,9 @@ const createGetItem = r.curry(r.memoize(
   }
 ));
 
-function createViewModelAndApiEngine(sqliteToRestPort) {
-  const getItem = createGetItem(false, sqliteToRestPort)
-    , getBItem = createGetItem(true, sqliteToRestPort)
+function createViewModelAndApiEngine(internalS2rPort) {
+  const getItem = createGetItem(false, internalS2rPort)
+    , getBItem = createGetItem(true, internalS2rPort)
     ;
 
   const vm = viewModels.createAll({ getBItem });
@@ -200,7 +212,7 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
       let res = bPromise.resolve();
 
       // TODO: clean the below if statements.  They are hacks to just git'r'done
-      const baseUrl = `http://localhost:${sqliteToRestPort}`;
+      const baseUrl = `http://localhost:${internalS2rPort}`;
       if (method === 'post' && item === 'beer') {
         res = res.then(() => bRequest({
             uri: `${baseUrl}/brewery?id=${ctx.request.body.brewery_id}`
@@ -234,17 +246,17 @@ function createViewModelAndApiEngine(sqliteToRestPort) {
           ));
       }
 
-      return res.then(() => getItem(item)(getApiRequestOpts(method, item, ctx, sqliteToRestPort)));
+      return res.then(() => getItem(item)(getApiRequestOpts(method, item, ctx, internalS2rPort)));
     }
   };
 }
 
-function getApiRequestOpts(method, item, ctx, sqliteToRestPort) {
+function getApiRequestOpts(method, item, ctx, internalS2rPort) {
   return r.filter(
     isDefined
     , {
       method: method.toUpperCase()
-      , uri: `http://localhost:${sqliteToRestPort}/${item}${ctx.search}`
+      , uri: `http://localhost:${internalS2rPort}/${item}${ctx.search}`
       , body: ctx.request.body
     }
   );
@@ -255,4 +267,4 @@ function getApiRequestOpts(method, item, ctx, sqliteToRestPort) {
 // Exports //
 //---------//
 
-module.exports = { start };
+module.exports = { start, getApp };
