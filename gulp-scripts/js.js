@@ -10,7 +10,7 @@ const bPromise = require('bluebird')
   , path = require('path')
   , rimrafAsync = bPromise.promisify(require('rimraf'))
   , utils = require('../lib/utils')
-  , webpackAsync = bPromise.promisify(require("webpack"))
+  , webpackAsync = bPromise.promisify(require('webpack'))
   ;
 
 
@@ -18,8 +18,8 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const inDir = path.resolve('./src/client/js')
-  , outDir = path.resolve('./dist/static/js')
+const inDir = path.join(__dirname, '../src/client/js')
+  , outDir = path.join(__dirname, '../dist/static/js')
   , { streamToPromise } = utils
   , refresh = global.refresh
   ;
@@ -42,7 +42,8 @@ function build() {
   return clean()
     .then(() => {
       return webpackAsync({
-        entry: {
+        context: path.join(__dirname, '..')
+        , entry: {
           index: path.join(inDir, 'index.js')
           , "bubble-worker": path.join(inDir, 'bubble/worker')
         }

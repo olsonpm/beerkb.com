@@ -19,6 +19,7 @@ const backend = require('../src/server')
   , gulp = require('gulp')
   , minimist = require('minimist')
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
+  , path = require('path')
   , r = require('ramda')
   , tasks = fp.reduce(
     (res, val) => fp.set(val, require('./' + val), res)
@@ -49,7 +50,7 @@ gulp.task('build', build)
   ;
 
 function serve(isDev_) {
-  isDev = isDev_;
+  if (typeof isDev_ !== 'undefined') isDev = isDev_;
 
   return build()
     .then(() => {
@@ -73,12 +74,12 @@ function buildAll() {
       fp.invokeMap('build', tasks)
     )
     .then(() => {
-      if (isDev) {
-        return ncpAsync(
-          './node_modules/livereload-js/dist/livereload.js'
-          , './dist/static/js/livereload.js'
-        );
-      }
+      if (!isDev) return;
+
+      return ncpAsync(
+        path.join(__dirname, '../node_modules/livereload-js/dist/livereload.js')
+        , path.join(__dirname, '../dist/static/js/livereload.js')
+      );
     });
 }
 

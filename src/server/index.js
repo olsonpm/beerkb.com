@@ -39,20 +39,23 @@ const app = new Koa()
   , distDir = path.resolve(path.join(__dirname, '../../dist'))
   , highlight = chalk.green
   , httpsOptions = ssl.credentials
-  , isDev = !!argv.dev
   , { isDefined, mutableMerge, size } = rUtils
   ;
 
-let router = koaRouter();
+let isDev = !!argv.dev
+  , router = koaRouter()
+  ;
 
 
 //------//
 // Main //
 //------//
 
-const getApp = (internalS2rPort, letsEncryptStaticDir) => {
+const getApp = (internalS2rPort, letsEncryptStaticDir, isDev_) => {
+  if (typeof isDev_ !== 'undefined') isDev = isDev_;
+
   app.use(koaCompress())
-    .use(koaStatic('./dist/static'))
+    .use(koaStatic(path.join(__dirname, '../../dist/static')))
     ;
 
   if (letsEncryptStaticDir) {
