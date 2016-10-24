@@ -27,13 +27,17 @@ mutableMerge(
 
 const bPromise = require('bluebird');
 
-const backend = require('../src/server')
+const beerkbInternalS2r = require('beerkb-internal-s2r')
+  , chalk = require('chalk')
   , common = require('./common')
   , fp = require('lodash/fp')
   , gulp = require('gulp')
+  , http = require('http')
   , minimist = require('minimist')
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
+  , portfinder = require('portfinder')
   , r = require('ramda')
+  , requireReload = require('require-reload')
   , tasks = fp.reduce(
     (res, val) => fp.set(val, require('./' + val), res)
     , {}
@@ -49,8 +53,11 @@ const backend = require('../src/server')
 //------//
 
 const argv = minimist(process.argv.slice(2), { default: { ssl: true }})
+  , bGetPort = bPromise.promisify(portfinder.getPort)
   , bWebpack = bPromise.promisify(webpack)
   , cleanDir = common.cleanDir
+  , highlight = chalk.green
+  , reload = requireReload(require)
   ;
 
 let isDev = !!argv.dev;
@@ -63,18 +70,39 @@ let isDev = !!argv.dev;
 gulp.task('build', r.nAry(0, build))
   .task('build-release', ['build'], buildRelease)
   .task('clean', clean)
-  .task('serve', r.nAry(0, serve))
+  .task('serve', ['build'], r.nAry(0, serve))
   ;
 
 function serve(isDev_) {
   if (typeof isDev_ !== 'undefined') isDev = isDev_;
 
-  return build()
-    .then(() => {
-      listen();
-      return backend.start()
-        .then(watchAll);
+  const compiler = webpack(webpackConfig);
+  let requestListener;
+
+  bPromise.props({
+      backendPort: bGetPort()
+      , internalS2r: beerkbInternalS2r.run()
+    })
+    .then(({ backendPort, internalS2r }) => {
+      // can't just pass requestListener since it may get hotreloaded
+      http.createServer((req, res) => requestListener(req, res))
+        .listen(backendPort);
+
+      console.log('beerkb listening on port: ' + highlight(backendPort));
+
+      compiler.watch({}, (err, stats) => {
+        if (err || stats.hasErrors()) return;
+
+        // no errors, good to go
+        requestListener = reload('../release/index.pack').getRequestListener(internalS2r.port);
+        console.log('webpack finished building');
+        global.refresh.reload();
+      });
     });
+
+  listen();
+
+  return watchAll();
 }
 
 function build(releaseDir) {

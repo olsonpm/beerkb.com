@@ -1,9 +1,9 @@
 'use strict';
 
-const koaApp = require('./src/server/app');
+const getApp = require('./src/server').getApp;
 
 function getRequestListener() {
-  const res = koaApp.get.apply(null, arguments);
+  const res = getApp.apply(null, arguments);
   return res.callback();
 }
 

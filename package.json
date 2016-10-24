@@ -61,6 +61,7 @@
     "ramda": "^0.22.0",
     "request": "^2.74.0",
     "request-promise": "^4.1.1",
+    "require-reload": "^0.2.2",
     "rimraf": "^2.5.2",
     "rsvp": "^3.3.3",
     "tabbable": "^1.0.4",
