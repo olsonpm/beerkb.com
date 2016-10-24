@@ -50,10 +50,10 @@ module.exports =
 
 	'use strict';
 
-	const koaApp = __webpack_require__(/*! ./src/server/app */ 1);
+	const getApp = __webpack_require__(/*! ./src/server */ 1).getApp;
 
 	function getRequestListener() {
-	  const res = koaApp.get.apply(null, arguments);
+	  const res = getApp.apply(null, arguments);
 	  return res.callback();
 	}
 
@@ -62,9 +62,9 @@ module.exports =
 
 /***/ },
 /* 1 */
-/*!***************************!*\
-  !*** ./src/server/app.js ***!
-  \***************************/
+/*!*****************************!*\
+  !*** ./src/server/index.js ***!
+  \*****************************/
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -97,7 +97,7 @@ module.exports =
 	//------//
 
 	const app = new Koa()
-	  , releaseDir = global.releaseDir
+	  , releaseDir = __dirname
 	  , { isDefined, mutableMerge, size } = rUtils
 	  ;
 
@@ -105,18 +105,16 @@ module.exports =
 	  , router = koaRouter()
 	  ;
 
-	if (!global.releaseDir) throw new Error('global.releaseDir must be set');
-
 
 	//------//
 	// Main //
 	//------//
 
-	const get = (internalS2rPort, letsEncryptStaticDir, isDev_) => {
+	const getApp = (internalS2rPort, letsEncryptStaticDir, isDev_) => {
 	  if (typeof isDev_ !== 'undefined') isDev = isDev_;
 
 	  app.use(koaCompress())
-	    .use(koaStatic(path.join(__dirname, '../../release/static')))
+	    .use(koaStatic(path.join(releaseDir, 'static')))
 	    ;
 
 	  if (letsEncryptStaticDir) {
@@ -132,7 +130,7 @@ module.exports =
 	          if (ctx.status === 500) {
 	            console.error(err);
 	            ctx.type = 'html';
-	            ctx.body = bFs.createReadStream(path.join(__dirname, '../../release/views/errors/500.html'));
+	            ctx.body = bFs.createReadStream(path.join(releaseDir, 'views/errors/500.html'));
 	            ctx.status = 200;
 	          } else {
 	            throw err;
@@ -222,9 +220,9 @@ module.exports =
 	));
 
 	function createViewModelAndApiEngine(internalS2rPort) {
-	    const getItem = createGetItem(false, internalS2rPort)
-	    , getBItem = createGetItem(true, internalS2rPort)
-	    ;
+	  const getItem = createGetItem(false, internalS2rPort)
+	  , getBItem = createGetItem(true, internalS2rPort)
+	  ;
 
 	  const vm = viewModels.createAll({ getBItem });
 
@@ -306,7 +304,7 @@ module.exports =
 	// Exports //
 	//---------//
 
-	module.exports = { get };
+	module.exports = { getApp };
 
 
 /***/ },
