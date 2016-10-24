@@ -5,27 +5,42 @@
 // Globals //
 //---------//
 
-const refresh = global.refresh = require('gulp-refresh');
+const rUtils = require('../lib/r-utils')
+  , path = require('path')
+  , gulpRefresh = require('gulp-refresh')
+  ;
+
+const { mutableMerge } = rUtils;
+
+mutableMerge(
+  global
+  , {
+    releaseDir: path.join(__dirname, '../release')
+    , refresh: gulpRefresh
+  }
+);
 
 
 //---------//
 // Imports //
 //---------//
 
+const bPromise = require('bluebird');
+
 const backend = require('../src/server')
-  , bPromise = require('bluebird')
   , common = require('./common')
   , fp = require('lodash/fp')
   , gulp = require('gulp')
   , minimist = require('minimist')
   , ncpAsync = bPromise.promisifyAll(require('ncp'))
-  , path = require('path')
   , r = require('ramda')
   , tasks = fp.reduce(
     (res, val) => fp.set(val, require('./' + val), res)
     , {}
     , ['njk', 'js', 'scss', 'fonts']
   )
+  , webpack = require('webpack')
+  , webpackConfig = require('../webpack.config')
   ;
 
 
@@ -34,6 +49,7 @@ const backend = require('../src/server')
 //------//
 
 const argv = minimist(process.argv.slice(2), { default: { ssl: true }})
+  , bWebpack = bPromise.promisify(webpack)
   , cleanDir = common.cleanDir
   ;
 
@@ -44,7 +60,8 @@ let isDev = !!argv.dev;
 // Main //
 //------//
 
-gulp.task('build', build)
+gulp.task('build', r.nAry(0, build))
+  .task('build-release', ['build'], buildRelease)
   .task('clean', clean)
   .task('serve', r.nAry(0, serve))
   ;
@@ -60,8 +77,16 @@ function serve(isDev_) {
     });
 }
 
-function build() {
+function build(releaseDir) {
+  if (releaseDir) global.releaseDir = releaseDir;
   return clean().then(buildAll);
+}
+
+function buildRelease() {
+  return bWebpack(webpackConfig).then(stats => {
+    if (stats.hasErrors())
+      throw new Error("Error during compile: " + JSON.stringify(stats.toJson(true), null, 2));
+  });
 }
 
 
@@ -78,7 +103,7 @@ function buildAll() {
 
       return ncpAsync(
         path.join(__dirname, '../node_modules/livereload-js/dist/livereload.js')
-        , path.join(__dirname, '../dist/static/js/livereload.js')
+        , path.join(global.releaseDir, 'static/js/livereload.js')
       );
     });
 }
@@ -90,16 +115,16 @@ function watchAll() {
 }
 
 function clean() {
-  return cleanDir('dist');
+  return cleanDir('release');
 }
 
 function listen() {
   let opts = {
-    basePath: './dist'
+    basePath: './release'
     , reloadPage: '/'
   };
 
-  refresh.listen(opts);
+  global.refresh.listen(opts);
 }
 
 

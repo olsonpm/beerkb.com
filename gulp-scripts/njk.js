@@ -24,7 +24,7 @@ const bPromise = require('bluebird')
 const browserCompiledTemplatesIn = path.join(__dirname, '../src/server/browser-templates')
   , browserCompiledTemplatesOut = path.join(__dirname, '../src/client/js/precompiled-templates.js')
   , inDir = path.join(__dirname, '../src/server/views')
-  , outDir = path.join(__dirname, '../dist/views')
+  , outDir = path.join(global.releaseDir, 'views')
   , refresh = global.refresh
   , { streamToPromise } = utils
   ;
