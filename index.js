@@ -1,10 +1,11 @@
 'use strict';
 
-const getApp = require('./src/server').getApp;
+const r = require('ramda');
 
-function getRequestListener() {
-  const res = getApp.apply(null, arguments);
-  return res.callback();
-}
+const invoke = r.curry(
+  (prop, obj) => r.pipe(r.prop, r.bind(r.__, obj), r.call)(prop, obj)
+);
 
-module.exports = { getRequestListener };
+module.exports = {
+  getRequestListener: r.pipe(require('./src/server').getApp, invoke('callback'))
+};

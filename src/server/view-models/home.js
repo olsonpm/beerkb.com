@@ -44,7 +44,10 @@ const bPromise = require('bluebird')
 // Init //
 //------//
 
-const { distribute, mutableAssoc, mutableDissoc, mutableMap, mutablePick, mutableRotate } = rUtils;
+const {
+  distribute, mutableAssoc, mutableDissoc, mutableMap, mutablePick
+  , mutableRotate
+} = rUtils;
 
 
 //------//
