@@ -649,11 +649,11 @@
 	//-------------//
 
 	function createBubble(_ref) {
-	  var x = _ref.x;
-	  var y = _ref.y;
-	  var moveDuration = _ref.moveDuration;
-	  var diameter = _ref.diameter;
-	  var size = _ref.size;
+	  var x = _ref.x,
+	      y = _ref.y,
+	      moveDuration = _ref.moveDuration,
+	      diameter = _ref.diameter,
+	      size = _ref.size;
 
 	  var bubbleWrapper = getBubbleDiv(x, y, diameter, size),
 	      bubbleDiv = bubbleWrapper.children()[0];
@@ -2324,33 +2324,33 @@
 	// Init //
 	//------//
 
-	var getRandomIntBetween = utils.getRandomIntBetween;
-	var betweenI = rUtils.betweenI;
-	var betweenRange = rUtils.betweenRange;
-	var staticCond = rUtils.staticCond;
-	var mutableMerge = rUtils.mutableMerge;
-	var state = {};
+	var getRandomIntBetween = utils.getRandomIntBetween,
+	    betweenI = rUtils.betweenI,
+	    betweenRange = rUtils.betweenRange,
+	    staticCond = rUtils.staticCond,
+	    mutableMerge = rUtils.mutableMerge,
+	    state = {};
 
 	//------//
 	// Main //
 	//------//
 
 	var updateClientDimensions = function updateClientDimensions(_ref) {
-	  var clientWidth = _ref.clientWidth;
-	  var clientHeight = _ref.clientHeight;
+	  var clientWidth = _ref.clientWidth,
+	      clientHeight = _ref.clientHeight;
 
 	  mutableMerge(state, { clientWidth: clientWidth, clientHeight: clientHeight });
 	  updateBubbleDiameterRange();
 	};
 
 	var run = function run(_ref2) {
-	  var clientWidth = _ref2.clientWidth;
-	  var clientHeight = _ref2.clientHeight;
-	  var clientWidthRange = _ref2.clientWidthRange;
-	  var fizzRateRange = _ref2.fizzRateRange;
-	  var fizzSpeedRange = _ref2.fizzSpeedRange;
-	  var onBubbleCreate = _ref2.onBubbleCreate;
-	  var scrollY = _ref2.scrollY;
+	  var clientWidth = _ref2.clientWidth,
+	      clientHeight = _ref2.clientHeight,
+	      clientWidthRange = _ref2.clientWidthRange,
+	      fizzRateRange = _ref2.fizzRateRange,
+	      fizzSpeedRange = _ref2.fizzSpeedRange,
+	      onBubbleCreate = _ref2.onBubbleCreate,
+	      scrollY = _ref2.scrollY;
 
 
 	  initializeState({ clientWidth: clientWidth, clientHeight: clientHeight, clientWidthRange: clientWidthRange, scrollY: scrollY });
@@ -2392,22 +2392,19 @@
 	//-------------//
 
 	function updateGetSize() {
-	  var _state$bubbleDiameter = _slicedToArray(state.bubbleDiameterRange, 2);
-
-	  var diameterMin = _state$bubbleDiameter[0];
-	  var diameterMax = _state$bubbleDiameter[1];
-	  var diameterDifference = r.subtract(diameterMax, diameterMin);
-	  var aThird = Math.round(diameterDifference / 3);
-
+	  var _state$bubbleDiameter = _slicedToArray(state.bubbleDiameterRange, 2),
+	      diameterMin = _state$bubbleDiameter[0],
+	      diameterMax = _state$bubbleDiameter[1],
+	      diameterDifference = r.subtract(diameterMax, diameterMin),
+	      aThird = Math.round(diameterDifference / 3);
 
 	  state.getSize = staticCond([[betweenRange(diameterMin, diameterMin + aThird), 'small'], [betweenRange(diameterMin + aThird, diameterMax - aThird), 'medium'], [betweenI(diameterMax - aThird, diameterMax), 'large']]);
 	}
 
 	function updateBubbleDiameterRange() {
-	  var _state$clientWidthRan = _slicedToArray(state.clientWidthRange, 2);
-
-	  var minWidth = _state$clientWidthRan[0];
-	  var maxWidth = _state$clientWidthRan[1];
+	  var _state$clientWidthRan = _slicedToArray(state.clientWidthRange, 2),
+	      minWidth = _state$clientWidthRan[0],
+	      maxWidth = _state$clientWidthRan[1];
 
 	  state.bubbleDiameterRange = [getLinearSlope(15, 30, state.clientWidth), getLinearSlope(50, 70, state.clientWidth)];
 
@@ -2424,10 +2421,10 @@
 	}
 
 	function initializeState(_ref3) {
-	  var clientHeight = _ref3.clientHeight;
-	  var clientWidth = _ref3.clientWidth;
-	  var clientWidthRange = _ref3.clientWidthRange;
-	  var scrollY = _ref3.scrollY;
+	  var clientHeight = _ref3.clientHeight,
+	      clientWidth = _ref3.clientWidth,
+	      clientWidthRange = _ref3.clientWidthRange,
+	      scrollY = _ref3.scrollY;
 
 	  state.clientWidthRange = clientWidthRange;
 	  state.scrollY = scrollY;
@@ -4299,19 +4296,16 @@
 
 	// short
 
-	var betweenI = getBetween('inclusive');
-	var betweenRange = getBetween('range');
-
-	var _r$map = r.map(r.flip, [r.lte, r.subtract]);
-
-	var _r$map2 = _slicedToArray(_r$map, 2);
-
-	var lte = _r$map2[0];
-	var subtract = _r$map2[1];
-	var square = function square(x) {
+	var betweenI = getBetween('inclusive'),
+	    betweenRange = getBetween('range'),
+	    _r$map = r.map(r.flip, [r.lte, r.subtract]),
+	    _r$map2 = _slicedToArray(_r$map, 2),
+	    lte = _r$map2[0],
+	    subtract = _r$map2[1],
+	    square = function square(x) {
 	  return x * x;
-	};
-	var toBoolean = function toBoolean(val) {
+	},
+	    toBoolean = function toBoolean(val) {
 	  return !!val;
 	};
 
@@ -4478,13 +4472,10 @@
 	var mutableRotate = r.curry(function (n, arr) {
 	  if (n === 0 || arr.length === 0) return arr;
 
-	  var _ref = n > 0 ? ['pop', 'unshift'] : ['shift', 'push'];
-
-	  var _ref2 = _slicedToArray(_ref, 2);
-
-	  var remove = _ref2[0];
-	  var attach = _ref2[1];
-
+	  var _ref = n > 0 ? ['pop', 'unshift'] : ['shift', 'push'],
+	      _ref2 = _slicedToArray(_ref, 2),
+	      remove = _ref2[0],
+	      attach = _ref2[1];
 
 	  n = Math.abs(n);
 	  for (var i = 0; i < n; i += 1) {
@@ -4674,10 +4665,10 @@
 
 	var hoverIntentWrapper = r.curry(function (el, elDt) {
 	  if (!("ontouchstart" in document.documentElement)) hoverIntent(el, onEnter(elDt), onLeave(elDt));
-	});
-	var feed = rUtils.feed;
-	var size = rUtils.size;
-	var screenSizes = {
+	}),
+	    feed = rUtils.feed,
+	    size = rUtils.size,
+	    screenSizes = {
 	  xxsMax: 619,
 	  xsMin: 620,
 	  xsMax: 767,
@@ -4686,8 +4677,8 @@
 	  mdMin: 992,
 	  mdMax: 1189,
 	  lgMin: 1190
-	};
-	var screenSizesPx = r.map(function (size) {
+	},
+	    screenSizesPx = r.map(function (size) {
 	  return size + 'px';
 	}, screenSizes);
 
@@ -17802,12 +17793,12 @@
 	// Init //
 	//------//
 
-	var modalBacklightDt = $('#modal-backlight');
-	var modalBacklight = modalBacklightDt[0];
-	var addHoveredDt = utils.addHoveredDt;
-	var getNumColumns = utils.getNumColumns;
-	var keycodes = utils.keycodes;
-	var postModalRender = {
+	var modalBacklightDt = $('#modal-backlight'),
+	    modalBacklight = modalBacklightDt[0],
+	    addHoveredDt = utils.addHoveredDt,
+	    getNumColumns = utils.getNumColumns,
+	    keycodes = utils.keycodes,
+	    postModalRender = {
 	  form: postFormRender,
 	  dialog: r.always(undefined)
 	};
@@ -17833,8 +17824,8 @@
 
 	  return {
 	    show: function show(_ref) {
-	      var ctx = _ref.ctx;
-	      var cbs = _ref.cbs;
+	      var ctx = _ref.ctx,
+	          cbs = _ref.cbs;
 
 	      var myself = this;
 
@@ -21380,20 +21371,20 @@
 	// Init //
 	//------//
 
-	var addToVm = getAddToVm();
-	var optionData = getOptionData();
-	var mutableMerge = rUtils.mutableMerge;
-	var size = rUtils.size;
-	var addHovered = utils.addHovered;
-	var addHoveredDt = utils.addHoveredDt;
-	var addHoveredToParent = utils.addHoveredToParent;
-	var directFind = utils.directFind;
-	var directFindAll = utils.directFindAll;
-	var getNumColumns = utils.getNumColumns;
-	var pairAdjacentElements = utils.pairAdjacentElements;
-	var removeDt = utils.removeDt;
-	var unwrap = utils.unwrap;
-	var schemaErrorMessages = {
+	var addToVm = getAddToVm(),
+	    optionData = getOptionData(),
+	    mutableMerge = rUtils.mutableMerge,
+	    size = rUtils.size,
+	    addHovered = utils.addHovered,
+	    addHoveredDt = utils.addHoveredDt,
+	    addHoveredToParent = utils.addHoveredToParent,
+	    directFind = utils.directFind,
+	    directFindAll = utils.directFindAll,
+	    getNumColumns = utils.getNumColumns,
+	    pairAdjacentElements = utils.pairAdjacentElements,
+	    removeDt = utils.removeDt,
+	    unwrap = utils.unwrap,
+	    schemaErrorMessages = {
 	  inStyleList: 'Required',
 	  inStateList: 'Required',
 	  isLaden: 'Required',
@@ -21401,10 +21392,10 @@
 	  lte30: 'Limit 30 characters',
 	  lte50: 'Limit 50 characters',
 	  lte500: 'Limit 500 characters'
-	};
-	var sendRequest = getSendRequest();
-	var updateVm = getUpdateVm();
-	var viewDt = $('#view-home');
+	},
+	    sendRequest = getSendRequest(),
+	    updateVm = getUpdateVm(),
+	    viewDt = $('#view-home');
 
 
 	var vm = void 0,
@@ -21568,10 +21559,10 @@
 	    delete: {
 	      modal: modal.dialog,
 	      getShowArgs: function getShowArgs(_ref) {
-	        var id = _ref.id;
-	        var brewery_id = _ref.brewery_id;
-	        var itemType = _ref.itemType;
-	        var itemDt = _ref.itemDt;
+	        var id = _ref.id,
+	            brewery_id = _ref.brewery_id,
+	            itemType = _ref.itemType,
+	            itemDt = _ref.itemDt;
 
 	        var myself = this;
 
@@ -21603,10 +21594,10 @@
 	    edit: {
 	      modal: modal.form,
 	      getShowArgs: function getShowArgs(_ref2) {
-	        var id = _ref2.id;
-	        var brewery_id = _ref2.brewery_id;
-	        var itemType = _ref2.itemType;
-	        var itemDt = _ref2.itemDt;
+	        var id = _ref2.id,
+	            brewery_id = _ref2.brewery_id,
+	            itemType = _ref2.itemType,
+	            itemDt = _ref2.itemDt;
 
 	        var myself = this,
 	            itemData = getItemData({ id: id, brewery_id: brewery_id, itemType: itemType }),
@@ -21676,9 +21667,9 @@
 	}
 
 	function getItemData(_ref4) {
-	  var id = _ref4.id;
-	  var brewery_id = _ref4.brewery_id;
-	  var itemType = _ref4.itemType;
+	  var id = _ref4.id,
+	      brewery_id = _ref4.brewery_id,
+	      itemType = _ref4.itemType;
 
 	  return itemType === 'brewery' ? vm.brewery[id] : vm.brewery[brewery_id].beer[id];
 	}
@@ -21871,16 +21862,16 @@
 	function getUpdateVm() {
 	  return {
 	    beer: function beer(_ref5) {
-	      var data = _ref5.data;
-	      var brewery_id = _ref5.brewery_id;
-	      var id = _ref5.id;
+	      var data = _ref5.data,
+	          brewery_id = _ref5.brewery_id,
+	          id = _ref5.id;
 
 	      mutableMerge(vm.brewery[brewery_id].beer[id], data);
 	      updateDom(viewDt.find(itemSelector.beer(brewery_id, id)), data, 'beer');
 	    },
 	    brewery: function brewery(_ref6) {
-	      var data = _ref6.data;
-	      var id = _ref6.id;
+	      var data = _ref6.data,
+	          id = _ref6.id;
 
 	      mutableMerge(vm.brewery[id], data);
 	      updateDom(viewDt.find(itemSelector.brewery(id)), data, 'brewery');
@@ -22113,8 +22104,8 @@
 
 	function get(ctxDt) {
 	  return ctxDt.find('[data-form]').reduce(function (res, _ref) {
-	    var id = _ref.id;
-	    var value = _ref.value;
+	    var id = _ref.id,
+	        value = _ref.value;
 	    return mutableAssoc(id, value, res);
 	  }, {});
 	}
@@ -22231,9 +22222,9 @@
 	// Init //
 	//------//
 
-	var isDefined = rUtils.isDefined;
-	var isLaden = rUtils.isLaden;
-	var keys = {
+	var isDefined = rUtils.isDefined,
+	    isLaden = rUtils.isLaden,
+	    keys = {
 	  beer: schemas.beer.keys,
 	  brewery: schemas.brewery.keys
 	};
@@ -22244,17 +22235,17 @@
 
 	module.exports = {
 	  buildInputFields: function buildInputFields(_ref) {
-	    var keyToTpl = _ref.keyToTpl;
-	    var keyToValue = _ref.keyToValue;
-	    var keyToList = _ref.keyToList;
-	    var _ref$keyToLabel = _ref.keyToLabel;
-	    var keyToLabel = _ref$keyToLabel === undefined ? {} : _ref$keyToLabel;
-	    var _ref$keyToId = _ref.keyToId;
-	    var keyToId = _ref$keyToId === undefined ? {} : _ref$keyToId;
-	    var _ref$keyToErrors = _ref.keyToErrors;
-	    var keyToErrors = _ref$keyToErrors === undefined ? {} : _ref$keyToErrors;
-	    var item = _ref.item;
-	    var type = _ref.type;
+	    var keyToTpl = _ref.keyToTpl,
+	        keyToValue = _ref.keyToValue,
+	        keyToList = _ref.keyToList,
+	        _ref$keyToLabel = _ref.keyToLabel,
+	        keyToLabel = _ref$keyToLabel === undefined ? {} : _ref$keyToLabel,
+	        _ref$keyToId = _ref.keyToId,
+	        keyToId = _ref$keyToId === undefined ? {} : _ref$keyToId,
+	        _ref$keyToErrors = _ref.keyToErrors,
+	        keyToErrors = _ref$keyToErrors === undefined ? {} : _ref$keyToErrors,
+	        item = _ref.item,
+	        type = _ref.type;
 
 
 	    return r.pipe(r.map(function (key) {
@@ -22306,12 +22297,12 @@
 	// Init //
 	//------//
 
-	var _schema$fns = schema.fns;
-	var isLaden = _schema$fns.isLaden;
-	var startsWithUppercase = _schema$fns.startsWithUppercase;
-	var inStyleList = r.contains(r.__, styleList);
-	var lte30 = r.pipe(r.length, r.lte(r.__, 30));
-	var lte500 = r.pipe(r.length, r.lte(r.__, 500));
+	var _schema$fns = schema.fns,
+	    isLaden = _schema$fns.isLaden,
+	    startsWithUppercase = _schema$fns.startsWithUppercase,
+	    inStyleList = r.contains(r.__, styleList),
+	    lte30 = r.pipe(r.length, r.lte(r.__, 30)),
+	    lte500 = r.pipe(r.length, r.lte(r.__, 500));
 
 
 	schema.assignName({ inStyleList: inStyleList, lte30: lte30, lte500: lte500 });
@@ -22382,12 +22373,12 @@
 	// Init //
 	//------//
 
-	var coerceArray = rUtils.coerceArray;
-	var containsAny = rUtils.containsAny;
-	var isLaden = rUtils.isLaden;
-	var mutableAssoc = rUtils.mutableAssoc;
-	var mutableMap = rUtils.mutableMap;
-	var size = rUtils.size;
+	var coerceArray = rUtils.coerceArray,
+	    containsAny = rUtils.containsAny,
+	    isLaden = rUtils.isLaden,
+	    mutableAssoc = rUtils.mutableAssoc,
+	    mutableMap = rUtils.mutableMap,
+	    size = rUtils.size;
 
 	//------//
 	// Main //
@@ -22496,12 +22487,12 @@
 	// Init //
 	//------//
 
-	var _schema$fns = schema.fns;
-	var isLaden = _schema$fns.isLaden;
-	var startsWithUppercase = _schema$fns.startsWithUppercase;
-	var inStateList = r.contains(r.__, stateList);
-	var lte30 = r.pipe(r.length, r.lte(r.__, 30));
-	var lte50 = r.pipe(r.length, r.lte(r.__, 50));
+	var _schema$fns = schema.fns,
+	    isLaden = _schema$fns.isLaden,
+	    startsWithUppercase = _schema$fns.startsWithUppercase,
+	    inStateList = r.contains(r.__, stateList),
+	    lte30 = r.pipe(r.length, r.lte(r.__, 30)),
+	    lte50 = r.pipe(r.length, r.lte(r.__, 50));
 
 
 	schema.assignName({ inStateList: inStateList, lte30: lte30, lte50: lte50 });
@@ -23238,12 +23229,12 @@
 	// Init //
 	//------//
 
-	var items = ['beer', 'brewery'];
-	var axiosInst = axios.create({
+	var items = ['beer', 'brewery'],
+	    axiosInst = axios.create({
 	  baseURL: window.location.origin + '/api/'
-	});
-	var itemMethods = getItemMethods();
-	var transform = rUtils.transform;
+	}),
+	    itemMethods = getItemMethods(),
+	    transform = rUtils.transform;
 
 	//------//
 	// Main //
