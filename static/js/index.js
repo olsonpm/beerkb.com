@@ -21120,7 +21120,7 @@
 	    var output = "";
 	    try {
 	      var parentTemplate = null;
-	      env.getTemplate("global-macros", false, "new-beer.njk", false, function (t_2, t_1) {
+	      env.getTemplate("global", false, "new-beer.njk", false, function (t_2, t_1) {
 	        if (t_2) {
 	          cb(t_2);return;
 	        }
@@ -21162,7 +21162,7 @@
 	    var output = "";
 	    try {
 	      var parentTemplate = null;
-	      env.getTemplate("global-macros", false, "new-brewery.njk", false, function (t_2, t_1) {
+	      env.getTemplate("global", false, "new-brewery.njk", false, function (t_2, t_1) {
 	        if (t_2) {
 	          cb(t_2);return;
 	        }
