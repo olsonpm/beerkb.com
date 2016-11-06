@@ -17,7 +17,7 @@ const bPromise = require('bluebird')
   , path = require('path')
   , r = require('ramda')
   , request = require('request')
-  , rUtils = require('./r-utils')
+  , rUtils = require('../../lib/r-utils')
   , schemas = require('../shared/schemas')
   , viewModels = require('./view-models')
   ;

@@ -7,7 +7,7 @@
 
 const $ = require('../external/domtastic.custom')
   , duration = require('../constants/duration')
-  , r = require('../external/ramda.custom')
+  , r = require('../../../../lib/external/ramda.custom')
   , render = require('../services/render')
   , tabbable = require('tabbable')
   , utils = require('../utils')

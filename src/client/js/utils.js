@@ -8,8 +8,8 @@
 const $ = require('./external/domtastic.custom')
   , duration = require('./constants/duration')
   , hoverIntent = require('hoverintent')
-  , r = require('ramda')
-  , rUtils = require('./r-utils')
+  , r = require('../../../lib/external/ramda.custom')
+  , rUtils = require('../../../lib/r-utils')
   , velocity = require('velocity-animate')
   ;
 

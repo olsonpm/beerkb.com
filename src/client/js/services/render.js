@@ -7,7 +7,7 @@
 
 const nunjucksSlim = require('nunjucks/browser/nunjucks-slim')
   , precompiledTemplates = require('../precompiled-templates')
-  , r = require('../external/ramda.custom')
+  , r = require('../../../../lib/external/ramda.custom')
   ;
 
 

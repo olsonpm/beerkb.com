@@ -5,7 +5,7 @@
 // Imports //
 //---------//
 
-const rUtils = require('../r-utils');
+const rUtils = require('../../../../lib/r-utils');
 
 
 //------//

@@ -68,7 +68,6 @@ let isDev = !!argv.dev;
 //------//
 
 gulp.task('build', r.nAry(0, build))
-  .task('build-release', ['build'], buildRelease)
   .task('clean', clean)
   .task('serve', ['build'], r.nAry(0, serve))
   ;
@@ -107,14 +106,12 @@ function serve(isDev_) {
 
 function build(releaseDir) {
   if (releaseDir) global.releaseDir = releaseDir;
-  return clean().then(buildAll);
-}
-
-function buildRelease() {
-  return bWebpack(webpackConfig).then(stats => {
-    if (stats.hasErrors())
-      throw new Error("Error during compile: " + JSON.stringify(stats.toJson(true), null, 2));
-  });
+  return clean().then(buildAll)
+    .then(() => bWebpack(webpackConfig))
+    .then(stats => {
+      if (stats.hasErrors())
+        throw new Error("Error during compile: " + JSON.stringify(stats.toJson(true), null, 2));
+    });
 }
 
 
@@ -126,6 +123,12 @@ function buildAll() {
   return bPromise.all(
       fp.invokeMap('build', tasks)
     )
+    .then(() => {
+      return ncpAsync(
+        path.join(__dirname, '../src/server/favicon.ico')
+        , path.join(global.releaseDir, 'static/favicon.ico')
+      );
+    })
     .then(() => {
       if (!isDev) return;
 

@@ -10,8 +10,8 @@
 // Imports //
 //---------//
 
-const r = require('../external/ramda.custom')
-  , rUtils = require('../r-utils')
+const r = require('../../../../lib/external/ramda.custom')
+  , rUtils = require('../../../../lib/r-utils')
   ;
 
 

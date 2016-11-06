@@ -36,7 +36,7 @@
 
 const bPromise = require('bluebird')
   , r = require('ramda')
-  , rUtils = require('../r-utils')
+  , rUtils = require('../../../lib/r-utils')
   ;
 
 

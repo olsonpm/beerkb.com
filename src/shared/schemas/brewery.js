@@ -6,7 +6,7 @@
 //---------//
 
 const schema = require('../schema')
-  , r = require('../ramda.custom')
+  , r = require('../../../lib/external/ramda.custom')
   , stateList = require('../state-list')
   ;
 

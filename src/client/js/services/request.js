@@ -6,8 +6,8 @@
 //---------//
 
 const axios = require('axios')
-  , r = require('../external/ramda.custom')
-  , rUtils = require('../r-utils')
+  , r = require('../../../../lib/external/ramda.custom')
+  , rUtils = require('../../../../lib/r-utils')
   ;
 
 
