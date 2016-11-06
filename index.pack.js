@@ -8927,7 +8927,7 @@ module.exports =
 	  , path = __webpack_require__(/*! path */ 82)
 	  , r = __webpack_require__(/*! ramda */ 1)
 	  , request = __webpack_require__(/*! request */ 57)
-	  , rUtils = __webpack_require__(/*! ./r-utils */ 563)
+	  , rUtils = __webpack_require__(/*! ../../lib/r-utils */ 563)
 	  , schemas = __webpack_require__(/*! ../shared/schemas */ 568)
 	  , viewModels = __webpack_require__(/*! ./view-models */ 574)
 	  ;
@@ -19042,38 +19042,59 @@ module.exports =
 	    self.emit('drain')
 	  })
 	  self.req.on('socket', function(socket) {
-	    if (timeout !== undefined) {
-	      socket.once('connect', function() {
-	        clearTimeout(self.timeoutTimer)
-	        self.timeoutTimer = null
-	        // Set an additional timeout on the socket, via the `setsockopt` syscall.
-	        // This timeout sets the amount of time to wait *between* bytes sent
-	        // from the server once connected.
-	        //
-	        // In particular, it's useful for erroring if the server fails to send
-	        // data halfway through streaming a response.
-	        self.req.setTimeout(timeout, function () {
-	          if (self.req) {
-	            self.abort()
-	            var e = new Error('ESOCKETTIMEDOUT')
-	            e.code = 'ESOCKETTIMEDOUT'
-	            e.connect = false
-	            self.emit('error', e)
-	          }
-	        })
+	    var setReqTimeout = function() {
+	      // This timeout sets the amount of time to wait *between* bytes sent
+	      // from the server once connected.
+	      //
+	      // In particular, it's useful for erroring if the server fails to send
+	      // data halfway through streaming a response.
+	      self.req.setTimeout(timeout, function () {
+	        if (self.req) {
+	          self.abort()
+	          var e = new Error('ESOCKETTIMEDOUT')
+	          e.code = 'ESOCKETTIMEDOUT'
+	          e.connect = false
+	          self.emit('error', e)
+	        }
 	      })
+	    }
+	    // `._connecting` was the old property which was made public in node v6.1.0
+	    var isConnecting = socket._connecting || socket.connecting
+	    if (timeout !== undefined) {
+	      // Only start the connection timer if we're actually connecting a new
+	      // socket, otherwise if we're already connected (because this is a
+	      // keep-alive connection) do not bother. This is important since we won't
+	      // get a 'connect' event for an already connected socket.
+	      if (isConnecting) {
+	        var onReqSockConnect = function() {
+	          socket.removeListener('connect', onReqSockConnect)
+	          clearTimeout(self.timeoutTimer)
+	          self.timeoutTimer = null
+	          setReqTimeout()
+	        }
 
-	      // Set a timeout in memory - this block will throw if the server takes more
-	      // than `timeout` to write the HTTP status and headers (corresponding to
-	      // the on('response') event on the client). NB: this measures wall-clock
-	      // time, not the time between bytes sent by the server.
-	      self.timeoutTimer = setTimeout(function () {
-	        self.abort()
-	        var e = new Error('ETIMEDOUT')
-	        e.code = 'ETIMEDOUT'
-	        e.connect = true
-	        self.emit('error', e)
-	      }, timeout)
+	        socket.on('connect', onReqSockConnect)
+
+	        self.req.on('error', function(err) {
+	          socket.removeListener('connect', onReqSockConnect)
+	        })
+
+	        // Set a timeout in memory - this block will throw if the server takes more
+	        // than `timeout` to write the HTTP status and headers (corresponding to
+	        // the on('response') event on the client). NB: this measures wall-clock
+	        // time, not the time between bytes sent by the server.
+	        self.timeoutTimer = setTimeout(function () {
+	          socket.removeListener('connect', onReqSockConnect)
+	          self.abort()
+	          var e = new Error('ETIMEDOUT')
+	          e.code = 'ETIMEDOUT'
+	          e.connect = true
+	          self.emit('error', e)
+	        }, timeout)
+	      } else {
+	        // We're already connected
+	        setReqTimeout()
+	      }
 	    }
 	    self.emit('socket', socket)
 	  })
@@ -53458,6 +53479,7 @@ module.exports =
 	  this.followRedirect = true
 	  this.followRedirects = true
 	  this.followAllRedirects = false
+	  this.followOriginalHttpMethod = false
 	  this.allowRedirect = function () {return true}
 	  this.maxRedirects = 10
 	  this.redirects = []
@@ -53485,6 +53507,9 @@ module.exports =
 	  }
 	  if (options.removeRefererHeader !== undefined) {
 	    self.removeRefererHeader = options.removeRefererHeader
+	  }
+	  if (options.followOriginalHttpMethod !== undefined) {
+	    self.followOriginalHttpMethod = options.followOriginalHttpMethod
 	  }
 	}
 
@@ -53565,7 +53590,7 @@ module.exports =
 	  )
 	  if (self.followAllRedirects && request.method !== 'HEAD'
 	    && response.statusCode !== 401 && response.statusCode !== 307) {
-	    request.method = 'GET'
+	    request.method = self.followOriginalHttpMethod ? request.method : 'GET'
 	  }
 	  // request.method = 'GET' // Force all redirects to use GET || commented out fixes #215
 	  delete request.src
@@ -86685,8 +86710,9 @@ module.exports =
 	  runtime = global.regeneratorRuntime = inModule ? module.exports : {};
 
 	  function wrap(innerFn, outerFn, self, tryLocsList) {
-	    // If outerFn provided, then outerFn.prototype instanceof Generator.
-	    var generator = Object.create((outerFn || Generator).prototype);
+	    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+	    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+	    var generator = Object.create(protoGenerator.prototype);
 	    var context = new Context(tryLocsList || []);
 
 	    // The ._invoke method unifies the implementations of the .next,
@@ -104692,15 +104718,27 @@ module.exports =
 
 	  // on Windows, A/V software can lock the directory, causing this
 	  // to fail with an EACCES or EPERM if the directory contains newly
-	  // created files.  Try again on failure, for up to 1 second.
+	  // created files.  Try again on failure, for up to 60 seconds.
+
+	  // Set the timeout this long because some Windows Anti-Virus, such as Parity
+	  // bit9, may lock files for up to a minute, causing npm package install
+	  // failures. Also, take care to yield the scheduler. Windows scheduling gives
+	  // CPU to a busy looping process, which can cause the program causing the lock
+	  // contention to be starved of CPU by node, so the contention doesn't resolve.
 	  if (process.platform === "win32") {
 	    fs.rename = (function (fs$rename) { return function (from, to, cb) {
 	      var start = Date.now()
+	      var backoff = 0;
 	      fs$rename(from, to, function CB (er) {
 	        if (er
 	            && (er.code === "EACCES" || er.code === "EPERM")
-	            && Date.now() - start < 1000) {
-	          return fs$rename(from, to, CB)
+	            && Date.now() - start < 60000) {
+	          setTimeout(function() {
+	            fs$rename(from, to, CB);
+	          }, backoff)
+	          if (backoff < 100)
+	            backoff += 10;
+	          return;
 	        }
 	        if (cb) cb(er)
 	      })
@@ -111831,6 +111869,7 @@ module.exports =
 	]
 
 	typeof fs.access === 'function' && api.push('access')
+	typeof fs.mkdtemp === 'function' && api.push('mkdtemp')
 
 	__webpack_require__(/*! thenify-all */ 561).withCallback(fs, exports, api)
 
@@ -115739,7 +115778,7 @@ module.exports =
 	//---------//
 
 	const schema = __webpack_require__(/*! ../schema */ 570)
-	  , r = __webpack_require__(/*! ../ramda.custom */ 564)
+	  , r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 564)
 	  , styleList = __webpack_require__(/*! ../style-list */ 571)
 	  ;
 
@@ -115818,8 +115857,8 @@ module.exports =
 	// Imports //
 	//---------//
 
-	const r = __webpack_require__(/*! ./ramda.custom */ 564)
-	  , rUtils = __webpack_require__(/*! ./r-utils */ 563)
+	const r = __webpack_require__(/*! ../../lib/external/ramda.custom */ 564)
+	  , rUtils = __webpack_require__(/*! ../../lib/r-utils */ 563)
 	  ;
 
 
@@ -115979,7 +116018,7 @@ module.exports =
 	//---------//
 
 	const schema = __webpack_require__(/*! ../schema */ 570)
-	  , r = __webpack_require__(/*! ../ramda.custom */ 564)
+	  , r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 564)
 	  , stateList = __webpack_require__(/*! ../state-list */ 573)
 	  ;
 
@@ -116176,7 +116215,7 @@ module.exports =
 
 	const bPromise = __webpack_require__(/*! bluebird */ 3)
 	  , r = __webpack_require__(/*! ramda */ 1)
-	  , rUtils = __webpack_require__(/*! ../r-utils */ 563)
+	  , rUtils = __webpack_require__(/*! ../../../lib/r-utils */ 563)
 	  ;
 
 
