@@ -45,21 +45,21 @@
 /*!********************************!*\
   !*** ./src/client/js/index.js ***!
   \********************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	// always polyfill and initialize base
 
 	__webpack_require__(/*! promise-polyfill */ 1);
-	__webpack_require__(/*! ./base */ 4);
+	__webpack_require__(/*! ./base */ 5);
 
 	//---------//
 	// Imports //
 	//---------//
 
-	var $ = __webpack_require__(/*! ./external/domtastic.custom */ 5),
-	    views = __webpack_require__(/*! ./views */ 22);
+	var $ = __webpack_require__(/*! ./external/domtastic.custom */ 6),
+	    views = __webpack_require__(/*! ./views */ 23);
 
 	//------//
 	// Main //
@@ -81,12 +81,12 @@
 	  return JSON.parse($('#view-' + viewName + ' > .vm')[0].innerHTML);
 	}
 
-/***/ },
+/***/ }),
 /* 1 */
 /*!***************************************!*\
   !*** ./~/promise-polyfill/promise.js ***!
   \***************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(setImmediate) {(function (root) {
 
@@ -104,7 +104,7 @@
 	  }
 
 	  function Promise(fn) {
-	    if (typeof this !== 'object') throw new TypeError('Promises must be constructed via new');
+	    if (!(this instanceof Promise)) throw new TypeError('Promises must be constructed via new');
 	    if (typeof fn !== 'function') throw new TypeError('not a function');
 	    this._state = 0;
 	    this._handled = false;
@@ -228,9 +228,9 @@
 	  };
 
 	  Promise.all = function (arr) {
-	    var args = Array.prototype.slice.call(arr);
-
 	    return new Promise(function (resolve, reject) {
+	      if (!arr || typeof arr.length === 'undefined') throw new TypeError('Promise.all accepts an array');
+	      var args = Array.prototype.slice.call(arr);
 	      if (args.length === 0) return resolve([]);
 	      var remaining = args.length;
 
@@ -322,31 +322,34 @@
 
 	})(this);
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/timers-browserify/main.js */ 2).setImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../timers-browserify/main.js */ 2).setImmediate))
 
-/***/ },
+/***/ }),
 /* 2 */
 /*!*************************************!*\
   !*** ./~/timers-browserify/main.js ***!
   \*************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(/*! process/browser.js */ 3).nextTick;
+	/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+	            (typeof self !== "undefined" && self) ||
+	            window;
 	var apply = Function.prototype.apply;
-	var slice = Array.prototype.slice;
-	var immediateIds = {};
-	var nextImmediateId = 0;
 
 	// DOM APIs, for completeness
 
 	exports.setTimeout = function() {
-	  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
+	  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
 	};
 	exports.setInterval = function() {
-	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
+	  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
 	};
 	exports.clearTimeout =
-	exports.clearInterval = function(timeout) { timeout.close(); };
+	exports.clearInterval = function(timeout) {
+	  if (timeout) {
+	    timeout.close();
+	  }
+	};
 
 	function Timeout(id, clearFn) {
 	  this._id = id;
@@ -354,7 +357,7 @@
 	}
 	Timeout.prototype.unref = Timeout.prototype.ref = function() {};
 	Timeout.prototype.close = function() {
-	  this._clearFn.call(window, this._id);
+	  this._clearFn.call(scope, this._id);
 	};
 
 	// Does not start the time, just sets up the members needed.
@@ -380,41 +383,222 @@
 	  }
 	};
 
-	// That's not how node.js implements it but the exposed api is the same.
-	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
-	  var id = nextImmediateId++;
-	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
+	// setimmediate attaches itself to the global object
+	__webpack_require__(/*! setimmediate */ 3);
+	// On some exotic environments, it's not clear which object `setimmediate` was
+	// able to install onto.  Search each possibility in the same order as the
+	// `setimmediate` library.
+	exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+	                       (typeof global !== "undefined" && global.setImmediate) ||
+	                       (this && this.setImmediate);
+	exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+	                         (typeof global !== "undefined" && global.clearImmediate) ||
+	                         (this && this.clearImmediate);
 
-	  immediateIds[id] = true;
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-	  nextTick(function onNextTick() {
-	    if (immediateIds[id]) {
-	      // fn.call() is faster so we optimize for the common use-case
-	      // @see http://jsperf.com/call-apply-segu
-	      if (args) {
-	        fn.apply(null, args);
-	      } else {
-	        fn.call(null);
-	      }
-	      // Prevent ids from leaking
-	      exports.clearImmediate(id);
-	    }
-	  });
-
-	  return id;
-	};
-
-	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
-	  delete immediateIds[id];
-	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/timers-browserify/main.js */ 2).setImmediate, __webpack_require__(/*! ./~/timers-browserify/main.js */ 2).clearImmediate))
-
-/***/ },
+/***/ }),
 /* 3 */
+/*!****************************************!*\
+  !*** ./~/setimmediate/setImmediate.js ***!
+  \****************************************/
+/***/ (function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+	    "use strict";
+
+	    if (global.setImmediate) {
+	        return;
+	    }
+
+	    var nextHandle = 1; // Spec says greater than zero
+	    var tasksByHandle = {};
+	    var currentlyRunningATask = false;
+	    var doc = global.document;
+	    var registerImmediate;
+
+	    function setImmediate(callback) {
+	      // Callback can either be a function or a string
+	      if (typeof callback !== "function") {
+	        callback = new Function("" + callback);
+	      }
+	      // Copy function arguments
+	      var args = new Array(arguments.length - 1);
+	      for (var i = 0; i < args.length; i++) {
+	          args[i] = arguments[i + 1];
+	      }
+	      // Store and register the task
+	      var task = { callback: callback, args: args };
+	      tasksByHandle[nextHandle] = task;
+	      registerImmediate(nextHandle);
+	      return nextHandle++;
+	    }
+
+	    function clearImmediate(handle) {
+	        delete tasksByHandle[handle];
+	    }
+
+	    function run(task) {
+	        var callback = task.callback;
+	        var args = task.args;
+	        switch (args.length) {
+	        case 0:
+	            callback();
+	            break;
+	        case 1:
+	            callback(args[0]);
+	            break;
+	        case 2:
+	            callback(args[0], args[1]);
+	            break;
+	        case 3:
+	            callback(args[0], args[1], args[2]);
+	            break;
+	        default:
+	            callback.apply(undefined, args);
+	            break;
+	        }
+	    }
+
+	    function runIfPresent(handle) {
+	        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+	        // So if we're currently running a task, we'll need to delay this invocation.
+	        if (currentlyRunningATask) {
+	            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+	            // "too much recursion" error.
+	            setTimeout(runIfPresent, 0, handle);
+	        } else {
+	            var task = tasksByHandle[handle];
+	            if (task) {
+	                currentlyRunningATask = true;
+	                try {
+	                    run(task);
+	                } finally {
+	                    clearImmediate(handle);
+	                    currentlyRunningATask = false;
+	                }
+	            }
+	        }
+	    }
+
+	    function installNextTickImplementation() {
+	        registerImmediate = function(handle) {
+	            process.nextTick(function () { runIfPresent(handle); });
+	        };
+	    }
+
+	    function canUsePostMessage() {
+	        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+	        // where `global.postMessage` means something completely different and can't be used for this purpose.
+	        if (global.postMessage && !global.importScripts) {
+	            var postMessageIsAsynchronous = true;
+	            var oldOnMessage = global.onmessage;
+	            global.onmessage = function() {
+	                postMessageIsAsynchronous = false;
+	            };
+	            global.postMessage("", "*");
+	            global.onmessage = oldOnMessage;
+	            return postMessageIsAsynchronous;
+	        }
+	    }
+
+	    function installPostMessageImplementation() {
+	        // Installs an event handler on `global` for the `message` event: see
+	        // * https://developer.mozilla.org/en/DOM/window.postMessage
+	        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+
+	        var messagePrefix = "setImmediate$" + Math.random() + "$";
+	        var onGlobalMessage = function(event) {
+	            if (event.source === global &&
+	                typeof event.data === "string" &&
+	                event.data.indexOf(messagePrefix) === 0) {
+	                runIfPresent(+event.data.slice(messagePrefix.length));
+	            }
+	        };
+
+	        if (global.addEventListener) {
+	            global.addEventListener("message", onGlobalMessage, false);
+	        } else {
+	            global.attachEvent("onmessage", onGlobalMessage);
+	        }
+
+	        registerImmediate = function(handle) {
+	            global.postMessage(messagePrefix + handle, "*");
+	        };
+	    }
+
+	    function installMessageChannelImplementation() {
+	        var channel = new MessageChannel();
+	        channel.port1.onmessage = function(event) {
+	            var handle = event.data;
+	            runIfPresent(handle);
+	        };
+
+	        registerImmediate = function(handle) {
+	            channel.port2.postMessage(handle);
+	        };
+	    }
+
+	    function installReadyStateChangeImplementation() {
+	        var html = doc.documentElement;
+	        registerImmediate = function(handle) {
+	            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+	            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+	            var script = doc.createElement("script");
+	            script.onreadystatechange = function () {
+	                runIfPresent(handle);
+	                script.onreadystatechange = null;
+	                html.removeChild(script);
+	                script = null;
+	            };
+	            html.appendChild(script);
+	        };
+	    }
+
+	    function installSetTimeoutImplementation() {
+	        registerImmediate = function(handle) {
+	            setTimeout(runIfPresent, 0, handle);
+	        };
+	    }
+
+	    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
+	    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
+	    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
+
+	    // Don't get fooled by e.g. browserify environments.
+	    if ({}.toString.call(global.process) === "[object process]") {
+	        // For Node.js before 0.9
+	        installNextTickImplementation();
+
+	    } else if (canUsePostMessage()) {
+	        // For non-IE10 modern browsers
+	        installPostMessageImplementation();
+
+	    } else if (global.MessageChannel) {
+	        // For web workers, where supported
+	        installMessageChannelImplementation();
+
+	    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
+	        // For IE 6–8
+	        installReadyStateChangeImplementation();
+
+	    } else {
+	        // For older browsers
+	        installSetTimeoutImplementation();
+	    }
+
+	    attachTo.setImmediate = setImmediate;
+	    attachTo.clearImmediate = clearImmediate;
+	}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(/*! ./../process/browser.js */ 4)))
+
+/***/ }),
+/* 4 */
 /*!******************************!*\
   !*** ./~/process/browser.js ***!
   \******************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// shim for using process in browser
 	var process = module.exports = {};
@@ -586,6 +770,10 @@
 	process.removeListener = noop;
 	process.removeAllListeners = noop;
 	process.emit = noop;
+	process.prependListener = noop;
+	process.prependOnceListener = noop;
+
+	process.listeners = function (name) { return [] }
 
 	process.binding = function (name) {
 	    throw new Error('process.binding is not supported');
@@ -598,12 +786,12 @@
 	process.umask = function() { return 0; };
 
 
-/***/ },
-/* 4 */
+/***/ }),
+/* 5 */
 /*!*******************************!*\
   !*** ./src/client/js/base.js ***!
   \*******************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -611,13 +799,13 @@
 	// Imports //
 	//---------//
 
-	var $ = __webpack_require__(/*! ./external/domtastic.custom */ 5),
-	    bubbleGenerator = __webpack_require__(/*! ./bubble-generator */ 6),
-	    duration = __webpack_require__(/*! ./constants/duration */ 13),
-	    modal = __webpack_require__(/*! ./services/modal */ 17),
-	    render = __webpack_require__(/*! ./services/render */ 18),
-	    utils = __webpack_require__(/*! ./utils */ 12),
-	    velocity = __webpack_require__(/*! velocity-animate */ 16);
+	var $ = __webpack_require__(/*! ./external/domtastic.custom */ 6),
+	    bubbleGenerator = __webpack_require__(/*! ./bubble-generator */ 7),
+	    duration = __webpack_require__(/*! ./constants/duration */ 14),
+	    modal = __webpack_require__(/*! ./services/modal */ 18),
+	    render = __webpack_require__(/*! ./services/render */ 19),
+	    utils = __webpack_require__(/*! ./utils */ 13),
+	    velocity = __webpack_require__(/*! velocity-animate */ 17);
 
 	//------//
 	// Init //
@@ -723,12 +911,12 @@
 	  });
 	}
 
-/***/ },
-/* 5 */
+/***/ }),
+/* 6 */
 /*!****************************************************!*\
   !*** ./src/client/js/external/domtastic.custom.js ***!
   \****************************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;'use strict';
 
@@ -2301,12 +2489,12 @@
 	});
 	//# sourceMappingURL=domtastic.js.map
 
-/***/ },
-/* 6 */
+/***/ }),
+/* 7 */
 /*!*******************************************!*\
   !*** ./src/client/js/bubble-generator.js ***!
   \*******************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -2316,9 +2504,9 @@
 
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-	var r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 7),
-	    rUtils = __webpack_require__(/*! ../../../lib/r-utils */ 8),
-	    utils = __webpack_require__(/*! ./utils */ 12);
+	var r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 8),
+	    rUtils = __webpack_require__(/*! ../../../lib/r-utils */ 9),
+	    utils = __webpack_require__(/*! ./utils */ 13);
 
 	//------//
 	// Init //
@@ -2445,39 +2633,119 @@
 	  updateScrollY: updateScrollY
 	};
 
-/***/ },
-/* 7 */
+/***/ }),
+/* 8 */
 /*!**************************************!*\
   !*** ./lib/external/ramda.custom.js ***!
   \**************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_RESULT__;'use strict';var _typeof=typeof Symbol==="function"&&typeof Symbol.iterator==="symbol"?function(obj){return typeof obj;}:function(obj){return obj&&typeof Symbol==="function"&&obj.constructor===Symbol&&obj!==Symbol.prototype?"symbol":typeof obj;};;(function(){'use strict';/**
-	     * A special placeholder value used to specify "gaps" within curried functions,
-	     * allowing partial application of any combination of arguments, regardless of
-	     * their positions.
-	     *
-	     * If `g` is a curried ternary function and `_` is `R.__`, the following are
-	     * equivalent:
-	     *
-	     *   - `g(1, 2, 3)`
-	     *   - `g(_, 2, 3)(1)`
-	     *   - `g(_, _, 3)(1)(2)`
-	     *   - `g(_, _, 3)(1, 2)`
-	     *   - `g(_, 2, _)(1, 3)`
-	     *   - `g(_, 2)(1)(3)`
-	     *   - `g(_, 2)(1, 3)`
-	     *   - `g(_, 2)(_, 3)(1)`
-	     *
-	     * @constant
-	     * @memberOf R
-	     * @since v0.6.0
-	     * @category Function
-	     * @example
-	     *
-	     *      var greet = R.replace('{name}', R.__, 'Hello, {name}!');
-	     *      greet('Alice'); //=> 'Hello, Alice!'
-	     */var __={'@@functional/placeholder':true};/* eslint-disable no-unused-vars */var _arity=function _arity(n,fn){/* eslint-disable no-unused-vars */switch(n){case 0:return function(){return fn.apply(this,arguments);};case 1:return function(a0){return fn.apply(this,arguments);};case 2:return function(a0,a1){return fn.apply(this,arguments);};case 3:return function(a0,a1,a2){return fn.apply(this,arguments);};case 4:return function(a0,a1,a2,a3){return fn.apply(this,arguments);};case 5:return function(a0,a1,a2,a3,a4){return fn.apply(this,arguments);};case 6:return function(a0,a1,a2,a3,a4,a5){return fn.apply(this,arguments);};case 7:return function(a0,a1,a2,a3,a4,a5,a6){return fn.apply(this,arguments);};case 8:return function(a0,a1,a2,a3,a4,a5,a6,a7){return fn.apply(this,arguments);};case 9:return function(a0,a1,a2,a3,a4,a5,a6,a7,a8){return fn.apply(this,arguments);};case 10:return function(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9){return fn.apply(this,arguments);};default:throw new Error('First argument to _arity must be a non-negative integer no greater than ten');}};var _arrayFromIterator=function _arrayFromIterator(iter){var list=[];var next;while(!(next=iter.next()).done){list.push(next.value);}return list;};var _complement=function _complement(f){return function(){return!f.apply(this,arguments);};};/**
+	var __WEBPACK_AMD_DEFINE_RESULT__;'use strict';
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	;(function () {
+
+	    'use strict';
+
+	    /**
+	       * A special placeholder value used to specify "gaps" within curried functions,
+	       * allowing partial application of any combination of arguments, regardless of
+	       * their positions.
+	       *
+	       * If `g` is a curried ternary function and `_` is `R.__`, the following are
+	       * equivalent:
+	       *
+	       *   - `g(1, 2, 3)`
+	       *   - `g(_, 2, 3)(1)`
+	       *   - `g(_, _, 3)(1)(2)`
+	       *   - `g(_, _, 3)(1, 2)`
+	       *   - `g(_, 2, _)(1, 3)`
+	       *   - `g(_, 2)(1)(3)`
+	       *   - `g(_, 2)(1, 3)`
+	       *   - `g(_, 2)(_, 3)(1)`
+	       *
+	       * @constant
+	       * @memberOf R
+	       * @since v0.6.0
+	       * @category Function
+	       * @example
+	       *
+	       *      var greet = R.replace('{name}', R.__, 'Hello, {name}!');
+	       *      greet('Alice'); //=> 'Hello, Alice!'
+	       */
+
+	    var __ = { '@@functional/placeholder': true };
+
+	    /* eslint-disable no-unused-vars */
+	    var _arity = function _arity(n, fn) {
+	        /* eslint-disable no-unused-vars */
+	        switch (n) {
+	            case 0:
+	                return function () {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 1:
+	                return function (a0) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 2:
+	                return function (a0, a1) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 3:
+	                return function (a0, a1, a2) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 4:
+	                return function (a0, a1, a2, a3) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 5:
+	                return function (a0, a1, a2, a3, a4) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 6:
+	                return function (a0, a1, a2, a3, a4, a5) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 7:
+	                return function (a0, a1, a2, a3, a4, a5, a6) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 8:
+	                return function (a0, a1, a2, a3, a4, a5, a6, a7) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 9:
+	                return function (a0, a1, a2, a3, a4, a5, a6, a7, a8) {
+	                    return fn.apply(this, arguments);
+	                };
+	            case 10:
+	                return function (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) {
+	                    return fn.apply(this, arguments);
+	                };
+	            default:
+	                throw new Error('First argument to _arity must be a non-negative integer no greater than ten');
+	        }
+	    };
+
+	    var _arrayFromIterator = function _arrayFromIterator(iter) {
+	        var list = [];
+	        var next;
+	        while (!(next = iter.next()).done) {
+	            list.push(next.value);
+	        }
+	        return list;
+	    };
+
+	    var _complement = function _complement(f) {
+	        return function () {
+	            return !f.apply(this, arguments);
+	        };
+	    };
+
+	    /**
 	     * Private `concat` function to merge two array-like objects.
 	     *
 	     * @private
@@ -2487,9 +2755,65 @@
 	     * @example
 	     *
 	     *      _concat([4, 5, 6], [1, 2, 3]); //=> [4, 5, 6, 1, 2, 3]
-	     */var _concat=function _concat(set1,set2){set1=set1||[];set2=set2||[];var idx;var len1=set1.length;var len2=set2.length;var result=[];idx=0;while(idx<len1){result[result.length]=set1[idx];idx+=1;}idx=0;while(idx<len2){result[result.length]=set2[idx];idx+=1;}return result;};var _filter=function _filter(fn,list){var idx=0;var len=list.length;var result=[];while(idx<len){if(fn(list[idx])){result[result.length]=list[idx];}idx+=1;}return result;};// String(x => x) evaluates to "x => x", so the pattern may not match.
-	var _functionName=function _functionName(f){// String(x => x) evaluates to "x => x", so the pattern may not match.
-	var match=String(f).match(/^function (\w*)/);return match==null?'':match[1];};var _has=function _has(prop,obj){return Object.prototype.hasOwnProperty.call(obj,prop);};var _identity=function _identity(x){return x;};var _isArguments=function(){var toString=Object.prototype.toString;return toString.call(arguments)==='[object Arguments]'?function _isArguments(x){return toString.call(x)==='[object Arguments]';}:function _isArguments(x){return _has('callee',x);};}();/**
+	     */
+	    var _concat = function _concat(set1, set2) {
+	        set1 = set1 || [];
+	        set2 = set2 || [];
+	        var idx;
+	        var len1 = set1.length;
+	        var len2 = set2.length;
+	        var result = [];
+	        idx = 0;
+	        while (idx < len1) {
+	            result[result.length] = set1[idx];
+	            idx += 1;
+	        }
+	        idx = 0;
+	        while (idx < len2) {
+	            result[result.length] = set2[idx];
+	            idx += 1;
+	        }
+	        return result;
+	    };
+
+	    var _filter = function _filter(fn, list) {
+	        var idx = 0;
+	        var len = list.length;
+	        var result = [];
+	        while (idx < len) {
+	            if (fn(list[idx])) {
+	                result[result.length] = list[idx];
+	            }
+	            idx += 1;
+	        }
+	        return result;
+	    };
+
+	    // String(x => x) evaluates to "x => x", so the pattern may not match.
+	    var _functionName = function _functionName(f) {
+	        // String(x => x) evaluates to "x => x", so the pattern may not match.
+	        var match = String(f).match(/^function (\w*)/);
+	        return match == null ? '' : match[1];
+	    };
+
+	    var _has = function _has(prop, obj) {
+	        return Object.prototype.hasOwnProperty.call(obj, prop);
+	    };
+
+	    var _identity = function _identity(x) {
+	        return x;
+	    };
+
+	    var _isArguments = function () {
+	        var toString = Object.prototype.toString;
+	        return toString.call(arguments) === '[object Arguments]' ? function _isArguments(x) {
+	            return toString.call(x) === '[object Arguments]';
+	        } : function _isArguments(x) {
+	            return _has('callee', x);
+	        };
+	    }();
+
+	    /**
 	     * Tests whether or not an object is an array.
 	     *
 	     * @private
@@ -2500,9 +2824,71 @@
 	     *      _isArray([]); //=> true
 	     *      _isArray(null); //=> false
 	     *      _isArray({}); //=> false
-	     */var _isArray=Array.isArray||function _isArray(val){return val!=null&&val.length>=0&&Object.prototype.toString.call(val)==='[object Array]';};var _isFunction=function _isFunction(x){return Object.prototype.toString.call(x)==='[object Function]';};var _isNumber=function _isNumber(x){return Object.prototype.toString.call(x)==='[object Number]';};var _isObject=function _isObject(x){return Object.prototype.toString.call(x)==='[object Object]';};var _isPlaceholder=function _isPlaceholder(a){return a!=null&&(typeof a==='undefined'?'undefined':_typeof(a))==='object'&&a['@@functional/placeholder']===true;};var _isString=function _isString(x){return Object.prototype.toString.call(x)==='[object String]';};var _isTransformer=function _isTransformer(obj){return typeof obj['@@transducer/step']==='function';};var _map=function _map(fn,functor){var idx=0;var len=functor.length;var result=Array(len);while(idx<len){result[idx]=fn(functor[idx]);idx+=1;}return result;};var _of=function _of(x){return[x];};var _pipe=function _pipe(f,g){return function(){return g.call(this,f.apply(this,arguments));};};// \b matches word boundary; [\b] matches backspace
-	var _quote=function _quote(s){var escaped=s.replace(/\\/g,'\\\\').replace(/[\b]/g,'\\b')// \b matches word boundary; [\b] matches backspace
-	.replace(/\f/g,'\\f').replace(/\n/g,'\\n').replace(/\r/g,'\\r').replace(/\t/g,'\\t').replace(/\v/g,'\\v').replace(/\0/g,'\\0');return'"'+escaped.replace(/"/g,'\\"')+'"';};var _reduced=function _reduced(x){return x&&x['@@transducer/reduced']?x:{'@@transducer/value':x,'@@transducer/reduced':true};};/**
+	     */
+	    var _isArray = Array.isArray || function _isArray(val) {
+	        return val != null && val.length >= 0 && Object.prototype.toString.call(val) === '[object Array]';
+	    };
+
+	    var _isFunction = function _isFunction(x) {
+	        return Object.prototype.toString.call(x) === '[object Function]';
+	    };
+
+	    var _isNumber = function _isNumber(x) {
+	        return Object.prototype.toString.call(x) === '[object Number]';
+	    };
+
+	    var _isObject = function _isObject(x) {
+	        return Object.prototype.toString.call(x) === '[object Object]';
+	    };
+
+	    var _isPlaceholder = function _isPlaceholder(a) {
+	        return a != null && (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === 'object' && a['@@functional/placeholder'] === true;
+	    };
+
+	    var _isString = function _isString(x) {
+	        return Object.prototype.toString.call(x) === '[object String]';
+	    };
+
+	    var _isTransformer = function _isTransformer(obj) {
+	        return typeof obj['@@transducer/step'] === 'function';
+	    };
+
+	    var _map = function _map(fn, functor) {
+	        var idx = 0;
+	        var len = functor.length;
+	        var result = Array(len);
+	        while (idx < len) {
+	            result[idx] = fn(functor[idx]);
+	            idx += 1;
+	        }
+	        return result;
+	    };
+
+	    var _of = function _of(x) {
+	        return [x];
+	    };
+
+	    var _pipe = function _pipe(f, g) {
+	        return function () {
+	            return g.call(this, f.apply(this, arguments));
+	        };
+	    };
+
+	    // \b matches word boundary; [\b] matches backspace
+	    var _quote = function _quote(s) {
+	        var escaped = s.replace(/\\/g, '\\\\').replace(/[\b]/g, '\\b') // \b matches word boundary; [\b] matches backspace
+	        .replace(/\f/g, '\\f').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\v/g, '\\v').replace(/\0/g, '\\0');
+	        return '"' + escaped.replace(/"/g, '\\"') + '"';
+	    };
+
+	    var _reduced = function _reduced(x) {
+	        return x && x['@@transducer/reduced'] ? x : {
+	            '@@transducer/value': x,
+	            '@@transducer/reduced': true
+	        };
+	    };
+
+	    /**
 	     * An optimized, private array `slice` implementation.
 	     *
 	     * @private
@@ -2518,9 +2904,67 @@
 	     *        return _slice(arguments, 0, 3);
 	     *      };
 	     *      firstThreeArgs(1, 2, 3, 4); //=> [1, 2, 3]
-	     */var _slice=function _slice(args,from,to){switch(arguments.length){case 1:return _slice(args,0,args.length);case 2:return _slice(args,from,args.length);default:var list=[];var idx=0;var len=Math.max(0,Math.min(args.length,to)-from);while(idx<len){list[idx]=args[from+idx];idx+=1;}return list;}};/**
+	     */
+	    var _slice = function _slice(args, from, to) {
+	        switch (arguments.length) {
+	            case 1:
+	                return _slice(args, 0, args.length);
+	            case 2:
+	                return _slice(args, from, args.length);
+	            default:
+	                var list = [];
+	                var idx = 0;
+	                var len = Math.max(0, Math.min(args.length, to) - from);
+	                while (idx < len) {
+	                    list[idx] = args[from + idx];
+	                    idx += 1;
+	                }
+	                return list;
+	        }
+	    };
+
+	    /**
 	     * Polyfill from <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString>.
-	     */var _toISOString=function(){var pad=function pad(n){return(n<10?'0':'')+n;};return typeof Date.prototype.toISOString==='function'?function _toISOString(d){return d.toISOString();}:function _toISOString(d){return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+':'+pad(d.getUTCSeconds())+'.'+(d.getUTCMilliseconds()/1000).toFixed(3).slice(2,5)+'Z';};}();var _xfBase={init:function init(){return this.xf['@@transducer/init']();},result:function result(_result){return this.xf['@@transducer/result'](_result);}};var _xwrap=function(){function XWrap(fn){this.f=fn;}XWrap.prototype['@@transducer/init']=function(){throw new Error('init not implemented on XWrap');};XWrap.prototype['@@transducer/result']=function(acc){return acc;};XWrap.prototype['@@transducer/step']=function(acc,x){return this.f(acc,x);};return function _xwrap(fn){return new XWrap(fn);};}();/**
+	     */
+	    var _toISOString = function () {
+	        var pad = function pad(n) {
+	            return (n < 10 ? '0' : '') + n;
+	        };
+	        return typeof Date.prototype.toISOString === 'function' ? function _toISOString(d) {
+	            return d.toISOString();
+	        } : function _toISOString(d) {
+	            return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + '.' + (d.getUTCMilliseconds() / 1000).toFixed(3).slice(2, 5) + 'Z';
+	        };
+	    }();
+
+	    var _xfBase = {
+	        init: function init() {
+	            return this.xf['@@transducer/init']();
+	        },
+	        result: function result(_result) {
+	            return this.xf['@@transducer/result'](_result);
+	        }
+	    };
+
+	    var _xwrap = function () {
+	        function XWrap(fn) {
+	            this.f = fn;
+	        }
+	        XWrap.prototype['@@transducer/init'] = function () {
+	            throw new Error('init not implemented on XWrap');
+	        };
+	        XWrap.prototype['@@transducer/result'] = function (acc) {
+	            return acc;
+	        };
+	        XWrap.prototype['@@transducer/step'] = function (acc, x) {
+	            return this.f(acc, x);
+	        };
+	        return function _xwrap(fn) {
+	            return new XWrap(fn);
+	        };
+	    }();
+
+	    /**
 	     * Similar to hasMethod, this checks whether a function has a [methodname]
 	     * function. If it isn't an array it will execute that function otherwise it
 	     * will default to the ramda implementation.
@@ -2529,28 +2973,107 @@
 	     * @param {Function} fn ramda implemtation
 	     * @param {String} methodname property to check for a custom implementation
 	     * @return {Object} Whatever the return value of the method is.
-	     */var _checkForMethod=function _checkForMethod(methodname,fn){return function(){var length=arguments.length;if(length===0){return fn();}var obj=arguments[length-1];return _isArray(obj)||typeof obj[methodname]!=='function'?fn.apply(this,arguments):obj[methodname].apply(obj,_slice(arguments,0,length-1));};};/**
+	     */
+	    var _checkForMethod = function _checkForMethod(methodname, fn) {
+	        return function () {
+	            var length = arguments.length;
+	            if (length === 0) {
+	                return fn();
+	            }
+	            var obj = arguments[length - 1];
+	            return _isArray(obj) || typeof obj[methodname] !== 'function' ? fn.apply(this, arguments) : obj[methodname].apply(obj, _slice(arguments, 0, length - 1));
+	        };
+	    };
+
+	    /**
 	     * Optimized internal one-arity curry function.
 	     *
 	     * @private
 	     * @category Function
 	     * @param {Function} fn The function to curry.
 	     * @return {Function} The curried function.
-	     */var _curry1=function _curry1(fn){return function f1(a){if(arguments.length===0||_isPlaceholder(a)){return f1;}else{return fn.apply(this,arguments);}};};/**
+	     */
+	    var _curry1 = function _curry1(fn) {
+	        return function f1(a) {
+	            if (arguments.length === 0 || _isPlaceholder(a)) {
+	                return f1;
+	            } else {
+	                return fn.apply(this, arguments);
+	            }
+	        };
+	    };
+
+	    /**
 	     * Optimized internal two-arity curry function.
 	     *
 	     * @private
 	     * @category Function
 	     * @param {Function} fn The function to curry.
 	     * @return {Function} The curried function.
-	     */var _curry2=function _curry2(fn){return function f2(a,b){switch(arguments.length){case 0:return f2;case 1:return _isPlaceholder(a)?f2:_curry1(function(_b){return fn(a,_b);});default:return _isPlaceholder(a)&&_isPlaceholder(b)?f2:_isPlaceholder(a)?_curry1(function(_a){return fn(_a,b);}):_isPlaceholder(b)?_curry1(function(_b){return fn(a,_b);}):fn(a,b);}};};/**
+	     */
+	    var _curry2 = function _curry2(fn) {
+	        return function f2(a, b) {
+	            switch (arguments.length) {
+	                case 0:
+	                    return f2;
+	                case 1:
+	                    return _isPlaceholder(a) ? f2 : _curry1(function (_b) {
+	                        return fn(a, _b);
+	                    });
+	                default:
+	                    return _isPlaceholder(a) && _isPlaceholder(b) ? f2 : _isPlaceholder(a) ? _curry1(function (_a) {
+	                        return fn(_a, b);
+	                    }) : _isPlaceholder(b) ? _curry1(function (_b) {
+	                        return fn(a, _b);
+	                    }) : fn(a, b);
+	            }
+	        };
+	    };
+
+	    /**
 	     * Optimized internal three-arity curry function.
 	     *
 	     * @private
 	     * @category Function
 	     * @param {Function} fn The function to curry.
 	     * @return {Function} The curried function.
-	     */var _curry3=function _curry3(fn){return function f3(a,b,c){switch(arguments.length){case 0:return f3;case 1:return _isPlaceholder(a)?f3:_curry2(function(_b,_c){return fn(a,_b,_c);});case 2:return _isPlaceholder(a)&&_isPlaceholder(b)?f3:_isPlaceholder(a)?_curry2(function(_a,_c){return fn(_a,b,_c);}):_isPlaceholder(b)?_curry2(function(_b,_c){return fn(a,_b,_c);}):_curry1(function(_c){return fn(a,b,_c);});default:return _isPlaceholder(a)&&_isPlaceholder(b)&&_isPlaceholder(c)?f3:_isPlaceholder(a)&&_isPlaceholder(b)?_curry2(function(_a,_b){return fn(_a,_b,c);}):_isPlaceholder(a)&&_isPlaceholder(c)?_curry2(function(_a,_c){return fn(_a,b,_c);}):_isPlaceholder(b)&&_isPlaceholder(c)?_curry2(function(_b,_c){return fn(a,_b,_c);}):_isPlaceholder(a)?_curry1(function(_a){return fn(_a,b,c);}):_isPlaceholder(b)?_curry1(function(_b){return fn(a,_b,c);}):_isPlaceholder(c)?_curry1(function(_c){return fn(a,b,_c);}):fn(a,b,c);}};};/**
+	     */
+	    var _curry3 = function _curry3(fn) {
+	        return function f3(a, b, c) {
+	            switch (arguments.length) {
+	                case 0:
+	                    return f3;
+	                case 1:
+	                    return _isPlaceholder(a) ? f3 : _curry2(function (_b, _c) {
+	                        return fn(a, _b, _c);
+	                    });
+	                case 2:
+	                    return _isPlaceholder(a) && _isPlaceholder(b) ? f3 : _isPlaceholder(a) ? _curry2(function (_a, _c) {
+	                        return fn(_a, b, _c);
+	                    }) : _isPlaceholder(b) ? _curry2(function (_b, _c) {
+	                        return fn(a, _b, _c);
+	                    }) : _curry1(function (_c) {
+	                        return fn(a, b, _c);
+	                    });
+	                default:
+	                    return _isPlaceholder(a) && _isPlaceholder(b) && _isPlaceholder(c) ? f3 : _isPlaceholder(a) && _isPlaceholder(b) ? _curry2(function (_a, _b) {
+	                        return fn(_a, _b, c);
+	                    }) : _isPlaceholder(a) && _isPlaceholder(c) ? _curry2(function (_a, _c) {
+	                        return fn(_a, b, _c);
+	                    }) : _isPlaceholder(b) && _isPlaceholder(c) ? _curry2(function (_b, _c) {
+	                        return fn(a, _b, _c);
+	                    }) : _isPlaceholder(a) ? _curry1(function (_a) {
+	                        return fn(_a, b, c);
+	                    }) : _isPlaceholder(b) ? _curry1(function (_b) {
+	                        return fn(a, _b, c);
+	                    }) : _isPlaceholder(c) ? _curry1(function (_c) {
+	                        return fn(a, b, _c);
+	                    }) : fn(a, b, c);
+	            }
+	        };
+	    };
+
+	    /**
 	     * Internal curryN function.
 	     *
 	     * @private
@@ -2559,7 +3082,32 @@
 	     * @param {Array} received An array of arguments received thus far.
 	     * @param {Function} fn The function to curry.
 	     * @return {Function} The curried function.
-	     */var _curryN=function _curryN(length,received,fn){return function(){var combined=[];var argsIdx=0;var left=length;var combinedIdx=0;while(combinedIdx<received.length||argsIdx<arguments.length){var result;if(combinedIdx<received.length&&(!_isPlaceholder(received[combinedIdx])||argsIdx>=arguments.length)){result=received[combinedIdx];}else{result=arguments[argsIdx];argsIdx+=1;}combined[combinedIdx]=result;if(!_isPlaceholder(result)){left-=1;}combinedIdx+=1;}return left<=0?fn.apply(this,combined):_arity(left,_curryN(length,combined,fn));};};/**
+	     */
+	    var _curryN = function _curryN(length, received, fn) {
+	        return function () {
+	            var combined = [];
+	            var argsIdx = 0;
+	            var left = length;
+	            var combinedIdx = 0;
+	            while (combinedIdx < received.length || argsIdx < arguments.length) {
+	                var result;
+	                if (combinedIdx < received.length && (!_isPlaceholder(received[combinedIdx]) || argsIdx >= arguments.length)) {
+	                    result = received[combinedIdx];
+	                } else {
+	                    result = arguments[argsIdx];
+	                    argsIdx += 1;
+	                }
+	                combined[combinedIdx] = result;
+	                if (!_isPlaceholder(result)) {
+	                    left -= 1;
+	                }
+	                combinedIdx += 1;
+	            }
+	            return left <= 0 ? fn.apply(this, combined) : _arity(left, _curryN(length, combined, fn));
+	        };
+	    };
+
+	    /**
 	     * Returns a function that dispatches with different strategies based on the
 	     * object in list position (last argument). If it is an array, executes [fn].
 	     * Otherwise, if it has a function with [methodname], it will execute that
@@ -2572,7 +3120,143 @@
 	     * @param {Function} xf transducer to initialize if object is transformer
 	     * @param {Function} fn default ramda implementation
 	     * @return {Function} A function that dispatches on object in list position
-	     */var _dispatchable=function _dispatchable(methodname,xf,fn){return function(){var length=arguments.length;if(length===0){return fn();}var obj=arguments[length-1];if(!_isArray(obj)){var args=_slice(arguments,0,length-1);if(typeof obj[methodname]==='function'){return obj[methodname].apply(obj,args);}if(_isTransformer(obj)){var transducer=xf.apply(null,args);return transducer(obj);}}return fn.apply(this,arguments);};};var _xany=function(){function XAny(f,xf){this.xf=xf;this.f=f;this.any=false;}XAny.prototype['@@transducer/init']=_xfBase.init;XAny.prototype['@@transducer/result']=function(result){if(!this.any){result=this.xf['@@transducer/step'](result,false);}return this.xf['@@transducer/result'](result);};XAny.prototype['@@transducer/step']=function(result,input){if(this.f(input)){this.any=true;result=_reduced(this.xf['@@transducer/step'](result,true));}return result;};return _curry2(function _xany(f,xf){return new XAny(f,xf);});}();var _xdrop=function(){function XDrop(n,xf){this.xf=xf;this.n=n;}XDrop.prototype['@@transducer/init']=_xfBase.init;XDrop.prototype['@@transducer/result']=_xfBase.result;XDrop.prototype['@@transducer/step']=function(result,input){if(this.n>0){this.n-=1;return result;}return this.xf['@@transducer/step'](result,input);};return _curry2(function _xdrop(n,xf){return new XDrop(n,xf);});}();var _xfilter=function(){function XFilter(f,xf){this.xf=xf;this.f=f;}XFilter.prototype['@@transducer/init']=_xfBase.init;XFilter.prototype['@@transducer/result']=_xfBase.result;XFilter.prototype['@@transducer/step']=function(result,input){return this.f(input)?this.xf['@@transducer/step'](result,input):result;};return _curry2(function _xfilter(f,xf){return new XFilter(f,xf);});}();var _xfind=function(){function XFind(f,xf){this.xf=xf;this.f=f;this.found=false;}XFind.prototype['@@transducer/init']=_xfBase.init;XFind.prototype['@@transducer/result']=function(result){if(!this.found){result=this.xf['@@transducer/step'](result,void 0);}return this.xf['@@transducer/result'](result);};XFind.prototype['@@transducer/step']=function(result,input){if(this.f(input)){this.found=true;result=_reduced(this.xf['@@transducer/step'](result,input));}return result;};return _curry2(function _xfind(f,xf){return new XFind(f,xf);});}();var _xmap=function(){function XMap(f,xf){this.xf=xf;this.f=f;}XMap.prototype['@@transducer/init']=_xfBase.init;XMap.prototype['@@transducer/result']=_xfBase.result;XMap.prototype['@@transducer/step']=function(result,input){return this.xf['@@transducer/step'](result,this.f(input));};return _curry2(function _xmap(f,xf){return new XMap(f,xf);});}();var _xtakeWhile=function(){function XTakeWhile(f,xf){this.xf=xf;this.f=f;}XTakeWhile.prototype['@@transducer/init']=_xfBase.init;XTakeWhile.prototype['@@transducer/result']=_xfBase.result;XTakeWhile.prototype['@@transducer/step']=function(result,input){return this.f(input)?this.xf['@@transducer/step'](result,input):_reduced(result);};return _curry2(function _xtakeWhile(f,xf){return new XTakeWhile(f,xf);});}();/**
+	     */
+	    var _dispatchable = function _dispatchable(methodname, xf, fn) {
+	        return function () {
+	            var length = arguments.length;
+	            if (length === 0) {
+	                return fn();
+	            }
+	            var obj = arguments[length - 1];
+	            if (!_isArray(obj)) {
+	                var args = _slice(arguments, 0, length - 1);
+	                if (typeof obj[methodname] === 'function') {
+	                    return obj[methodname].apply(obj, args);
+	                }
+	                if (_isTransformer(obj)) {
+	                    var transducer = xf.apply(null, args);
+	                    return transducer(obj);
+	                }
+	            }
+	            return fn.apply(this, arguments);
+	        };
+	    };
+
+	    var _xany = function () {
+	        function XAny(f, xf) {
+	            this.xf = xf;
+	            this.f = f;
+	            this.any = false;
+	        }
+	        XAny.prototype['@@transducer/init'] = _xfBase.init;
+	        XAny.prototype['@@transducer/result'] = function (result) {
+	            if (!this.any) {
+	                result = this.xf['@@transducer/step'](result, false);
+	            }
+	            return this.xf['@@transducer/result'](result);
+	        };
+	        XAny.prototype['@@transducer/step'] = function (result, input) {
+	            if (this.f(input)) {
+	                this.any = true;
+	                result = _reduced(this.xf['@@transducer/step'](result, true));
+	            }
+	            return result;
+	        };
+	        return _curry2(function _xany(f, xf) {
+	            return new XAny(f, xf);
+	        });
+	    }();
+
+	    var _xdrop = function () {
+	        function XDrop(n, xf) {
+	            this.xf = xf;
+	            this.n = n;
+	        }
+	        XDrop.prototype['@@transducer/init'] = _xfBase.init;
+	        XDrop.prototype['@@transducer/result'] = _xfBase.result;
+	        XDrop.prototype['@@transducer/step'] = function (result, input) {
+	            if (this.n > 0) {
+	                this.n -= 1;
+	                return result;
+	            }
+	            return this.xf['@@transducer/step'](result, input);
+	        };
+	        return _curry2(function _xdrop(n, xf) {
+	            return new XDrop(n, xf);
+	        });
+	    }();
+
+	    var _xfilter = function () {
+	        function XFilter(f, xf) {
+	            this.xf = xf;
+	            this.f = f;
+	        }
+	        XFilter.prototype['@@transducer/init'] = _xfBase.init;
+	        XFilter.prototype['@@transducer/result'] = _xfBase.result;
+	        XFilter.prototype['@@transducer/step'] = function (result, input) {
+	            return this.f(input) ? this.xf['@@transducer/step'](result, input) : result;
+	        };
+	        return _curry2(function _xfilter(f, xf) {
+	            return new XFilter(f, xf);
+	        });
+	    }();
+
+	    var _xfind = function () {
+	        function XFind(f, xf) {
+	            this.xf = xf;
+	            this.f = f;
+	            this.found = false;
+	        }
+	        XFind.prototype['@@transducer/init'] = _xfBase.init;
+	        XFind.prototype['@@transducer/result'] = function (result) {
+	            if (!this.found) {
+	                result = this.xf['@@transducer/step'](result, void 0);
+	            }
+	            return this.xf['@@transducer/result'](result);
+	        };
+	        XFind.prototype['@@transducer/step'] = function (result, input) {
+	            if (this.f(input)) {
+	                this.found = true;
+	                result = _reduced(this.xf['@@transducer/step'](result, input));
+	            }
+	            return result;
+	        };
+	        return _curry2(function _xfind(f, xf) {
+	            return new XFind(f, xf);
+	        });
+	    }();
+
+	    var _xmap = function () {
+	        function XMap(f, xf) {
+	            this.xf = xf;
+	            this.f = f;
+	        }
+	        XMap.prototype['@@transducer/init'] = _xfBase.init;
+	        XMap.prototype['@@transducer/result'] = _xfBase.result;
+	        XMap.prototype['@@transducer/step'] = function (result, input) {
+	            return this.xf['@@transducer/step'](result, this.f(input));
+	        };
+	        return _curry2(function _xmap(f, xf) {
+	            return new XMap(f, xf);
+	        });
+	    }();
+
+	    var _xtakeWhile = function () {
+	        function XTakeWhile(f, xf) {
+	            this.xf = xf;
+	            this.f = f;
+	        }
+	        XTakeWhile.prototype['@@transducer/init'] = _xfBase.init;
+	        XTakeWhile.prototype['@@transducer/result'] = _xfBase.result;
+	        XTakeWhile.prototype['@@transducer/step'] = function (result, input) {
+	            return this.f(input) ? this.xf['@@transducer/step'](result, input) : _reduced(result);
+	        };
+	        return _curry2(function _xtakeWhile(f, xf) {
+	            return new XTakeWhile(f, xf);
+	        });
+	    }();
+
+	    /**
 	     * Adds two values.
 	     *
 	     * @func
@@ -2588,7 +3272,12 @@
 	     *
 	     *      R.add(2, 3);       //=>  5
 	     *      R.add(7)(10);      //=> 17
-	     */var add=_curry2(function add(a,b){return Number(a)+Number(b);});/**
+	     */
+	    var add = _curry2(function add(a, b) {
+	        return Number(a) + Number(b);
+	    });
+
+	    /**
 	     * Returns a function that always returns the given value. Note that for
 	     * non-primitives the value returned is a reference to the original value.
 	     *
@@ -2606,7 +3295,14 @@
 	     *
 	     *      var t = R.always('Tee');
 	     *      t(); //=> 'Tee'
-	     */var always=_curry1(function always(val){return function(){return val;};});/**
+	     */
+	    var always = _curry1(function always(val) {
+	        return function () {
+	            return val;
+	        };
+	    });
+
+	    /**
 	     * Returns `true` if both arguments are `true`; `false` otherwise.
 	     *
 	     * @func
@@ -2624,7 +3320,12 @@
 	     *      R.and(true, false); //=> false
 	     *      R.and(false, true); //=> false
 	     *      R.and(false, false); //=> false
-	     */var and=_curry2(function and(a,b){return a&&b;});/**
+	     */
+	    var and = _curry2(function and(a, b) {
+	        return a && b;
+	    });
+
+	    /**
 	     * Returns `true` if at least one of elements of the list match the predicate,
 	     * `false` otherwise.
 	     *
@@ -2648,7 +3349,19 @@
 	     *      var lessThan2 = R.flip(R.lt)(2);
 	     *      R.any(lessThan0)([1, 2]); //=> false
 	     *      R.any(lessThan2)([1, 2]); //=> true
-	     */var any=_curry2(_dispatchable('any',_xany,function any(fn,list){var idx=0;while(idx<list.length){if(fn(list[idx])){return true;}idx+=1;}return false;}));/**
+	     */
+	    var any = _curry2(_dispatchable('any', _xany, function any(fn, list) {
+	        var idx = 0;
+	        while (idx < list.length) {
+	            if (fn(list[idx])) {
+	                return true;
+	            }
+	            idx += 1;
+	        }
+	        return false;
+	    }));
+
+	    /**
 	     * Applies function `fn` to the argument list `args`. This is useful for
 	     * creating a fixed-arity function from a variadic function. `fn` should be a
 	     * bound function if context is significant.
@@ -2667,7 +3380,12 @@
 	     *      var nums = [1, 2, 3, -99, 42, 6, 7];
 	     *      R.apply(Math.max, nums); //=> 42
 	     * @symb R.apply(f, [a, b, c]) = f(a, b, c)
-	     */var apply=_curry2(function apply(fn,args){return fn.apply(this,args);});/**
+	     */
+	    var apply = _curry2(function apply(fn, args) {
+	        return fn.apply(this, args);
+	    });
+
+	    /**
 	     * Makes a shallow clone of an object, setting or overriding the specified
 	     * property with the given value. Note that this copies and flattens prototype
 	     * properties onto the new object as well. All non-primitive properties are
@@ -2686,7 +3404,17 @@
 	     * @example
 	     *
 	     *      R.assoc('c', 3, {a: 1, b: 2}); //=> {a: 1, b: 2, c: 3}
-	     */var assoc=_curry3(function assoc(prop,val,obj){var result={};for(var p in obj){result[p]=obj[p];}result[prop]=val;return result;});/**
+	     */
+	    var assoc = _curry3(function assoc(prop, val, obj) {
+	        var result = {};
+	        for (var p in obj) {
+	            result[p] = obj[p];
+	        }
+	        result[prop] = val;
+	        return result;
+	    });
+
+	    /**
 	     * Creates a function that is bound to a context.
 	     * Note: `R.bind` does not provide the additional argument-binding capabilities of
 	     * [Function.prototype.bind](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind).
@@ -2707,7 +3435,14 @@
 	     *      R.pipe(R.assoc('a', 2), R.tap(log), R.assoc('a', 3))({a: 1}); //=> {a: 3}
 	     *      // logs {a: 2}
 	     * @symb R.bind(f, o)(a, b) = f.call(o, a, b)
-	     */var bind=_curry2(function bind(fn,thisObj){return _arity(fn.length,function(){return fn.apply(thisObj,arguments);});});/**
+	     */
+	    var bind = _curry2(function bind(fn, thisObj) {
+	        return _arity(fn.length, function () {
+	            return fn.apply(thisObj, arguments);
+	        });
+	    });
+
+	    /**
 	     * Restricts a number to be within a range.
 	     *
 	     * Also works for other ordered types such as Strings and Dates.
@@ -2726,7 +3461,15 @@
 	     *      R.clamp(1, 10, -1) // => 1
 	     *      R.clamp(1, 10, 11) // => 10
 	     *      R.clamp(1, 10, 4)  // => 4
-	     */var clamp=_curry3(function clamp(min,max,value){if(min>max){throw new Error('min must not be greater than max in clamp(min, max, value)');}return value<min?min:value>max?max:value;});/**
+	     */
+	    var clamp = _curry3(function clamp(min, max, value) {
+	        if (min > max) {
+	            throw new Error('min must not be greater than max in clamp(min, max, value)');
+	        }
+	        return value < min ? min : value > max ? max : value;
+	    });
+
+	    /**
 	     * Returns a curried equivalent of the provided function, with the specified
 	     * arity. The curried function has two unusual capabilities. First, its
 	     * arguments needn't be provided one at a time. If `g` is `R.curryN(3, f)`, the
@@ -2767,7 +3510,15 @@
 	     *      var f = curriedAddFourNumbers(1, 2);
 	     *      var g = f(3);
 	     *      g(4); //=> 10
-	     */var curryN=_curry2(function curryN(length,fn){if(length===1){return _curry1(fn);}return _arity(length,_curryN(length,[],fn));});/**
+	     */
+	    var curryN = _curry2(function curryN(length, fn) {
+	        if (length === 1) {
+	            return _curry1(fn);
+	        }
+	        return _arity(length, _curryN(length, [], fn));
+	    });
+
+	    /**
 	     * Returns the first element of the list which matches the predicate, or
 	     * `undefined` if no element matches.
 	     *
@@ -2790,7 +3541,19 @@
 	     *      var xs = [{a: 1}, {a: 2}, {a: 3}];
 	     *      R.find(R.propEq('a', 2))(xs); //=> {a: 2}
 	     *      R.find(R.propEq('a', 4))(xs); //=> undefined
-	     */var find=_curry2(_dispatchable('find',_xfind,function find(fn,list){var idx=0;var len=list.length;while(idx<len){if(fn(list[idx])){return list[idx];}idx+=1;}}));/**
+	     */
+	    var find = _curry2(_dispatchable('find', _xfind, function find(fn, list) {
+	        var idx = 0;
+	        var len = list.length;
+	        while (idx < len) {
+	            if (fn(list[idx])) {
+	                return list[idx];
+	            }
+	            idx += 1;
+	        }
+	    }));
+
+	    /**
 	     * Iterate over an input `list`, calling a provided function `fn` for each
 	     * element in the list.
 	     *
@@ -2823,7 +3586,18 @@
 	     *      // logs 7
 	     *      // logs 8
 	     * @symb R.forEach(f, [a, b, c]) = [a, b, c]
-	     */var forEach=_curry2(_checkForMethod('forEach',function forEach(fn,list){var len=list.length;var idx=0;while(idx<len){fn(list[idx]);idx+=1;}return list;}));/**
+	     */
+	    var forEach = _curry2(_checkForMethod('forEach', function forEach(fn, list) {
+	        var len = list.length;
+	        var idx = 0;
+	        while (idx < len) {
+	            fn(list[idx]);
+	            idx += 1;
+	        }
+	        return list;
+	    }));
+
+	    /**
 	     * Creates a new object from a list key-value pairs. If a key appears in
 	     * multiple pairs, the rightmost pair is included in the object.
 	     *
@@ -2838,7 +3612,18 @@
 	     * @example
 	     *
 	     *      R.fromPairs([['a', 1], ['b', 2], ['c', 3]]); //=> {a: 1, b: 2, c: 3}
-	     */var fromPairs=_curry1(function fromPairs(pairs){var result={};var idx=0;while(idx<pairs.length){result[pairs[idx][0]]=pairs[idx][1];idx+=1;}return result;});/**
+	     */
+	    var fromPairs = _curry1(function fromPairs(pairs) {
+	        var result = {};
+	        var idx = 0;
+	        while (idx < pairs.length) {
+	            result[pairs[idx][0]] = pairs[idx][1];
+	            idx += 1;
+	        }
+	        return result;
+	    });
+
+	    /**
 	     * Returns `true` if the first argument is greater than or equal to the second;
 	     * `false` otherwise.
 	     *
@@ -2858,7 +3643,12 @@
 	     *      R.gte(2, 3); //=> false
 	     *      R.gte('a', 'z'); //=> false
 	     *      R.gte('z', 'a'); //=> true
-	     */var gte=_curry2(function gte(a,b){return a>=b;});/**
+	     */
+	    var gte = _curry2(function gte(a, b) {
+	        return a >= b;
+	    });
+
+	    /**
 	     * Returns whether or not an object has an own property with the specified name
 	     *
 	     * @func
@@ -2881,7 +3671,10 @@
 	     *      pointHas('x');  //=> true
 	     *      pointHas('y');  //=> true
 	     *      pointHas('z');  //=> false
-	     */var has=_curry2(_has);/**
+	     */
+	    var has = _curry2(_has);
+
+	    /**
 	     * Returns true if its arguments are identical, false otherwise. Values are
 	     * identical if they reference the same memory. `NaN` is identical to `NaN`;
 	     * `0` and `-0` are not identical.
@@ -2903,15 +3696,24 @@
 	     *      R.identical([], []); //=> false
 	     *      R.identical(0, -0); //=> false
 	     *      R.identical(NaN, NaN); //=> true
-	     */// SameValue algorithm
-	// Steps 1-5, 7-10
-	// Steps 6.b-6.e: +0 != -0
-	// Step 6.a: NaN == NaN
-	var identical=_curry2(function identical(a,b){// SameValue algorithm
-	if(a===b){// Steps 1-5, 7-10
-	// Steps 6.b-6.e: +0 != -0
-	return a!==0||1/a===1/b;}else{// Step 6.a: NaN == NaN
-	return a!==a&&b!==b;}});/**
+	     */
+	    // SameValue algorithm
+	    // Steps 1-5, 7-10
+	    // Steps 6.b-6.e: +0 != -0
+	    // Step 6.a: NaN == NaN
+	    var identical = _curry2(function identical(a, b) {
+	        // SameValue algorithm
+	        if (a === b) {
+	            // Steps 1-5, 7-10
+	            // Steps 6.b-6.e: +0 != -0
+	            return a !== 0 || 1 / a === 1 / b;
+	        } else {
+	            // Step 6.a: NaN == NaN
+	            return a !== a && b !== b;
+	        }
+	    });
+
+	    /**
 	     * A function that does nothing but return the parameter supplied to it. Good
 	     * as a default or placeholder function.
 	     *
@@ -2929,7 +3731,10 @@
 	     *      var obj = {};
 	     *      R.identity(obj) === obj; //=> true
 	     * @symb R.identity(a) = a
-	     */var identity=_curry1(_identity);/**
+	     */
+	    var identity = _curry1(_identity);
+
+	    /**
 	     * Tests whether or not an object is similar to an array.
 	     *
 	     * @func
@@ -2948,7 +3753,33 @@
 	     *      R.isArrayLike({}); //=> false
 	     *      R.isArrayLike({length: 10}); //=> false
 	     *      R.isArrayLike({0: 'zero', 9: 'nine', length: 10}); //=> true
-	     */var isArrayLike=_curry1(function isArrayLike(x){if(_isArray(x)){return true;}if(!x){return false;}if((typeof x==='undefined'?'undefined':_typeof(x))!=='object'){return false;}if(_isString(x)){return false;}if(x.nodeType===1){return!!x.length;}if(x.length===0){return true;}if(x.length>0){return x.hasOwnProperty(0)&&x.hasOwnProperty(x.length-1);}return false;});/**
+	     */
+	    var isArrayLike = _curry1(function isArrayLike(x) {
+	        if (_isArray(x)) {
+	            return true;
+	        }
+	        if (!x) {
+	            return false;
+	        }
+	        if ((typeof x === 'undefined' ? 'undefined' : _typeof(x)) !== 'object') {
+	            return false;
+	        }
+	        if (_isString(x)) {
+	            return false;
+	        }
+	        if (x.nodeType === 1) {
+	            return !!x.length;
+	        }
+	        if (x.length === 0) {
+	            return true;
+	        }
+	        if (x.length > 0) {
+	            return x.hasOwnProperty(0) && x.hasOwnProperty(x.length - 1);
+	        }
+	        return false;
+	    });
+
+	    /**
 	     * Returns a list containing the names of all the enumerable own properties of
 	     * the supplied object.
 	     * Note that the order of the output array is not guaranteed to be consistent
@@ -2964,11 +3795,58 @@
 	     * @example
 	     *
 	     *      R.keys({a: 1, b: 2, c: 3}); //=> ['a', 'b', 'c']
-	     */// cover IE < 9 keys issues
-	// Safari bug
-	var keys=function(){// cover IE < 9 keys issues
-	var hasEnumBug=!{toString:null}.propertyIsEnumerable('toString');var nonEnumerableProps=['constructor','valueOf','isPrototypeOf','toString','propertyIsEnumerable','hasOwnProperty','toLocaleString'];// Safari bug
-	var hasArgsEnumBug=function(){'use strict';return arguments.propertyIsEnumerable('length');}();var contains=function contains(list,item){var idx=0;while(idx<list.length){if(list[idx]===item){return true;}idx+=1;}return false;};return typeof Object.keys==='function'&&!hasArgsEnumBug?_curry1(function keys(obj){return Object(obj)!==obj?[]:Object.keys(obj);}):_curry1(function keys(obj){if(Object(obj)!==obj){return[];}var prop,nIdx;var ks=[];var checkArgsLength=hasArgsEnumBug&&_isArguments(obj);for(prop in obj){if(_has(prop,obj)&&(!checkArgsLength||prop!=='length')){ks[ks.length]=prop;}}if(hasEnumBug){nIdx=nonEnumerableProps.length-1;while(nIdx>=0){prop=nonEnumerableProps[nIdx];if(_has(prop,obj)&&!contains(ks,prop)){ks[ks.length]=prop;}nIdx-=1;}}return ks;});}();/**
+	     */
+	    // cover IE < 9 keys issues
+	    // Safari bug
+	    var keys = function () {
+	        // cover IE < 9 keys issues
+	        var hasEnumBug = !{ toString: null }.propertyIsEnumerable('toString');
+	        var nonEnumerableProps = ['constructor', 'valueOf', 'isPrototypeOf', 'toString', 'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
+	        // Safari bug
+	        var hasArgsEnumBug = function () {
+	            'use strict';
+
+	            return arguments.propertyIsEnumerable('length');
+	        }();
+	        var contains = function contains(list, item) {
+	            var idx = 0;
+	            while (idx < list.length) {
+	                if (list[idx] === item) {
+	                    return true;
+	                }
+	                idx += 1;
+	            }
+	            return false;
+	        };
+	        return typeof Object.keys === 'function' && !hasArgsEnumBug ? _curry1(function keys(obj) {
+	            return Object(obj) !== obj ? [] : Object.keys(obj);
+	        }) : _curry1(function keys(obj) {
+	            if (Object(obj) !== obj) {
+	                return [];
+	            }
+	            var prop, nIdx;
+	            var ks = [];
+	            var checkArgsLength = hasArgsEnumBug && _isArguments(obj);
+	            for (prop in obj) {
+	                if (_has(prop, obj) && (!checkArgsLength || prop !== 'length')) {
+	                    ks[ks.length] = prop;
+	                }
+	            }
+	            if (hasEnumBug) {
+	                nIdx = nonEnumerableProps.length - 1;
+	                while (nIdx >= 0) {
+	                    prop = nonEnumerableProps[nIdx];
+	                    if (_has(prop, obj) && !contains(ks, prop)) {
+	                        ks[ks.length] = prop;
+	                    }
+	                    nIdx -= 1;
+	                }
+	            }
+	            return ks;
+	        });
+	    }();
+
+	    /**
 	     * Returns the number of elements in the array by returning `list.length`.
 	     *
 	     * @func
@@ -2982,7 +3860,12 @@
 	     *
 	     *      R.length([]); //=> 0
 	     *      R.length([1, 2, 3]); //=> 3
-	     */var length=_curry1(function length(list){return list!=null&&_isNumber(list.length)?list.length:NaN;});/**
+	     */
+	    var length = _curry1(function length(list) {
+	        return list != null && _isNumber(list.length) ? list.length : NaN;
+	    });
+
+	    /**
 	     * Returns `true` if the first argument is less than the second; `false`
 	     * otherwise.
 	     *
@@ -3002,7 +3885,12 @@
 	     *      R.lt(2, 3); //=> true
 	     *      R.lt('a', 'z'); //=> true
 	     *      R.lt('z', 'a'); //=> false
-	     */var lt=_curry2(function lt(a,b){return a<b;});/**
+	     */
+	    var lt = _curry2(function lt(a, b) {
+	        return a < b;
+	    });
+
+	    /**
 	     * Returns `true` if the first argument is less than or equal to the second;
 	     * `false` otherwise.
 	     *
@@ -3022,7 +3910,12 @@
 	     *      R.lte(2, 3); //=> true
 	     *      R.lte('a', 'z'); //=> true
 	     *      R.lte('z', 'a'); //=> false
-	     */var lte=_curry2(function lte(a,b){return a<=b;});/**
+	     */
+	    var lte = _curry2(function lte(a, b) {
+	        return a <= b;
+	    });
+
+	    /**
 	     * Returns the larger of its two arguments.
 	     *
 	     * @func
@@ -3038,7 +3931,12 @@
 	     *
 	     *      R.max(789, 123); //=> 789
 	     *      R.max('a', 'b'); //=> 'b'
-	     */var max=_curry2(function max(a,b){return b>a?b:a;});/**
+	     */
+	    var max = _curry2(function max(a, b) {
+	        return b > a ? b : a;
+	    });
+
+	    /**
 	     * Takes a function and two values, and returns whichever value produces the
 	     * smaller result when passed to the provided function.
 	     *
@@ -3061,7 +3959,12 @@
 	     *
 	     *      R.reduce(R.minBy(square), Infinity, [3, -5, 4, 1, -2]); //=> 1
 	     *      R.reduce(R.minBy(square), Infinity, []); //=> Infinity
-	     */var minBy=_curry3(function minBy(f,a,b){return f(b)<f(a)?b:a;});/**
+	     */
+	    var minBy = _curry3(function minBy(f, a, b) {
+	        return f(b) < f(a) ? b : a;
+	    });
+
+	    /**
 	     * Negates its argument.
 	     *
 	     * @func
@@ -3074,7 +3977,12 @@
 	     * @example
 	     *
 	     *      R.negate(42); //=> -42
-	     */var negate=_curry1(function negate(n){return-n;});/**
+	     */
+	    var negate = _curry1(function negate(n) {
+	        return -n;
+	    });
+
+	    /**
 	     * A function that returns the `!` of its argument. It will return `true` when
 	     * passed false-y value, and `false` when passed a truth-y one.
 	     *
@@ -3092,7 +4000,12 @@
 	     *      R.not(false); //=> true
 	     *      R.not(0); //=> true
 	     *      R.not(1); //=> false
-	     */var not=_curry1(function not(a){return!a;});/**
+	     */
+	    var not = _curry1(function not(a) {
+	        return !a;
+	    });
+
+	    /**
 	     * Returns the nth element of the given list or string. If n is negative the
 	     * element at index length + n is returned.
 	     *
@@ -3117,7 +4030,13 @@
 	     * @symb R.nth(-1, [a, b, c]) = c
 	     * @symb R.nth(0, [a, b, c]) = a
 	     * @symb R.nth(1, [a, b, c]) = b
-	     */var nth=_curry2(function nth(offset,list){var idx=offset<0?list.length+offset:offset;return _isString(list)?list.charAt(idx):list[idx];});/**
+	     */
+	    var nth = _curry2(function nth(offset, list) {
+	        var idx = offset < 0 ? list.length + offset : offset;
+	        return _isString(list) ? list.charAt(idx) : list[idx];
+	    });
+
+	    /**
 	     * Returns a function which returns its nth argument.
 	     *
 	     * @func
@@ -3134,7 +4053,15 @@
 	     * @symb R.nthArg(-1)(a, b, c) = c
 	     * @symb R.nthArg(0)(a, b, c) = a
 	     * @symb R.nthArg(1)(a, b, c) = b
-	     */var nthArg=_curry1(function nthArg(n){var arity=n<0?1:n+1;return curryN(arity,function(){return nth(n,arguments);});});/**
+	     */
+	    var nthArg = _curry1(function nthArg(n) {
+	        var arity = n < 0 ? 1 : n + 1;
+	        return curryN(arity, function () {
+	            return nth(n, arguments);
+	        });
+	    });
+
+	    /**
 	     * Returns a singleton array containing the value provided.
 	     *
 	     * Note this `of` is different from the ES6 `of`; See
@@ -3151,7 +4078,10 @@
 	     *
 	     *      R.of(null); //=> [null]
 	     *      R.of([42]); //=> [[42]]
-	     */var of=_curry1(_of);/**
+	     */
+	    var of = _curry1(_of);
+
+	    /**
 	     * Retrieve the value at a given path.
 	     *
 	     * @func
@@ -3167,7 +4097,21 @@
 	     *
 	     *      R.path(['a', 'b'], {a: {b: 2}}); //=> 2
 	     *      R.path(['a', 'b'], {c: {b: 2}}); //=> undefined
-	     */var path=_curry2(function path(paths,obj){var val=obj;var idx=0;while(idx<paths.length){if(val==null){return;}val=val[paths[idx]];idx+=1;}return val;});/**
+	     */
+	    var path = _curry2(function path(paths, obj) {
+	        var val = obj;
+	        var idx = 0;
+	        while (idx < paths.length) {
+	            if (val == null) {
+	                return;
+	            }
+	            val = val[paths[idx]];
+	            idx += 1;
+	        }
+	        return val;
+	    });
+
+	    /**
 	     * Returns a partial copy of an object containing only the keys specified. If
 	     * the key does not exist, the property is ignored.
 	     *
@@ -3184,7 +4128,20 @@
 	     *
 	     *      R.pick(['a', 'd'], {a: 1, b: 2, c: 3, d: 4}); //=> {a: 1, d: 4}
 	     *      R.pick(['a', 'e', 'f'], {a: 1, b: 2, c: 3, d: 4}); //=> {a: 1}
-	     */var pick=_curry2(function pick(names,obj){var result={};var idx=0;while(idx<names.length){if(names[idx]in obj){result[names[idx]]=obj[names[idx]];}idx+=1;}return result;});/**
+	     */
+	    var pick = _curry2(function pick(names, obj) {
+	        var result = {};
+	        var idx = 0;
+	        while (idx < names.length) {
+	            if (names[idx] in obj) {
+	                result[names[idx]] = obj[names[idx]];
+	            }
+	            idx += 1;
+	        }
+	        return result;
+	    });
+
+	    /**
 	     * Returns a partial copy of an object containing only the keys that satisfy
 	     * the supplied predicate.
 	     *
@@ -3203,7 +4160,18 @@
 	     *
 	     *      var isUpperCase = (val, key) => key.toUpperCase() === key;
 	     *      R.pickBy(isUpperCase, {a: 1, b: 2, A: 3, B: 4}); //=> {A: 3, B: 4}
-	     */var pickBy=_curry2(function pickBy(test,obj){var result={};for(var prop in obj){if(test(obj[prop],prop,obj)){result[prop]=obj[prop];}}return result;});/**
+	     */
+	    var pickBy = _curry2(function pickBy(test, obj) {
+	        var result = {};
+	        for (var prop in obj) {
+	            if (test(obj[prop], prop, obj)) {
+	                result[prop] = obj[prop];
+	            }
+	        }
+	        return result;
+	    });
+
+	    /**
 	     * Returns a function that when supplied an object returns the indicated
 	     * property of that object, if it exists.
 	     *
@@ -3220,7 +4188,12 @@
 	     *
 	     *      R.prop('x', {x: 100}); //=> 100
 	     *      R.prop('x', {}); //=> undefined
-	     */var prop=_curry2(function prop(p,obj){return obj[p];});/**
+	     */
+	    var prop = _curry2(function prop(p, obj) {
+	        return obj[p];
+	    });
+
+	    /**
 	     * If the given, non-null object has an own property with the specified name,
 	     * returns the value of that property. Otherwise returns the provided default
 	     * value.
@@ -3245,7 +4218,12 @@
 	     *
 	     *      favorite(alice);  //=> undefined
 	     *      favoriteWithDefault(alice);  //=> 'Ramda'
-	     */var propOr=_curry3(function propOr(val,p,obj){return obj!=null&&_has(p,obj)?obj[p]:val;});/**
+	     */
+	    var propOr = _curry3(function propOr(val, p, obj) {
+	        return obj != null && _has(p, obj) ? obj[p] : val;
+	    });
+
+	    /**
 	     * Returns a list of numbers from `from` (inclusive) to `to` (exclusive).
 	     *
 	     * @func
@@ -3260,7 +4238,21 @@
 	     *
 	     *      R.range(1, 5);    //=> [1, 2, 3, 4]
 	     *      R.range(50, 53);  //=> [50, 51, 52]
-	     */var range=_curry2(function range(from,to){if(!(_isNumber(from)&&_isNumber(to))){throw new TypeError('Both arguments to range must be numbers');}var result=[];var n=from;while(n<to){result.push(n);n+=1;}return result;});/**
+	     */
+	    var range = _curry2(function range(from, to) {
+	        if (!(_isNumber(from) && _isNumber(to))) {
+	            throw new TypeError('Both arguments to range must be numbers');
+	        }
+	        var result = [];
+	        var n = from;
+	        while (n < to) {
+	            result.push(n);
+	            n += 1;
+	        }
+	        return result;
+	    });
+
+	    /**
 	     * Returns a new list or string with the elements or characters in reverse
 	     * order.
 	     *
@@ -3283,7 +4275,12 @@
 	     *      R.reverse('ab');       //=> 'ba'
 	     *      R.reverse('a');        //=> 'a'
 	     *      R.reverse('');         //=> ''
-	     */var reverse=_curry1(function reverse(list){return _isString(list)?list.split('').reverse().join(''):_slice(list).reverse();});/**
+	     */
+	    var reverse = _curry1(function reverse(list) {
+	        return _isString(list) ? list.split('').reverse().join('') : _slice(list).reverse();
+	    });
+
+	    /**
 	     * Returns the elements of the given list or string (or object with a `slice`
 	     * method) from `fromIndex` (inclusive) to `toIndex` (exclusive).
 	     *
@@ -3306,7 +4303,12 @@
 	     *      R.slice(0, -1, ['a', 'b', 'c', 'd']);       //=> ['a', 'b', 'c']
 	     *      R.slice(-3, -1, ['a', 'b', 'c', 'd']);      //=> ['b', 'c']
 	     *      R.slice(0, 3, 'ramda');                     //=> 'ram'
-	     */var slice=_curry3(_checkForMethod('slice',function slice(fromIndex,toIndex,list){return Array.prototype.slice.call(list,fromIndex,toIndex);}));/**
+	     */
+	    var slice = _curry3(_checkForMethod('slice', function slice(fromIndex, toIndex, list) {
+	        return Array.prototype.slice.call(list, fromIndex, toIndex);
+	    }));
+
+	    /**
 	     * Splits a collection into slices of the specified length.
 	     *
 	     * @func
@@ -3322,7 +4324,20 @@
 	     *
 	     *      R.splitEvery(3, [1, 2, 3, 4, 5, 6, 7]); //=> [[1, 2, 3], [4, 5, 6], [7]]
 	     *      R.splitEvery(3, 'foobarbaz'); //=> ['foo', 'bar', 'baz']
-	     */var splitEvery=_curry2(function splitEvery(n,list){if(n<=0){throw new Error('First argument to splitEvery must be a positive integer');}var result=[];var idx=0;while(idx<list.length){result.push(slice(idx,idx+=n,list));}return result;});/**
+	     */
+	    var splitEvery = _curry2(function splitEvery(n, list) {
+	        if (n <= 0) {
+	            throw new Error('First argument to splitEvery must be a positive integer');
+	        }
+	        var result = [];
+	        var idx = 0;
+	        while (idx < list.length) {
+	            result.push(slice(idx, idx += n, list));
+	        }
+	        return result;
+	    });
+
+	    /**
 	     * Subtracts its second argument from its first argument.
 	     *
 	     * @func
@@ -3344,7 +4359,12 @@
 	     *      var complementaryAngle = R.subtract(90);
 	     *      complementaryAngle(30); //=> 60
 	     *      complementaryAngle(72); //=> 18
-	     */var subtract=_curry2(function subtract(a,b){return Number(a)-Number(b);});/**
+	     */
+	    var subtract = _curry2(function subtract(a, b) {
+	        return Number(a) - Number(b);
+	    });
+
+	    /**
 	     * Returns all but the first element of the given list or string (or object
 	     * with a `tail` method).
 	     *
@@ -3370,7 +4390,10 @@
 	     *      R.tail('ab');   //=> 'b'
 	     *      R.tail('a');    //=> ''
 	     *      R.tail('');     //=> ''
-	     */var tail=_checkForMethod('tail',slice(1,Infinity));/**
+	     */
+	    var tail = _checkForMethod('tail', slice(1, Infinity));
+
+	    /**
 	     * Returns a new list containing the first `n` elements of a given list,
 	     * passing each value to the supplied predicate function, and terminating when
 	     * the predicate function returns `false`. Excludes the element that caused the
@@ -3395,7 +4418,17 @@
 	     *      var isNotFour = x => x !== 4;
 	     *
 	     *      R.takeWhile(isNotFour, [1, 2, 3, 4, 3, 2, 1]); //=> [1, 2, 3]
-	     */var takeWhile=_curry2(_dispatchable('takeWhile',_xtakeWhile,function takeWhile(fn,list){var idx=0;var len=list.length;while(idx<len&&fn(list[idx])){idx+=1;}return _slice(list,0,idx);}));/**
+	     */
+	    var takeWhile = _curry2(_dispatchable('takeWhile', _xtakeWhile, function takeWhile(fn, list) {
+	        var idx = 0;
+	        var len = list.length;
+	        while (idx < len && fn(list[idx])) {
+	            idx += 1;
+	        }
+	        return _slice(list, 0, idx);
+	    }));
+
+	    /**
 	     * Calls an input function `n` times, returning an array containing the results
 	     * of those function calls.
 	     *
@@ -3416,7 +4449,23 @@
 	     * @symb R.times(f, 0) = []
 	     * @symb R.times(f, 1) = [f(0)]
 	     * @symb R.times(f, 2) = [f(0), f(1)]
-	     */var times=_curry2(function times(fn,n){var len=Number(n);var idx=0;var list;if(len<0||isNaN(len)){throw new RangeError('n must be a non-negative number');}list=new Array(len);while(idx<len){list[idx]=fn(idx);idx+=1;}return list;});/**
+	     */
+	    var times = _curry2(function times(fn, n) {
+	        var len = Number(n);
+	        var idx = 0;
+	        var list;
+	        if (len < 0 || isNaN(len)) {
+	            throw new RangeError('n must be a non-negative number');
+	        }
+	        list = new Array(len);
+	        while (idx < len) {
+	            list[idx] = fn(idx);
+	            idx += 1;
+	        }
+	        return list;
+	    });
+
+	    /**
 	     * Converts an object into an array of key, value arrays. Only the object's
 	     * own properties are used.
 	     * Note that the order of the output array is not guaranteed to be consistent
@@ -3433,7 +4482,18 @@
 	     * @example
 	     *
 	     *      R.toPairs({a: 1, b: 2, c: 3}); //=> [['a', 1], ['b', 2], ['c', 3]]
-	     */var toPairs=_curry1(function toPairs(obj){var pairs=[];for(var prop in obj){if(_has(prop,obj)){pairs[pairs.length]=[prop,obj[prop]];}}return pairs;});/**
+	     */
+	    var toPairs = _curry1(function toPairs(obj) {
+	        var pairs = [];
+	        for (var prop in obj) {
+	            if (_has(prop, obj)) {
+	                pairs[pairs.length] = [prop, obj[prop]];
+	            }
+	        }
+	        return pairs;
+	    });
+
+	    /**
 	     * Removes (strips) whitespace from both ends of the string.
 	     *
 	     * @func
@@ -3447,7 +4507,25 @@
 	     *
 	     *      R.trim('   xyz  '); //=> 'xyz'
 	     *      R.map(R.trim, R.split(',', 'x, y, z')); //=> ['x', 'y', 'z']
-	     */var trim=function(){var ws='\t\n\x0B\f\r \xA0\u1680\u180E\u2000\u2001\u2002\u2003'+'\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028'+'\u2029\uFEFF';var zeroWidth='\u200B';var hasProtoTrim=typeof String.prototype.trim==='function';if(!hasProtoTrim||ws.trim()||!zeroWidth.trim()){return _curry1(function trim(str){var beginRx=new RegExp('^['+ws+']['+ws+']*');var endRx=new RegExp('['+ws+']['+ws+']*$');return str.replace(beginRx,'').replace(endRx,'');});}else{return _curry1(function trim(str){return str.trim();});}}();/**
+	     */
+	    var trim = function () {
+	        var ws = '\t\n\x0B\f\r \xA0\u1680\u180E\u2000\u2001\u2002\u2003' + '\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028' + '\u2029\uFEFF';
+	        var zeroWidth = '\u200B';
+	        var hasProtoTrim = typeof String.prototype.trim === 'function';
+	        if (!hasProtoTrim || ws.trim() || !zeroWidth.trim()) {
+	            return _curry1(function trim(str) {
+	                var beginRx = new RegExp('^[' + ws + '][' + ws + ']*');
+	                var endRx = new RegExp('[' + ws + '][' + ws + ']*$');
+	                return str.replace(beginRx, '').replace(endRx, '');
+	            });
+	        } else {
+	            return _curry1(function trim(str) {
+	                return str.trim();
+	            });
+	        }
+	    }();
+
+	    /**
 	     * Gives a single-word string description of the (native) type of a value,
 	     * returning such answers as 'Object', 'Number', 'Array', or 'Null'. Does not
 	     * attempt to distinguish user Object types any further, reporting them all as
@@ -3469,7 +4547,12 @@
 	     *      R.type(null); //=> "Null"
 	     *      R.type([]); //=> "Array"
 	     *      R.type(/[A-z]/); //=> "RegExp"
-	     */var type=_curry1(function type(val){return val===null?'Null':val===undefined?'Undefined':Object.prototype.toString.call(val).slice(8,-1);});/**
+	     */
+	    var type = _curry1(function type(val) {
+	        return val === null ? 'Null' : val === undefined ? 'Undefined' : Object.prototype.toString.call(val).slice(8, -1);
+	    });
+
+	    /**
 	     * Tests the final argument by passing it to the given predicate function. If
 	     * the predicate is not satisfied, the function will return the result of
 	     * calling the `whenFalseFn` function with the same argument. If the predicate
@@ -3493,7 +4576,12 @@
 	     *      var coerceArray = R.unless(R.isArrayLike, R.of);
 	     *      coerceArray([1, 2, 3]); //=> [1, 2, 3]
 	     *      coerceArray(1);         //=> [1]
-	     */var unless=_curry3(function unless(pred,whenFalseFn,x){return pred(x)?x:whenFalseFn(x);});/**
+	     */
+	    var unless = _curry3(function unless(pred, whenFalseFn, x) {
+	        return pred(x) ? x : whenFalseFn(x);
+	    });
+
+	    /**
 	     * Returns a list of all the enumerable own properties of the supplied object.
 	     * Note that the order of the output array is not guaranteed across different
 	     * JS platforms.
@@ -3508,14 +4596,197 @@
 	     * @example
 	     *
 	     *      R.values({a: 1, b: 2, c: 3}); //=> [1, 2, 3]
-	     */var values=_curry1(function values(obj){var props=keys(obj);var len=props.length;var vals=[];var idx=0;while(idx<len){vals[idx]=obj[props[idx]];idx+=1;}return vals;});var _createPartialApplicator=function _createPartialApplicator(concat){return _curry2(function(fn,args){return _arity(Math.max(0,fn.length-args.length),function(){return fn.apply(this,concat(args,arguments));});});};// Values of other types are only equal if identical.
-	var _equals=function _equals(a,b,stackA,stackB){if(identical(a,b)){return true;}if(type(a)!==type(b)){return false;}if(a==null||b==null){return false;}if(typeof a.equals==='function'||typeof b.equals==='function'){return typeof a.equals==='function'&&a.equals(b)&&typeof b.equals==='function'&&b.equals(a);}switch(type(a)){case'Arguments':case'Array':case'Object':if(typeof a.constructor==='function'&&_functionName(a.constructor)==='Promise'){return a===b;}break;case'Boolean':case'Number':case'String':if(!((typeof a==='undefined'?'undefined':_typeof(a))===(typeof b==='undefined'?'undefined':_typeof(b))&&identical(a.valueOf(),b.valueOf()))){return false;}break;case'Date':if(!identical(a.valueOf(),b.valueOf())){return false;}break;case'Error':return a.name===b.name&&a.message===b.message;case'RegExp':if(!(a.source===b.source&&a.global===b.global&&a.ignoreCase===b.ignoreCase&&a.multiline===b.multiline&&a.sticky===b.sticky&&a.unicode===b.unicode)){return false;}break;case'Map':case'Set':if(!_equals(_arrayFromIterator(a.entries()),_arrayFromIterator(b.entries()),stackA,stackB)){return false;}break;case'Int8Array':case'Uint8Array':case'Uint8ClampedArray':case'Int16Array':case'Uint16Array':case'Int32Array':case'Uint32Array':case'Float32Array':case'Float64Array':break;case'ArrayBuffer':break;default:// Values of other types are only equal if identical.
-	return false;}var keysA=keys(a);if(keysA.length!==keys(b).length){return false;}var idx=stackA.length-1;while(idx>=0){if(stackA[idx]===a){return stackB[idx]===b;}idx-=1;}stackA.push(a);stackB.push(b);idx=keysA.length-1;while(idx>=0){var key=keysA[idx];if(!(_has(key,b)&&_equals(b[key],a[key],stackA,stackB))){return false;}idx-=1;}stackA.pop();stackB.pop();return true;};/**
+	     */
+	    var values = _curry1(function values(obj) {
+	        var props = keys(obj);
+	        var len = props.length;
+	        var vals = [];
+	        var idx = 0;
+	        while (idx < len) {
+	            vals[idx] = obj[props[idx]];
+	            idx += 1;
+	        }
+	        return vals;
+	    });
+
+	    var _createPartialApplicator = function _createPartialApplicator(concat) {
+	        return _curry2(function (fn, args) {
+	            return _arity(Math.max(0, fn.length - args.length), function () {
+	                return fn.apply(this, concat(args, arguments));
+	            });
+	        });
+	    };
+
+	    // Values of other types are only equal if identical.
+	    var _equals = function _equals(a, b, stackA, stackB) {
+	        if (identical(a, b)) {
+	            return true;
+	        }
+	        if (type(a) !== type(b)) {
+	            return false;
+	        }
+	        if (a == null || b == null) {
+	            return false;
+	        }
+	        if (typeof a.equals === 'function' || typeof b.equals === 'function') {
+	            return typeof a.equals === 'function' && a.equals(b) && typeof b.equals === 'function' && b.equals(a);
+	        }
+	        switch (type(a)) {
+	            case 'Arguments':
+	            case 'Array':
+	            case 'Object':
+	                if (typeof a.constructor === 'function' && _functionName(a.constructor) === 'Promise') {
+	                    return a === b;
+	                }
+	                break;
+	            case 'Boolean':
+	            case 'Number':
+	            case 'String':
+	                if (!((typeof a === 'undefined' ? 'undefined' : _typeof(a)) === (typeof b === 'undefined' ? 'undefined' : _typeof(b)) && identical(a.valueOf(), b.valueOf()))) {
+	                    return false;
+	                }
+	                break;
+	            case 'Date':
+	                if (!identical(a.valueOf(), b.valueOf())) {
+	                    return false;
+	                }
+	                break;
+	            case 'Error':
+	                return a.name === b.name && a.message === b.message;
+	            case 'RegExp':
+	                if (!(a.source === b.source && a.global === b.global && a.ignoreCase === b.ignoreCase && a.multiline === b.multiline && a.sticky === b.sticky && a.unicode === b.unicode)) {
+	                    return false;
+	                }
+	                break;
+	            case 'Map':
+	            case 'Set':
+	                if (!_equals(_arrayFromIterator(a.entries()), _arrayFromIterator(b.entries()), stackA, stackB)) {
+	                    return false;
+	                }
+	                break;
+	            case 'Int8Array':
+	            case 'Uint8Array':
+	            case 'Uint8ClampedArray':
+	            case 'Int16Array':
+	            case 'Uint16Array':
+	            case 'Int32Array':
+	            case 'Uint32Array':
+	            case 'Float32Array':
+	            case 'Float64Array':
+	                break;
+	            case 'ArrayBuffer':
+	                break;
+	            default:
+	                // Values of other types are only equal if identical.
+	                return false;
+	        }
+	        var keysA = keys(a);
+	        if (keysA.length !== keys(b).length) {
+	            return false;
+	        }
+	        var idx = stackA.length - 1;
+	        while (idx >= 0) {
+	            if (stackA[idx] === a) {
+	                return stackB[idx] === b;
+	            }
+	            idx -= 1;
+	        }
+	        stackA.push(a);
+	        stackB.push(b);
+	        idx = keysA.length - 1;
+	        while (idx >= 0) {
+	            var key = keysA[idx];
+	            if (!(_has(key, b) && _equals(b[key], a[key], stackA, stackB))) {
+	                return false;
+	            }
+	            idx -= 1;
+	        }
+	        stackA.pop();
+	        stackB.pop();
+	        return true;
+	    };
+
+	    /**
 	     * `_makeFlat` is a helper function that returns a one-level or fully recursive
 	     * function based on the flag passed in.
 	     *
 	     * @private
-	     */var _makeFlat=function _makeFlat(recursive){return function flatt(list){var value,jlen,j;var result=[];var idx=0;var ilen=list.length;while(idx<ilen){if(isArrayLike(list[idx])){value=recursive?flatt(list[idx]):list[idx];j=0;jlen=value.length;while(j<jlen){result[result.length]=value[j];j+=1;}}else{result[result.length]=list[idx];}idx+=1;}return result;};};var _reduce=function(){function _arrayReduce(xf,acc,list){var idx=0;var len=list.length;while(idx<len){acc=xf['@@transducer/step'](acc,list[idx]);if(acc&&acc['@@transducer/reduced']){acc=acc['@@transducer/value'];break;}idx+=1;}return xf['@@transducer/result'](acc);}function _iterableReduce(xf,acc,iter){var step=iter.next();while(!step.done){acc=xf['@@transducer/step'](acc,step.value);if(acc&&acc['@@transducer/reduced']){acc=acc['@@transducer/value'];break;}step=iter.next();}return xf['@@transducer/result'](acc);}function _methodReduce(xf,acc,obj){return xf['@@transducer/result'](obj.reduce(bind(xf['@@transducer/step'],xf),acc));}var symIterator=typeof Symbol!=='undefined'?Symbol.iterator:'@@iterator';return function _reduce(fn,acc,list){if(typeof fn==='function'){fn=_xwrap(fn);}if(isArrayLike(list)){return _arrayReduce(fn,acc,list);}if(typeof list.reduce==='function'){return _methodReduce(fn,acc,list);}if(list[symIterator]!=null){return _iterableReduce(fn,acc,list[symIterator]());}if(typeof list.next==='function'){return _iterableReduce(fn,acc,list);}throw new TypeError('reduce: list must be array or iterable');};}();/**
+	     */
+	    var _makeFlat = function _makeFlat(recursive) {
+	        return function flatt(list) {
+	            var value, jlen, j;
+	            var result = [];
+	            var idx = 0;
+	            var ilen = list.length;
+	            while (idx < ilen) {
+	                if (isArrayLike(list[idx])) {
+	                    value = recursive ? flatt(list[idx]) : list[idx];
+	                    j = 0;
+	                    jlen = value.length;
+	                    while (j < jlen) {
+	                        result[result.length] = value[j];
+	                        j += 1;
+	                    }
+	                } else {
+	                    result[result.length] = list[idx];
+	                }
+	                idx += 1;
+	            }
+	            return result;
+	        };
+	    };
+
+	    var _reduce = function () {
+	        function _arrayReduce(xf, acc, list) {
+	            var idx = 0;
+	            var len = list.length;
+	            while (idx < len) {
+	                acc = xf['@@transducer/step'](acc, list[idx]);
+	                if (acc && acc['@@transducer/reduced']) {
+	                    acc = acc['@@transducer/value'];
+	                    break;
+	                }
+	                idx += 1;
+	            }
+	            return xf['@@transducer/result'](acc);
+	        }
+	        function _iterableReduce(xf, acc, iter) {
+	            var step = iter.next();
+	            while (!step.done) {
+	                acc = xf['@@transducer/step'](acc, step.value);
+	                if (acc && acc['@@transducer/reduced']) {
+	                    acc = acc['@@transducer/value'];
+	                    break;
+	                }
+	                step = iter.next();
+	            }
+	            return xf['@@transducer/result'](acc);
+	        }
+	        function _methodReduce(xf, acc, obj) {
+	            return xf['@@transducer/result'](obj.reduce(bind(xf['@@transducer/step'], xf), acc));
+	        }
+	        var symIterator = typeof Symbol !== 'undefined' ? Symbol.iterator : '@@iterator';
+	        return function _reduce(fn, acc, list) {
+	            if (typeof fn === 'function') {
+	                fn = _xwrap(fn);
+	            }
+	            if (isArrayLike(list)) {
+	                return _arrayReduce(fn, acc, list);
+	            }
+	            if (typeof list.reduce === 'function') {
+	                return _methodReduce(fn, acc, list);
+	            }
+	            if (list[symIterator] != null) {
+	                return _iterableReduce(fn, acc, list[symIterator]());
+	            }
+	            if (typeof list.next === 'function') {
+	                return _iterableReduce(fn, acc, list);
+	            }
+	            throw new TypeError('reduce: list must be array or iterable');
+	        };
+	    }();
+
+	    /**
 	     * Creates a new list iteration function from an existing one by adding two new
 	     * parameters to its callback function: the current index, and the entire list.
 	     *
@@ -3538,7 +4809,23 @@
 	     *      var mapIndexed = R.addIndex(R.map);
 	     *      mapIndexed((val, idx) => idx + '-' + val, ['f', 'o', 'o', 'b', 'a', 'r']);
 	     *      //=> ['0-f', '1-o', '2-o', '3-b', '4-a', '5-r']
-	     */var addIndex=_curry1(function addIndex(fn){return curryN(fn.length,function(){var idx=0;var origFn=arguments[0];var list=arguments[arguments.length-1];var args=_slice(arguments);args[0]=function(){var result=origFn.apply(this,_concat(arguments,[idx,list]));idx+=1;return result;};return fn.apply(this,args);});});/**
+	     */
+	    var addIndex = _curry1(function addIndex(fn) {
+	        return curryN(fn.length, function () {
+	            var idx = 0;
+	            var origFn = arguments[0];
+	            var list = arguments[arguments.length - 1];
+	            var args = _slice(arguments);
+	            args[0] = function () {
+	                var result = origFn.apply(this, _concat(arguments, [idx, list]));
+	                idx += 1;
+	                return result;
+	            };
+	            return fn.apply(this, args);
+	        });
+	    });
+
+	    /**
 	     * Returns a curried equivalent of the provided function. The curried function
 	     * has two unusual capabilities. First, its arguments needn't be provided one
 	     * at a time. If `f` is a ternary function and `g` is `R.curry(f)`, the
@@ -3578,7 +4865,12 @@
 	     *      var f = curriedAddFourNumbers(1, 2);
 	     *      var g = f(3);
 	     *      g(4); //=> 10
-	     */var curry=_curry1(function curry(fn){return curryN(fn.length,fn);});/**
+	     */
+	    var curry = _curry1(function curry(fn) {
+	        return curryN(fn.length, fn);
+	    });
+
+	    /**
 	     * Returns all but the first `n` elements of the given list, string, or
 	     * transducer/transformer (or object with a `drop` method).
 	     *
@@ -3601,7 +4893,12 @@
 	     *      R.drop(3, ['foo', 'bar', 'baz']); //=> []
 	     *      R.drop(4, ['foo', 'bar', 'baz']); //=> []
 	     *      R.drop(3, 'ramda');               //=> 'da'
-	     */var drop=_curry2(_dispatchable('drop',_xdrop,function drop(n,xs){return slice(Math.max(0,n),Infinity,xs);}));/**
+	     */
+	    var drop = _curry2(_dispatchable('drop', _xdrop, function drop(n, xs) {
+	        return slice(Math.max(0, n), Infinity, xs);
+	    }));
+
+	    /**
 	     * Returns `true` if its arguments are equivalent, `false` otherwise. Handles
 	     * cyclical data structures.
 	     *
@@ -3625,7 +4922,12 @@
 	     *      var a = {}; a.v = a;
 	     *      var b = {}; b.v = b;
 	     *      R.equals(a, b); //=> true
-	     */var equals=_curry2(function equals(a,b){return _equals(a,b,[],[]);});/**
+	     */
+	    var equals = _curry2(function equals(a, b) {
+	        return _equals(a, b, [], []);
+	    });
+
+	    /**
 	     * Takes a predicate and a "filterable", and returns a new filterable of the
 	     * same type containing the members of the given filterable which satisfy the
 	     * given predicate.
@@ -3650,9 +4952,19 @@
 	     *      R.filter(isEven, [1, 2, 3, 4]); //=> [2, 4]
 	     *
 	     *      R.filter(isEven, {a: 1, b: 2, c: 3, d: 4}); //=> {b: 2, d: 4}
-	     */// else
-	var filter=_curry2(_dispatchable('filter',_xfilter,function(pred,filterable){return _isObject(filterable)?_reduce(function(acc,key){if(pred(filterable[key])){acc[key]=filterable[key];}return acc;},{},keys(filterable)):// else
-	_filter(pred,filterable);}));/**
+	     */
+	    // else
+	    var filter = _curry2(_dispatchable('filter', _xfilter, function (pred, filterable) {
+	        return _isObject(filterable) ? _reduce(function (acc, key) {
+	            if (pred(filterable[key])) {
+	                acc[key] = filterable[key];
+	            }
+	            return acc;
+	        }, {}, keys(filterable)) : // else
+	        _filter(pred, filterable);
+	    }));
+
+	    /**
 	     * Returns a new list by pulling every item out of it (and all its sub-arrays)
 	     * and putting them in a new array, depth-first.
 	     *
@@ -3668,7 +4980,10 @@
 	     *
 	     *      R.flatten([1, 2, [3, 4], 5, [6, [7, 8, [9, [10, 11], 12]]]]);
 	     *      //=> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-	     */var flatten=_curry1(_makeFlat(true));/**
+	     */
+	    var flatten = _curry1(_makeFlat(true));
+
+	    /**
 	     * Returns a new function much like the supplied one, except that the first two
 	     * arguments' order is reversed.
 	     *
@@ -3687,7 +5002,17 @@
 	     *
 	     *      R.flip(mergeThree)(1, 2, 3); //=> [2, 1, 3]
 	     * @symb R.flip(f)(a, b, c) = f(b, a, c)
-	     */var flip=_curry1(function flip(fn){return curry(function(a,b){var args=_slice(arguments);args[0]=b;args[1]=a;return fn.apply(this,args);});});/**
+	     */
+	    var flip = _curry1(function flip(fn) {
+	        return curry(function (a, b) {
+	            var args = _slice(arguments);
+	            args[0] = b;
+	            args[1] = a;
+	            return fn.apply(this, args);
+	        });
+	    });
+
+	    /**
 	     * Returns the first element of the given list or string. In some libraries
 	     * this function is named `first`.
 	     *
@@ -3707,7 +5032,10 @@
 	     *
 	     *      R.head('abc'); //=> 'a'
 	     *      R.head(''); //=> ''
-	     */var head=nth(0);/**
+	     */
+	    var head = nth(0);
+
+	    /**
 	     * Returns the last element of the given list or string.
 	     *
 	     * @func
@@ -3726,7 +5054,10 @@
 	     *
 	     *      R.last('abc'); //=> 'c'
 	     *      R.last(''); //=> ''
-	     */var last=nth(-1);/**
+	     */
+	    var last = nth(-1);
+
+	    /**
 	     * Takes a function and
 	     * a [functor](https://github.com/fantasyland/fantasy-land#functor),
 	     * applies the function to each of the functor's values, and returns
@@ -3760,7 +5091,24 @@
 	     * @symb R.map(f, [a, b]) = [f(a), f(b)]
 	     * @symb R.map(f, { x: a, y: b }) = { x: f(a), y: f(b) }
 	     * @symb R.map(f, functor_o) = functor_o.map(f)
-	     */var map=_curry2(_dispatchable('map',_xmap,function map(fn,functor){switch(Object.prototype.toString.call(functor)){case'[object Function]':return curryN(functor.length,function(){return fn.call(this,functor.apply(this,arguments));});case'[object Object]':return _reduce(function(acc,key){acc[key]=fn(functor[key]);return acc;},{},keys(functor));default:return _map(fn,functor);}}));/**
+	     */
+	    var map = _curry2(_dispatchable('map', _xmap, function map(fn, functor) {
+	        switch (Object.prototype.toString.call(functor)) {
+	            case '[object Function]':
+	                return curryN(functor.length, function () {
+	                    return fn.call(this, functor.apply(this, arguments));
+	                });
+	            case '[object Object]':
+	                return _reduce(function (acc, key) {
+	                    acc[key] = fn(functor[key]);
+	                    return acc;
+	                }, {}, keys(functor));
+	            default:
+	                return _map(fn, functor);
+	        }
+	    }));
+
+	    /**
 	     * An Object-specific version of `map`. The function is applied to three
 	     * arguments: *(value, key, obj)*. If only the value is significant, use
 	     * `map` instead.
@@ -3780,7 +5128,15 @@
 	     *      var prependKeyAndDouble = (num, key, obj) => key + (num * 2);
 	     *
 	     *      R.mapObjIndexed(prependKeyAndDouble, values); //=> { x: 'x2', y: 'y4', z: 'z6' }
-	     */var mapObjIndexed=_curry2(function mapObjIndexed(fn,obj){return _reduce(function(acc,key){acc[key]=fn(obj[key],key,obj);return acc;},{},keys(obj));});/**
+	     */
+	    var mapObjIndexed = _curry2(function mapObjIndexed(fn, obj) {
+	        return _reduce(function (acc, key) {
+	            acc[key] = fn(obj[key], key, obj);
+	            return acc;
+	        }, {}, keys(obj));
+	    });
+
+	    /**
 	     * Takes a function `f` and a list of arguments, and returns a function `g`.
 	     * When applied, `g` returns the result of applying `f` to the arguments
 	     * provided initially followed by the arguments provided to `g`.
@@ -3807,7 +5163,10 @@
 	     *      var sayHelloToMs = R.partial(sayHello, ['Ms.']);
 	     *      sayHelloToMs('Jane', 'Jones'); //=> 'Hello, Ms. Jane Jones!'
 	     * @symb R.partial(f, [a, b])(c, d) = f(a, b, c, d)
-	     */var partial=_createPartialApplicator(_concat);/**
+	     */
+	    var partial = _createPartialApplicator(_concat);
+
+	    /**
 	     * Returns a new list by plucking the same named property off all objects in
 	     * the list supplied.
 	     *
@@ -3826,7 +5185,12 @@
 	     *      R.pluck(0)([[1, 2], [3, 4]]);   //=> [1, 3]
 	     * @symb R.pluck('x', [{x: 1, y: 2}, {x: 3, y: 4}, {x: 5, y: 6}]) = [1, 3, 5]
 	     * @symb R.pluck(0, [[1, 2], [3, 4], [5, 6]]) = [1, 3, 5]
-	     */var pluck=_curry2(function pluck(p,list){return map(prop(p),list);});/**
+	     */
+	    var pluck = _curry2(function pluck(p, list) {
+	        return map(prop(p), list);
+	    });
+
+	    /**
 	     * Returns a single item by iterating through the list, successively calling
 	     * the iterator function and passing it an accumulator value and the current
 	     * value from the array, and then passing the result to the next call.
@@ -3859,7 +5223,10 @@
 	     *
 	     *      R.reduce(plus, 10, numbers); //=> 16
 	     * @symb R.reduce(f, a, [b, c, d]) = f(f(f(a, b), c), d)
-	     */var reduce=_curry3(_reduce);/**
+	     */
+	    var reduce = _curry3(_reduce);
+
+	    /**
 	     * The complement of `filter`.
 	     *
 	     * Acts as a transducer if a transformer is given in list position.
@@ -3880,7 +5247,12 @@
 	     *      R.reject(isOdd, [1, 2, 3, 4]); //=> [2, 4]
 	     *
 	     *      R.reject(isOdd, {a: 1, b: 2, c: 3, d: 4}); //=> {b: 2, d: 4}
-	     */var reject=_curry2(function reject(pred,filterable){return filter(_complement(pred),filterable);});/**
+	     */
+	    var reject = _curry2(function reject(pred, filterable) {
+	        return filter(_complement(pred), filterable);
+	    });
+
+	    /**
 	     * Adds together all the elements of a list.
 	     *
 	     * @func
@@ -3894,21 +5266,70 @@
 	     * @example
 	     *
 	     *      R.sum([2,4,6,8,100,1]); //=> 121
-	     */var sum=reduce(add,0);// Array.prototype.indexOf doesn't exist below IE9
-	// manually crawl the list to distinguish between +0 and -0
-	// NaN
-	// non-zero numbers can utilise Set
-	// all these types can utilise Set
-	// null can utilise Set
-	// anything else not covered above, defer to R.equals
-	var _indexOf=function _indexOf(list,a,idx){var inf,item;// Array.prototype.indexOf doesn't exist below IE9
-	if(typeof list.indexOf==='function'){switch(typeof a==='undefined'?'undefined':_typeof(a)){case'number':if(a===0){// manually crawl the list to distinguish between +0 and -0
-	inf=1/a;while(idx<list.length){item=list[idx];if(item===0&&1/item===inf){return idx;}idx+=1;}return-1;}else if(a!==a){// NaN
-	while(idx<list.length){item=list[idx];if(typeof item==='number'&&item!==item){return idx;}idx+=1;}return-1;}// non-zero numbers can utilise Set
-	return list.indexOf(a,idx);// all these types can utilise Set
-	case'string':case'boolean':case'function':case'undefined':return list.indexOf(a,idx);case'object':if(a===null){// null can utilise Set
-	return list.indexOf(a,idx);}}}// anything else not covered above, defer to R.equals
-	while(idx<list.length){if(equals(list[idx],a)){return idx;}idx+=1;}return-1;};/**
+	     */
+	    var sum = reduce(add, 0);
+
+	    // Array.prototype.indexOf doesn't exist below IE9
+	    // manually crawl the list to distinguish between +0 and -0
+	    // NaN
+	    // non-zero numbers can utilise Set
+	    // all these types can utilise Set
+	    // null can utilise Set
+	    // anything else not covered above, defer to R.equals
+	    var _indexOf = function _indexOf(list, a, idx) {
+	        var inf, item;
+	        // Array.prototype.indexOf doesn't exist below IE9
+	        if (typeof list.indexOf === 'function') {
+	            switch (typeof a === 'undefined' ? 'undefined' : _typeof(a)) {
+	                case 'number':
+	                    if (a === 0) {
+	                        // manually crawl the list to distinguish between +0 and -0
+	                        inf = 1 / a;
+	                        while (idx < list.length) {
+	                            item = list[idx];
+	                            if (item === 0 && 1 / item === inf) {
+	                                return idx;
+	                            }
+	                            idx += 1;
+	                        }
+	                        return -1;
+	                    } else if (a !== a) {
+	                        // NaN
+	                        while (idx < list.length) {
+	                            item = list[idx];
+	                            if (typeof item === 'number' && item !== item) {
+	                                return idx;
+	                            }
+	                            idx += 1;
+	                        }
+	                        return -1;
+	                    }
+	                    // non-zero numbers can utilise Set
+	                    return list.indexOf(a, idx);
+	                // all these types can utilise Set
+	                case 'string':
+	                case 'boolean':
+	                case 'function':
+	                case 'undefined':
+	                    return list.indexOf(a, idx);
+	                case 'object':
+	                    if (a === null) {
+	                        // null can utilise Set
+	                        return list.indexOf(a, idx);
+	                    }
+	            }
+	        }
+	        // anything else not covered above, defer to R.equals
+	        while (idx < list.length) {
+	            if (equals(list[idx], a)) {
+	                return idx;
+	            }
+	            idx += 1;
+	        }
+	        return -1;
+	    };
+
+	    /**
 	     * ap applies a list of functions to a list of values.
 	     *
 	     * Dispatches to the `ap` method of the second argument, if present. Also
@@ -3927,9 +5348,18 @@
 	     *
 	     *      R.ap([R.multiply(2), R.add(3)], [1,2,3]); //=> [2, 4, 6, 4, 5, 6]
 	     * @symb R.ap([f, g], [a, b]) = [f(a), f(b), g(a), g(b)]
-	     */// else
-	var ap=_curry2(function ap(applicative,fn){return typeof applicative.ap==='function'?applicative.ap(fn):typeof applicative==='function'?function(x){return applicative(x)(fn(x));}:// else
-	_reduce(function(acc,f){return _concat(acc,map(f,fn));},[],applicative);});/**
+	     */
+	    // else
+	    var ap = _curry2(function ap(applicative, fn) {
+	        return typeof applicative.ap === 'function' ? applicative.ap(fn) : typeof applicative === 'function' ? function (x) {
+	            return applicative(x)(fn(x));
+	        } : // else
+	        _reduce(function (acc, f) {
+	            return _concat(acc, map(f, fn));
+	        }, [], applicative);
+	    });
+
+	    /**
 	     * Returns the result of calling its first argument with the remaining
 	     * arguments. This is occasionally useful as a converging function for
 	     * `R.converge`: the left branch can produce a function while the right branch
@@ -3957,7 +5387,12 @@
 	     *
 	     *      format({indent: 2, value: 'foo\nbar\nbaz\n'}); //=> '  foo\n  bar\n  baz\n'
 	     * @symb R.call(f, a, b) = f(a, b)
-	     */var call=curry(function call(fn){return fn.apply(this,_slice(arguments,1));});/**
+	     */
+	    var call = curry(function call(fn) {
+	        return fn.apply(this, _slice(arguments, 1));
+	    });
+
+	    /**
 	     * Accepts a converging function and a list of branching functions and returns
 	     * a new function. When invoked, this new function is applied to some
 	     * arguments, each branching function is applied to those same arguments. The
@@ -3985,7 +5420,18 @@
 	     *      var add3 = (a, b, c) => a + b + c;
 	     *      R.converge(add3, [multiply, add, subtract])(1, 2); //=> 4
 	     * @symb R.converge(f, [g, h])(a, b) = f(g(a, b), h(a, b))
-	     */var converge=_curry2(function converge(after,fns){return curryN(reduce(max,0,pluck('length',fns)),function(){var args=arguments;var context=this;return after.apply(context,_map(function(fn){return fn.apply(context,args);},fns));});});/**
+	     */
+	    var converge = _curry2(function converge(after, fns) {
+	        return curryN(reduce(max, 0, pluck('length', fns)), function () {
+	            var args = arguments;
+	            var context = this;
+	            return after.apply(context, _map(function (fn) {
+	                return fn.apply(context, args);
+	            }, fns));
+	        });
+	    });
+
+	    /**
 	     * "lifts" a function to be the specified arity, so that it may "map over" that
 	     * many lists, Functions or other objects that satisfy the [FantasyLand Apply spec](https://github.com/fantasyland/fantasy-land#apply).
 	     *
@@ -4001,7 +5447,15 @@
 	     *
 	     *      var madd3 = R.liftN(3, R.curryN(3, (...args) => R.sum(args)));
 	     *      madd3([1,2,3], [1,2,3], [1]); //=> [3, 4, 5, 4, 5, 6, 5, 6, 7]
-	     */var liftN=_curry2(function liftN(arity,fn){var lifted=curryN(arity,fn);return curryN(arity,function(){return _reduce(ap,map(lifted,arguments[0]),_slice(arguments,1));});});/**
+	     */
+	    var liftN = _curry2(function liftN(arity, fn) {
+	        var lifted = curryN(arity, fn);
+	        return curryN(arity, function () {
+	            return _reduce(ap, map(lifted, arguments[0]), _slice(arguments, 1));
+	        });
+	    });
+
+	    /**
 	     * Performs left-to-right function composition. The leftmost function may have
 	     * any arity; the remaining functions must be unary.
 	     *
@@ -4023,9 +5477,62 @@
 	     *
 	     *      f(3, 4); // -(3^4) + 1
 	     * @symb R.pipe(f, g, h)(a, b) = h(g(f(a, b)))
-	     */var pipe=function pipe(){if(arguments.length===0){throw new Error('pipe requires at least one argument');}return _arity(arguments[0].length,reduce(_pipe,arguments[0],tail(arguments)));};var _contains=function _contains(a,list){return _indexOf(list,a,0)>=0;};//  mapPairs :: (Object, [String]) -> [String]
-	var _toString=function _toString(x,seen){var recur=function recur(y){var xs=seen.concat([x]);return _contains(y,xs)?'<Circular>':_toString(y,xs);};//  mapPairs :: (Object, [String]) -> [String]
-	var mapPairs=function mapPairs(obj,keys){return _map(function(k){return _quote(k)+': '+recur(obj[k]);},keys.slice().sort());};switch(Object.prototype.toString.call(x)){case'[object Arguments]':return'(function() { return arguments; }('+_map(recur,x).join(', ')+'))';case'[object Array]':return'['+_map(recur,x).concat(mapPairs(x,reject(function(k){return /^\d+$/.test(k);},keys(x)))).join(', ')+']';case'[object Boolean]':return(typeof x==='undefined'?'undefined':_typeof(x))==='object'?'new Boolean('+recur(x.valueOf())+')':x.toString();case'[object Date]':return'new Date('+(isNaN(x.valueOf())?recur(NaN):_quote(_toISOString(x)))+')';case'[object Null]':return'null';case'[object Number]':return(typeof x==='undefined'?'undefined':_typeof(x))==='object'?'new Number('+recur(x.valueOf())+')':1/x===-Infinity?'-0':x.toString(10);case'[object String]':return(typeof x==='undefined'?'undefined':_typeof(x))==='object'?'new String('+recur(x.valueOf())+')':_quote(x);case'[object Undefined]':return'undefined';default:if(typeof x.toString==='function'){var repr=x.toString();if(repr!=='[object Object]'){return repr;}}return'{'+mapPairs(x,keys(x)).join(', ')+'}';}};/**
+	     */
+	    var pipe = function pipe() {
+	        if (arguments.length === 0) {
+	            throw new Error('pipe requires at least one argument');
+	        }
+	        return _arity(arguments[0].length, reduce(_pipe, arguments[0], tail(arguments)));
+	    };
+
+	    var _contains = function _contains(a, list) {
+	        return _indexOf(list, a, 0) >= 0;
+	    };
+
+	    //  mapPairs :: (Object, [String]) -> [String]
+	    var _toString = function _toString(x, seen) {
+	        var recur = function recur(y) {
+	            var xs = seen.concat([x]);
+	            return _contains(y, xs) ? '<Circular>' : _toString(y, xs);
+	        };
+	        //  mapPairs :: (Object, [String]) -> [String]
+	        var mapPairs = function mapPairs(obj, keys) {
+	            return _map(function (k) {
+	                return _quote(k) + ': ' + recur(obj[k]);
+	            }, keys.slice().sort());
+	        };
+	        switch (Object.prototype.toString.call(x)) {
+	            case '[object Arguments]':
+	                return '(function() { return arguments; }(' + _map(recur, x).join(', ') + '))';
+	            case '[object Array]':
+	                return '[' + _map(recur, x).concat(mapPairs(x, reject(function (k) {
+	                    return (/^\d+$/.test(k)
+	                    );
+	                }, keys(x)))).join(', ') + ']';
+	            case '[object Boolean]':
+	                return (typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object' ? 'new Boolean(' + recur(x.valueOf()) + ')' : x.toString();
+	            case '[object Date]':
+	                return 'new Date(' + (isNaN(x.valueOf()) ? recur(NaN) : _quote(_toISOString(x))) + ')';
+	            case '[object Null]':
+	                return 'null';
+	            case '[object Number]':
+	                return (typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object' ? 'new Number(' + recur(x.valueOf()) + ')' : 1 / x === -Infinity ? '-0' : x.toString(10);
+	            case '[object String]':
+	                return (typeof x === 'undefined' ? 'undefined' : _typeof(x)) === 'object' ? 'new String(' + recur(x.valueOf()) + ')' : _quote(x);
+	            case '[object Undefined]':
+	                return 'undefined';
+	            default:
+	                if (typeof x.toString === 'function') {
+	                    var repr = x.toString();
+	                    if (repr !== '[object Object]') {
+	                        return repr;
+	                    }
+	                }
+	                return '{' + mapPairs(x, keys(x)).join(', ') + '}';
+	        }
+	    };
+
+	    /**
 	     * Performs right-to-left function composition. The rightmost function may have
 	     * any arity; the remaining functions must be unary.
 	     *
@@ -4045,7 +5552,15 @@
 	     *
 	     *      f(3, 4); // -(3^4) + 1
 	     * @symb R.compose(f, g, h)(a, b) = f(g(h(a, b)))
-	     */var compose=function compose(){if(arguments.length===0){throw new Error('compose requires at least one argument');}return pipe.apply(this,reverse(arguments));};/**
+	     */
+	    var compose = function compose() {
+	        if (arguments.length === 0) {
+	            throw new Error('compose requires at least one argument');
+	        }
+	        return pipe.apply(this, reverse(arguments));
+	    };
+
+	    /**
 	     * Returns `true` if the specified value is equal, in `R.equals` terms, to at
 	     * least one element of the given list; `false` otherwise.
 	     *
@@ -4063,7 +5578,10 @@
 	     *      R.contains(3, [1, 2, 3]); //=> true
 	     *      R.contains(4, [1, 2, 3]); //=> false
 	     *      R.contains([42], [[42]]); //=> true
-	     */var contains=_curry2(_contains);/**
+	     */
+	    var contains = _curry2(_contains);
+
+	    /**
 	     * Finds the set (i.e. no duplicates) of all elements in the first list not
 	     * contained in the second list.
 	     *
@@ -4080,7 +5598,21 @@
 	     *
 	     *      R.difference([1,2,3,4], [7,6,5,4,3]); //=> [1,2]
 	     *      R.difference([7,6,5,4,3], [1,2,3,4]); //=> [7,6,5]
-	     */var difference=_curry2(function difference(first,second){var out=[];var idx=0;var firstLen=first.length;while(idx<firstLen){if(!_contains(first[idx],second)&&!_contains(first[idx],out)){out[out.length]=first[idx];}idx+=1;}return out;});/**
+	     */
+	    var difference = _curry2(function difference(first, second) {
+	        var out = [];
+	        var idx = 0;
+	        var firstLen = first.length;
+	        while (idx < firstLen) {
+	            if (!_contains(first[idx], second) && !_contains(first[idx], out)) {
+	                out[out.length] = first[idx];
+	            }
+	            idx += 1;
+	        }
+	        return out;
+	    });
+
+	    /**
 	     * "lifts" a function of arity > 1 so that it may "map over" a list, Function or other
 	     * object that satisfies the [FantasyLand Apply spec](https://github.com/fantasyland/fantasy-land#apply).
 	     *
@@ -4101,7 +5633,12 @@
 	     *      var madd5 = R.lift(R.curry((a, b, c, d, e) => a + b + c + d + e));
 	     *
 	     *      madd5([1,2], [3], [4, 5], [6], [7, 8]); //=> [21, 22, 22, 23, 22, 23, 23, 24]
-	     */var lift=_curry1(function lift(fn){return liftN(fn.length,fn);});/**
+	     */
+	    var lift = _curry1(function lift(fn) {
+	        return liftN(fn.length, fn);
+	    });
+
+	    /**
 	     * Returns a partial copy of an object omitting the keys specified.
 	     *
 	     * @func
@@ -4116,7 +5653,18 @@
 	     * @example
 	     *
 	     *      R.omit(['a', 'd'], {a: 1, b: 2, c: 3, d: 4}); //=> {b: 2, c: 3}
-	     */var omit=_curry2(function omit(names,obj){var result={};for(var prop in obj){if(!_contains(prop,names)){result[prop]=obj[prop];}}return result;});/**
+	     */
+	    var omit = _curry2(function omit(names, obj) {
+	        var result = {};
+	        for (var prop in obj) {
+	            if (!_contains(prop, names)) {
+	                result[prop] = obj[prop];
+	            }
+	        }
+	        return result;
+	    });
+
+	    /**
 	     * Returns the string representation of the given value. `eval`'ing the output
 	     * should result in a value equivalent to the input value. Many of the built-in
 	     * `toString` methods do not satisfy this requirement.
@@ -4151,7 +5699,12 @@
 	     *      R.toString([1, 2, 3]); //=> '[1, 2, 3]'
 	     *      R.toString({foo: 1, bar: 2, baz: 3}); //=> '{"bar": 2, "baz": 3, "foo": 1}'
 	     *      R.toString(new Date('2001-02-03T04:05:06Z')); //=> 'new Date("2001-02-03T04:05:06.000Z")'
-	     */var toString=_curry1(function toString(val){return _toString(val,[]);});/**
+	     */
+	    var toString = _curry1(function toString(val) {
+	        return _toString(val, []);
+	    });
+
+	    /**
 	     * A function wrapping calls to the two functions in an `&&` operation,
 	     * returning the result of the first function if it is false-y and the result
 	     * of the second function otherwise. Note that this is short-circuited,
@@ -4177,7 +5730,14 @@
 	     *      var f = R.both(gt10, even);
 	     *      f(100); //=> true
 	     *      f(101); //=> false
-	     */var both=_curry2(function both(f,g){return _isFunction(f)?function _both(){return f.apply(this,arguments)&&g.apply(this,arguments);}:lift(and)(f,g);});/**
+	     */
+	    var both = _curry2(function both(f, g) {
+	        return _isFunction(f) ? function _both() {
+	            return f.apply(this, arguments) && g.apply(this, arguments);
+	        } : lift(and)(f, g);
+	    });
+
+	    /**
 	     * Takes a function `f` and returns a function `g` such that:
 	     *
 	     *   - applying `g` to zero or more arguments will give __true__ if applying
@@ -4202,7 +5762,10 @@
 	     *      var isOdd = R.complement(isEven);
 	     *      isOdd(21); //=> true
 	     *      isOdd(42); //=> false
-	     */var complement=lift(not);/**
+	     */
+	    var complement = lift(not);
+
+	    /**
 	     * Returns the result of concatenating the given lists or strings.
 	     *
 	     * Note: `R.concat` expects both arguments to be of the same type,
@@ -4226,7 +5789,18 @@
 	     *      R.concat([], []); //=> []
 	     *      R.concat([4, 5, 6], [1, 2, 3]); //=> [4, 5, 6, 1, 2, 3]
 	     *      R.concat('ABC', 'DEF'); // 'ABCDEF'
-	     */var concat=_curry2(function concat(a,b){if(a==null||!_isFunction(a.concat)){throw new TypeError(toString(a)+' does not have a method named "concat"');}if(_isArray(a)&&!_isArray(b)){throw new TypeError(toString(b)+' is not an array');}return a.concat(b);});/**
+	     */
+	    var concat = _curry2(function concat(a, b) {
+	        if (a == null || !_isFunction(a.concat)) {
+	            throw new TypeError(toString(a) + ' does not have a method named "concat"');
+	        }
+	        if (_isArray(a) && !_isArray(b)) {
+	            throw new TypeError(toString(b) + ' is not an array');
+	        }
+	        return a.concat(b);
+	    });
+
+	    /**
 	     * Turns a named method with a specified arity into a function that can be
 	     * called directly supplied with arguments and a target object.
 	     *
@@ -4251,7 +5825,18 @@
 	     * @symb R.invoker(0, 'method')(o) = o['method']()
 	     * @symb R.invoker(1, 'method')(a, o) = o['method'](a)
 	     * @symb R.invoker(2, 'method')(a, b, o) = o['method'](a, b)
-	     */var invoker=_curry2(function invoker(arity,method){return curryN(arity+1,function(){var target=arguments[arity];if(target!=null&&_isFunction(target[method])){return target[method].apply(target,_slice(arguments,0,arity));}throw new TypeError(toString(target)+' does not have a method named "'+method+'"');});});/**
+	     */
+	    var invoker = _curry2(function invoker(arity, method) {
+	        return curryN(arity + 1, function () {
+	            var target = arguments[arity];
+	            if (target != null && _isFunction(target[method])) {
+	                return target[method].apply(target, _slice(arguments, 0, arity));
+	            }
+	            throw new TypeError(toString(target) + ' does not have a method named "' + method + '"');
+	        });
+	    });
+
+	    /**
 	     * Returns a string made by inserting the `separator` between each element and
 	     * concatenating all the elements into a single string.
 	     *
@@ -4269,14 +5854,100 @@
 	     *      var spacer = R.join(' ');
 	     *      spacer(['a', 2, 3.4]);   //=> 'a 2 3.4'
 	     *      R.join('|', [1, 2, 3]);    //=> '1|2|3'
-	     */var join=invoker(1,'join');var R={__:__,add:add,addIndex:addIndex,always:always,any:any,apply:apply,assoc:assoc,bind:bind,both:both,call:call,clamp:clamp,complement:complement,compose:compose,concat:concat,contains:contains,converge:converge,curry:curry,curryN:curryN,difference:difference,drop:drop,equals:equals,filter:filter,find:find,flatten:flatten,flip:flip,forEach:forEach,fromPairs:fromPairs,gte:gte,has:has,head:head,identical:identical,identity:identity,invoker:invoker,join:join,keys:keys,last:last,length:length,lt:lt,lte:lte,map:map,mapObjIndexed:mapObjIndexed,max:max,minBy:minBy,negate:negate,nthArg:nthArg,of:of,omit:omit,partial:partial,path:path,pick:pick,pickBy:pickBy,pipe:pipe,prop:prop,propOr:propOr,range:range,reduce:reduce,reject:reject,splitEvery:splitEvery,subtract:subtract,sum:sum,tail:tail,takeWhile:takeWhile,times:times,toPairs:toPairs,trim:trim,type:type,unless:unless,values:values};/* eslint-env amd *//* TEST_ENTRY_POINT */if(( false?'undefined':_typeof(exports))==='object'){module.exports=R;}else if(true){!(__WEBPACK_AMD_DEFINE_RESULT__ = function(){return R;}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));}else{this.R=R;}}).call(undefined);
+	     */
+	    var join = invoker(1, 'join');
 
-/***/ },
-/* 8 */
+	    var R = {
+	        __: __,
+	        add: add,
+	        addIndex: addIndex,
+	        always: always,
+	        any: any,
+	        apply: apply,
+	        assoc: assoc,
+	        bind: bind,
+	        both: both,
+	        call: call,
+	        clamp: clamp,
+	        complement: complement,
+	        compose: compose,
+	        concat: concat,
+	        contains: contains,
+	        converge: converge,
+	        curry: curry,
+	        curryN: curryN,
+	        difference: difference,
+	        drop: drop,
+	        equals: equals,
+	        filter: filter,
+	        find: find,
+	        flatten: flatten,
+	        flip: flip,
+	        forEach: forEach,
+	        fromPairs: fromPairs,
+	        gte: gte,
+	        has: has,
+	        head: head,
+	        identical: identical,
+	        identity: identity,
+	        invoker: invoker,
+	        join: join,
+	        keys: keys,
+	        last: last,
+	        length: length,
+	        lt: lt,
+	        lte: lte,
+	        map: map,
+	        mapObjIndexed: mapObjIndexed,
+	        max: max,
+	        minBy: minBy,
+	        negate: negate,
+	        nthArg: nthArg,
+	        of: of,
+	        omit: omit,
+	        partial: partial,
+	        path: path,
+	        pick: pick,
+	        pickBy: pickBy,
+	        pipe: pipe,
+	        prop: prop,
+	        propOr: propOr,
+	        range: range,
+	        reduce: reduce,
+	        reject: reject,
+	        splitEvery: splitEvery,
+	        subtract: subtract,
+	        sum: sum,
+	        tail: tail,
+	        takeWhile: takeWhile,
+	        times: times,
+	        toPairs: toPairs,
+	        trim: trim,
+	        type: type,
+	        unless: unless,
+	        values: values
+	    };
+	    /* eslint-env amd */
+
+	    /* TEST_ENTRY_POINT */
+
+	    if (( false ? 'undefined' : _typeof(exports)) === 'object') {
+	        module.exports = R;
+	    } else if (true) {
+	        !(__WEBPACK_AMD_DEFINE_RESULT__ = function () {
+	            return R;
+	        }.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	    } else {
+	        this.R = R;
+	    }
+	}).call(undefined);
+
+/***/ }),
+/* 9 */
 /*!************************!*\
   !*** ./lib/r-utils.js ***!
   \************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -4286,8 +5957,8 @@
 
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-	var r = __webpack_require__(/*! ./external/ramda.custom */ 7),
-	    isInteger = __webpack_require__(/*! is-integer */ 9);
+	var r = __webpack_require__(/*! ./external/ramda.custom */ 8),
+	    isInteger = __webpack_require__(/*! is-integer */ 10);
 
 	//------//
 	// Main //
@@ -4594,16 +6265,16 @@
 	  transform: transform
 	};
 
-/***/ },
-/* 9 */
+/***/ }),
+/* 10 */
 /*!*******************************!*\
   !*** ./~/is-integer/index.js ***!
   \*******************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// https://github.com/paulmillr/es6-shim
 	// http://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.isinteger
-	var isFinite = __webpack_require__(/*! is-finite */ 10);
+	var isFinite = __webpack_require__(/*! is-finite */ 11);
 	module.exports = Number.isInteger || function(val) {
 	  return typeof val === "number" &&
 	    isFinite(val) &&
@@ -4611,27 +6282,27 @@
 	};
 
 
-/***/ },
-/* 10 */
+/***/ }),
+/* 11 */
 /*!******************************!*\
   !*** ./~/is-finite/index.js ***!
   \******************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var numberIsNan = __webpack_require__(/*! number-is-nan */ 11);
+	var numberIsNan = __webpack_require__(/*! number-is-nan */ 12);
 
 	module.exports = Number.isFinite || function (val) {
 		return !(typeof val !== 'number' || numberIsNan(val) || val === Infinity || val === -Infinity);
 	};
 
 
-/***/ },
-/* 11 */
+/***/ }),
+/* 12 */
 /*!**********************************!*\
   !*** ./~/number-is-nan/index.js ***!
   \**********************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 	module.exports = Number.isNaN || function (x) {
@@ -4639,12 +6310,12 @@
 	};
 
 
-/***/ },
-/* 12 */
+/***/ }),
+/* 13 */
 /*!********************************!*\
   !*** ./src/client/js/utils.js ***!
   \********************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -4652,12 +6323,12 @@
 	// Imports //
 	//---------//
 
-	var $ = __webpack_require__(/*! ./external/domtastic.custom */ 5),
-	    duration = __webpack_require__(/*! ./constants/duration */ 13),
-	    hoverIntent = __webpack_require__(/*! hoverintent */ 14),
-	    r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 7),
-	    rUtils = __webpack_require__(/*! ../../../lib/r-utils */ 8),
-	    velocity = __webpack_require__(/*! velocity-animate */ 16);
+	var $ = __webpack_require__(/*! ./external/domtastic.custom */ 6),
+	    duration = __webpack_require__(/*! ./constants/duration */ 14),
+	    hoverIntent = __webpack_require__(/*! hoverintent */ 15),
+	    r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 8),
+	    rUtils = __webpack_require__(/*! ../../../lib/r-utils */ 9),
+	    velocity = __webpack_require__(/*! velocity-animate */ 17);
 
 	//------//
 	// Init //
@@ -4714,7 +6385,46 @@
 
 	var joinAdjacentArrays = feed(r.flip(r.append), r.concat, []);
 
-	var pairAdjacentElements = feed(r.flip(r.append), r.pair, []);
+	function pairAdjacentElements(anArray) {
+	  var result = [];
+
+	  var currentPair = [],
+	      i = 0;
+
+	  var _iteratorNormalCompletion = true;
+	  var _didIteratorError = false;
+	  var _iteratorError = undefined;
+
+	  try {
+	    for (var _iterator = anArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	      var item = _step.value;
+
+	      currentPair.push(item);
+	      if (i % 2 === 1) {
+	        result.push(currentPair);
+	        currentPair = [];
+	      }
+	      i += 1;
+	    }
+	  } catch (err) {
+	    _didIteratorError = true;
+	    _iteratorError = err;
+	  } finally {
+	    try {
+	      if (!_iteratorNormalCompletion && _iterator.return) {
+	        _iterator.return();
+	      }
+	    } finally {
+	      if (_didIteratorError) {
+	        throw _iteratorError;
+	      }
+	    }
+	  }
+
+	  if (currentPair.length) result.push(currentPair);
+
+	  return result;
+	}
 
 	var keycodes = {
 	  esc: 27
@@ -4782,12 +6492,12 @@
 	  unwrap: unwrap
 	};
 
-/***/ },
-/* 13 */
+/***/ }),
+/* 14 */
 /*!*********************************************!*\
   !*** ./src/client/js/constants/duration.js ***!
   \*********************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -4797,17 +6507,17 @@
 	  long: 1000
 	};
 
-/***/ },
-/* 14 */
+/***/ }),
+/* 15 */
 /*!********************************!*\
   !*** ./~/hoverintent/index.js ***!
   \********************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	;(function(global) {
 	'use strict';
 
-	var extend = __webpack_require__(/*! xtend */ 15);
+	var extend = __webpack_require__(/*! xtend */ 16);
 
 	var hoverintent = function(el, onOver, onOut) {
 	  var x, y, pX, pY;
@@ -4902,12 +6612,12 @@
 	})(this);
 
 
-/***/ },
-/* 15 */
+/***/ }),
+/* 16 */
 /*!******************************!*\
   !*** ./~/xtend/immutable.js ***!
   \******************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = extend
 
@@ -4930,14 +6640,14 @@
 	}
 
 
-/***/ },
-/* 16 */
+/***/ }),
+/* 17 */
 /*!****************************************!*\
   !*** ./~/velocity-animate/velocity.js ***!
   \****************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*! VelocityJS.org (1.3.1). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
+	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*! VelocityJS.org (1.5.0). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 	/*************************
 	 Velocity jQuery Shim
@@ -5299,9 +7009,9 @@
 			position: function() {
 				/* jQuery */
 				function offsetParentFn(elem) {
-					var offsetParent = elem.offsetParent || document;
+					var offsetParent = elem.offsetParent;
 
-					while (offsetParent && (offsetParent.nodeType.toLowerCase !== "html" && offsetParent.style.position === "static")) {
+					while (offsetParent && (offsetParent.nodeName.toLowerCase() !== "html" && offsetParent.style && offsetParent.style.position.toLowerCase() === "static")) {
 						offsetParent = offsetParent.offsetParent;
 					}
 
@@ -5434,6 +7144,19 @@
 				};
 			})();
 
+			var performance = (function() {
+				var perf = window.performance || {};
+
+				if (typeof perf.now !== "function") {
+					var nowOffset = perf.timing && perf.timing.navigationStart ? perf.timing.navigationStart : (new Date()).getTime();
+
+					perf.now = function() {
+						return (new Date()).getTime() - nowOffset;
+					};
+				}
+				return perf;
+			})();
+
 			/* Array compacting. Copyright Lo-Dash. MIT License: https://github.com/lodash/lodash/blob/master/LICENSE.txt */
 			function compactSparseArray(array) {
 				var index = -1,
@@ -5451,10 +7174,95 @@
 				return result;
 			}
 
+			/**
+			 * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
+			 * on host objects like NamedNodeMap, NodeList, and HTMLCollection
+			 * (technically, since host objects have been implementation-dependent,
+			 * at least before ES2015, IE hasn't needed to work this way).
+			 * Also works on strings, fixes IE < 9 to allow an explicit undefined
+			 * for the 2nd argument (as in Firefox), and prevents errors when
+			 * called on other DOM objects.
+			 */
+			var _slice = (function() {
+				var slice = Array.prototype.slice;
+
+				try {
+					// Can't be used with DOM elements in IE < 9
+					slice.call(document.documentElement);
+					return slice;
+				} catch (e) { // Fails in IE < 9
+
+					// This will work for genuine arrays, array-like objects, 
+					// NamedNodeMap (attributes, entities, notations),
+					// NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
+					// and will not fail on other DOM objects (as do DOM elements in IE < 9)
+					return function(begin, end) {
+						var len = this.length;
+
+						if (typeof begin !== "number") {
+							begin = 0;
+						}
+						// IE < 9 gets unhappy with an undefined end argument
+						if (typeof end !== "number") {
+							end = len;
+						}
+						// For native Array objects, we use the native slice function
+						if (this.slice) {
+							return slice.call(this, begin, end);
+						}
+						// For array like object we handle it ourselves.
+						var i,
+								cloned = [],
+								// Handle negative value for "begin"
+								start = (begin >= 0) ? begin : Math.max(0, len + begin),
+								// Handle negative value for "end"
+								upTo = end < 0 ? len + end : Math.min(end, len),
+								// Actual expected size of the slice
+								size = upTo - start;
+
+						if (size > 0) {
+							cloned = new Array(size);
+							if (this.charAt) {
+								for (i = 0; i < size; i++) {
+									cloned[i] = this.charAt(start + i);
+								}
+							} else {
+								for (i = 0; i < size; i++) {
+									cloned[i] = this[start + i];
+								}
+							}
+						}
+						return cloned;
+					};
+				}
+			})();
+
+			/* .indexOf doesn't exist in IE<9 */
+			var _inArray = (function() {
+				if (Array.prototype.includes) {
+					return function(arr, val) {
+						return arr.includes(val);
+					};
+				}
+				if (Array.prototype.indexOf) {
+					return function(arr, val) {
+						return arr.indexOf(val) >= 0;
+					};
+				}
+				return function(arr, val) {
+					for (var i = 0; i < arr.length; i++) {
+						if (arr[i] === val) {
+							return true;
+						}
+					}
+					return false;
+				};
+			});
+
 			function sanitizeElements(elements) {
 				/* Unwrap jQuery/Zepto objects. */
 				if (Type.isWrapped(elements)) {
-					elements = [].slice.call(elements);
+					elements = _slice.call(elements);
 					/* Wrap a single element in an array so that $.each() can iterate with the element instead of its node's children. */
 				} else if (Type.isNode(elements)) {
 					elements = [elements];
@@ -5464,6 +7272,9 @@
 			}
 
 			var Type = {
+				isNumber: function(variable) {
+					return (typeof variable === "number");
+				},
 				isString: function(variable) {
 					return (typeof variable === "string");
 				},
@@ -5476,16 +7287,16 @@
 				isNode: function(variable) {
 					return variable && variable.nodeType;
 				},
-				/* Copyright Martin Bohm. MIT License: https://gist.github.com/Tomalak/818a78a226a0738eaade */
-				isNodeList: function(variable) {
-					return typeof variable === "object" &&
-							/^\[object (HTMLCollection|NodeList|Object)\]$/.test(Object.prototype.toString.call(variable)) &&
-							variable.length !== undefined &&
-							(variable.length === 0 || (typeof variable[0] === "object" && variable[0].nodeType > 0));
-				},
-				/* Determine if variable is a wrapped jQuery or Zepto element. */
+				/* Determine if variable is an array-like wrapped jQuery, Zepto or similar element, or even a NodeList etc. */
+				/* NOTE: HTMLFormElements also have a length. */
 				isWrapped: function(variable) {
-					return variable && (variable.jquery || (window.Zepto && window.Zepto.zepto.isZ(variable)));
+					return variable
+							&& variable !== window
+							&& Type.isNumber(variable.length)
+							&& !Type.isString(variable)
+							&& !Type.isFunction(variable)
+							&& !Type.isNode(variable)
+							&& (variable.length === 0 || Type.isNode(variable[0]));
 				},
 				isSVG: function(variable) {
 					return window.SVGElement && (variable instanceof window.SVGElement);
@@ -5540,12 +7351,12 @@
 				/* Container for page-wide Velocity state data. */
 				State: {
 					/* Detect mobile devices to determine if mobileHA should be turned on. */
-					isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+					isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(window.navigator.userAgent),
 					/* The mobileHA option's behavior changes on older Android devices (Gingerbread, versions 2.3.3-2.3.7). */
-					isAndroid: /Android/i.test(navigator.userAgent),
-					isGingerbread: /Android 2\.3\.[3-7]/i.test(navigator.userAgent),
+					isAndroid: /Android/i.test(window.navigator.userAgent),
+					isGingerbread: /Android 2\.3\.[3-7]/i.test(window.navigator.userAgent),
 					isChrome: window.chrome,
-					isFirefox: /Firefox/i.test(navigator.userAgent),
+					isFirefox: /Firefox/i.test(window.navigator.userAgent),
 					/* Create a cached element for re-use when checking for CSS property prefixes. */
 					prefixElement: document.createElement("div"),
 					/* Cache every prefix match to avoid repeating lookups. */
@@ -5558,15 +7369,18 @@
 					/* Keep track of whether our RAF tick is running. */
 					isTicking: false,
 					/* Container for every in-progress call to Velocity. */
-					calls: []
+					calls: [],
+					delayedElements: {
+						count: 0
+					}
 				},
 				/* Velocity's custom CSS stack. Made global for unit testing. */
-				CSS: { /* Defined below. */},
+				CSS: {/* Defined below. */},
 				/* A shim of the jQuery utility functions used by Velocity -- provided by Velocity's optional jQuery shim. */
 				Utilities: $,
 				/* Container for the user's custom animation redirects that are referenced by name in place of the properties map argument. */
-				Redirects: { /* Manually registered by the user. */},
-				Easings: { /* Defined below. */},
+				Redirects: {/* Manually registered by the user. */},
+				Easings: {/* Defined below. */},
 				/* Attempt to use ES6 Promises by default. Users can override this with a third-party promises library. */
 				Promise: window.Promise,
 				/* Velocity option defaults, which can be overriden by the user. */
@@ -5583,7 +7397,9 @@
 					delay: false,
 					mobileHA: true,
 					/* Advanced: Set to false to prevent property values from being cached between consecutive Velocity-initiated chain calls. */
-					_cacheValues: true
+					_cacheValues: true,
+					/* Advanced: Set to false if the promise should always resolve on empty element lists. */
+					promiseRejectEmpty: true
 				},
 				/* A design goal of Velocity is to cache data wherever possible in order to avoid DOM requerying. Accordingly, each element has a data cache. */
 				init: function(element) {
@@ -5610,9 +7426,66 @@
 				hook: null, /* Defined below. */
 				/* Velocity-wide animation time remapping for testing purposes. */
 				mock: false,
-				version: {major: 1, minor: 3, patch: 1},
+				version: {major: 1, minor: 5, patch: 1},
 				/* Set to 1 or 2 (most verbose) to output debug info to console. */
-				debug: false
+				debug: false,
+				/* Use rAF high resolution timestamp when available */
+				timestamp: true,
+				/* Pause all animations */
+				pauseAll: function(queueName) {
+					var currentTime = (new Date()).getTime();
+
+					$.each(Velocity.State.calls, function(i, activeCall) {
+
+						if (activeCall) {
+
+							/* If we have a queueName and this call is not on that queue, skip */
+							if (queueName !== undefined && ((activeCall[2].queue !== queueName) || (activeCall[2].queue === false))) {
+								return true;
+							}
+
+							/* Set call to paused */
+							activeCall[5] = {
+								resume: false
+							};
+						}
+					});
+
+					/* Pause timers on any currently delayed calls */
+					$.each(Velocity.State.delayedElements, function(k, element) {
+						if (!element) {
+							return;
+						}
+						pauseDelayOnElement(element, currentTime);
+					});
+				},
+				/* Resume all animations */
+				resumeAll: function(queueName) {
+					var currentTime = (new Date()).getTime();
+
+					$.each(Velocity.State.calls, function(i, activeCall) {
+
+						if (activeCall) {
+
+							/* If we have a queueName and this call is not on that queue, skip */
+							if (queueName !== undefined && ((activeCall[2].queue !== queueName) || (activeCall[2].queue === false))) {
+								return true;
+							}
+
+							/* Set call to resumed if it was paused */
+							if (activeCall[5]) {
+								activeCall[5].resume = true;
+							}
+						}
+					});
+					/* Resume timers on any currently delayed calls */
+					$.each(Velocity.State.delayedElements, function(k, element) {
+						if (!element) {
+							return;
+						}
+						resumeDelayOnElement(element, currentTime);
+					});
+				}
 			};
 
 			/* Retrieve the appropriate scroll anchor and property name for the browser: https://developer.mozilla.org/en-US/docs/Web/API/Window.scrollY */
@@ -5634,6 +7507,33 @@
 				/* jQuery <=1.4.2 returns null instead of undefined when no match is found. We normalize this behavior. */
 				return response === null ? undefined : response;
 			}
+
+			/**************
+			 Delay Timer
+			 **************/
+
+			function pauseDelayOnElement(element, currentTime) {
+				/* Check for any delay timers, and pause the set timeouts (while preserving time data)
+				 to be resumed when the "resume" command is issued */
+				var data = Data(element);
+				if (data && data.delayTimer && !data.delayPaused) {
+					data.delayRemaining = data.delay - currentTime + data.delayBegin;
+					data.delayPaused = true;
+					clearTimeout(data.delayTimer.setTimeout);
+				}
+			}
+
+			function resumeDelayOnElement(element, currentTime) {
+				/* Check for any paused timers and resume */
+				var data = Data(element);
+				if (data && data.delayTimer && data.delayPaused) {
+					/* If the element was mid-delay, re initiate the timeout with the remaining delay */
+					data.delayPaused = false;
+					data.delayTimer.setTimeout = setTimeout(data.delayTimer.next, data.delayRemaining);
+				}
+			}
+
+
 
 			/**************
 			 Easing
@@ -5817,7 +7717,7 @@
 						dx: state.v,
 						dv: springAccelerationForState(state)
 					},
-					b = springEvaluateStateWithDerivative(state, dt * 0.5, a),
+							b = springEvaluateStateWithDerivative(state, dt * 0.5, a),
 							c = springEvaluateStateWithDerivative(state, dt * 0.5, b),
 							d = springEvaluateStateWithDerivative(state, dt, c),
 							dxdt = 1.0 / 6.0 * (a.dx + 2.0 * (b.dx + c.dx) + d.dx),
@@ -5837,7 +7737,7 @@
 						tension: null,
 						friction: null
 					},
-					path = [0],
+							path = [0],
 							time_lapsed = 0,
 							tolerance = 1 / 10000,
 							DT = 16 / 1000,
@@ -5993,7 +7893,161 @@
 				Lists: {
 					colors: ["fill", "stroke", "stopColor", "color", "backgroundColor", "borderColor", "borderTopColor", "borderRightColor", "borderBottomColor", "borderLeftColor", "outlineColor"],
 					transformsBase: ["translateX", "translateY", "scale", "scaleX", "scaleY", "skewX", "skewY", "rotateZ"],
-					transforms3D: ["transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY"]
+					transforms3D: ["transformPerspective", "translateZ", "scaleZ", "rotateX", "rotateY"],
+					units: [
+						"%", // relative
+						"em", "ex", "ch", "rem", // font relative
+						"vw", "vh", "vmin", "vmax", // viewport relative
+						"cm", "mm", "Q", "in", "pc", "pt", "px", // absolute lengths
+						"deg", "grad", "rad", "turn", // angles
+						"s", "ms" // time
+					],
+					colorNames: {
+						"aliceblue": "240,248,255",
+						"antiquewhite": "250,235,215",
+						"aquamarine": "127,255,212",
+						"aqua": "0,255,255",
+						"azure": "240,255,255",
+						"beige": "245,245,220",
+						"bisque": "255,228,196",
+						"black": "0,0,0",
+						"blanchedalmond": "255,235,205",
+						"blueviolet": "138,43,226",
+						"blue": "0,0,255",
+						"brown": "165,42,42",
+						"burlywood": "222,184,135",
+						"cadetblue": "95,158,160",
+						"chartreuse": "127,255,0",
+						"chocolate": "210,105,30",
+						"coral": "255,127,80",
+						"cornflowerblue": "100,149,237",
+						"cornsilk": "255,248,220",
+						"crimson": "220,20,60",
+						"cyan": "0,255,255",
+						"darkblue": "0,0,139",
+						"darkcyan": "0,139,139",
+						"darkgoldenrod": "184,134,11",
+						"darkgray": "169,169,169",
+						"darkgrey": "169,169,169",
+						"darkgreen": "0,100,0",
+						"darkkhaki": "189,183,107",
+						"darkmagenta": "139,0,139",
+						"darkolivegreen": "85,107,47",
+						"darkorange": "255,140,0",
+						"darkorchid": "153,50,204",
+						"darkred": "139,0,0",
+						"darksalmon": "233,150,122",
+						"darkseagreen": "143,188,143",
+						"darkslateblue": "72,61,139",
+						"darkslategray": "47,79,79",
+						"darkturquoise": "0,206,209",
+						"darkviolet": "148,0,211",
+						"deeppink": "255,20,147",
+						"deepskyblue": "0,191,255",
+						"dimgray": "105,105,105",
+						"dimgrey": "105,105,105",
+						"dodgerblue": "30,144,255",
+						"firebrick": "178,34,34",
+						"floralwhite": "255,250,240",
+						"forestgreen": "34,139,34",
+						"fuchsia": "255,0,255",
+						"gainsboro": "220,220,220",
+						"ghostwhite": "248,248,255",
+						"gold": "255,215,0",
+						"goldenrod": "218,165,32",
+						"gray": "128,128,128",
+						"grey": "128,128,128",
+						"greenyellow": "173,255,47",
+						"green": "0,128,0",
+						"honeydew": "240,255,240",
+						"hotpink": "255,105,180",
+						"indianred": "205,92,92",
+						"indigo": "75,0,130",
+						"ivory": "255,255,240",
+						"khaki": "240,230,140",
+						"lavenderblush": "255,240,245",
+						"lavender": "230,230,250",
+						"lawngreen": "124,252,0",
+						"lemonchiffon": "255,250,205",
+						"lightblue": "173,216,230",
+						"lightcoral": "240,128,128",
+						"lightcyan": "224,255,255",
+						"lightgoldenrodyellow": "250,250,210",
+						"lightgray": "211,211,211",
+						"lightgrey": "211,211,211",
+						"lightgreen": "144,238,144",
+						"lightpink": "255,182,193",
+						"lightsalmon": "255,160,122",
+						"lightseagreen": "32,178,170",
+						"lightskyblue": "135,206,250",
+						"lightslategray": "119,136,153",
+						"lightsteelblue": "176,196,222",
+						"lightyellow": "255,255,224",
+						"limegreen": "50,205,50",
+						"lime": "0,255,0",
+						"linen": "250,240,230",
+						"magenta": "255,0,255",
+						"maroon": "128,0,0",
+						"mediumaquamarine": "102,205,170",
+						"mediumblue": "0,0,205",
+						"mediumorchid": "186,85,211",
+						"mediumpurple": "147,112,219",
+						"mediumseagreen": "60,179,113",
+						"mediumslateblue": "123,104,238",
+						"mediumspringgreen": "0,250,154",
+						"mediumturquoise": "72,209,204",
+						"mediumvioletred": "199,21,133",
+						"midnightblue": "25,25,112",
+						"mintcream": "245,255,250",
+						"mistyrose": "255,228,225",
+						"moccasin": "255,228,181",
+						"navajowhite": "255,222,173",
+						"navy": "0,0,128",
+						"oldlace": "253,245,230",
+						"olivedrab": "107,142,35",
+						"olive": "128,128,0",
+						"orangered": "255,69,0",
+						"orange": "255,165,0",
+						"orchid": "218,112,214",
+						"palegoldenrod": "238,232,170",
+						"palegreen": "152,251,152",
+						"paleturquoise": "175,238,238",
+						"palevioletred": "219,112,147",
+						"papayawhip": "255,239,213",
+						"peachpuff": "255,218,185",
+						"peru": "205,133,63",
+						"pink": "255,192,203",
+						"plum": "221,160,221",
+						"powderblue": "176,224,230",
+						"purple": "128,0,128",
+						"red": "255,0,0",
+						"rosybrown": "188,143,143",
+						"royalblue": "65,105,225",
+						"saddlebrown": "139,69,19",
+						"salmon": "250,128,114",
+						"sandybrown": "244,164,96",
+						"seagreen": "46,139,87",
+						"seashell": "255,245,238",
+						"sienna": "160,82,45",
+						"silver": "192,192,192",
+						"skyblue": "135,206,235",
+						"slateblue": "106,90,205",
+						"slategray": "112,128,144",
+						"snow": "255,250,250",
+						"springgreen": "0,255,127",
+						"steelblue": "70,130,180",
+						"tan": "210,180,140",
+						"teal": "0,128,128",
+						"thistle": "216,191,216",
+						"tomato": "255,99,71",
+						"turquoise": "64,224,208",
+						"violet": "238,130,238",
+						"wheat": "245,222,179",
+						"whitesmoke": "245,245,245",
+						"white": "255,255,255",
+						"yellowgreen": "154,205,50",
+						"yellow": "255,255,0"
+					}
 				},
 				/************
 				 Hooks
@@ -6099,6 +8153,22 @@
 							/* If there was no hook match, return the property name untouched. */
 							return property;
 						}
+					},
+					getUnit: function(str, start) {
+						var unit = (str.substr(start || 0, 5).match(/^[a-z%]+/) || [])[0] || "";
+
+						if (unit && _inArray(CSS.Lists.units, unit)) {
+							return unit;
+						}
+						return "";
+					},
+					fixColors: function(str) {
+						return str.replace(/(rgba?\(\s*)?(\b[a-z]+\b)/g, function($0, $1, $2) {
+							if (CSS.Lists.colorNames.hasOwnProperty($2)) {
+								return ($1 ? $1 : "rgba(") + CSS.Lists.colorNames[$2] + ($1 ? "" : ",1)");
+							}
+							return $1 + $2;
+						});
 					},
 					/* Convert any rootPropertyValue, null or otherwise, into a space-delimited list of hook values so that
 					 the targeted hook can be injected or extracted at its standard position. */
@@ -6428,6 +8498,11 @@
 
 											return extracted;
 										case "inject":
+											/* If we have a pattern then it might already have the right values */
+											if (/^rgb/.test(propertyValue)) {
+												return propertyValue;
+											}
+
 											/* If this is IE<=8 and an alpha component exists, strip it off. */
 											if (IE <= 8) {
 												if (propertyValue.split(" ").length === 4) {
@@ -6445,6 +8520,47 @@
 								};
 							})();
 						}
+
+						/**************
+						 Dimensions
+						 **************/
+						function augmentDimension(name, element, wantInner) {
+							var isBorderBox = CSS.getPropertyValue(element, "boxSizing").toString().toLowerCase() === "border-box";
+
+							if (isBorderBox === (wantInner || false)) {
+								/* in box-sizing mode, the CSS width / height accessors already give the outerWidth / outerHeight. */
+								var i,
+										value,
+										augment = 0,
+										sides = name === "width" ? ["Left", "Right"] : ["Top", "Bottom"],
+										fields = ["padding" + sides[0], "padding" + sides[1], "border" + sides[0] + "Width", "border" + sides[1] + "Width"];
+
+								for (i = 0; i < fields.length; i++) {
+									value = parseFloat(CSS.getPropertyValue(element, fields[i]));
+									if (!isNaN(value)) {
+										augment += value;
+									}
+								}
+								return wantInner ? -augment : augment;
+							}
+							return 0;
+						}
+						function getDimension(name, wantInner) {
+							return function(type, element, propertyValue) {
+								switch (type) {
+									case "name":
+										return name;
+									case "extract":
+										return parseFloat(propertyValue) + augmentDimension(name, element, wantInner);
+									case "inject":
+										return (parseFloat(propertyValue) - augmentDimension(name, element, wantInner)) + "px";
+								}
+							};
+						}
+						CSS.Normalizations.registered.innerWidth = getDimension("width", true);
+						CSS.Normalizations.registered.innerHeight = getDimension("height", true);
+						CSS.Normalizations.registered.outerWidth = getDimension("width");
+						CSS.Normalizations.registered.outerHeight = getDimension("height");
 					}
 				},
 				/************************
@@ -6567,17 +8683,34 @@
 					},
 					/* The class add/remove functions are used to temporarily apply a "velocity-animating" class to elements while they're animating. */
 					addClass: function(element, className) {
-						if (element.classList) {
-							element.classList.add(className);
-						} else {
-							element.className += (element.className.length ? " " : "") + className;
+						if (element) {
+							if (element.classList) {
+								element.classList.add(className);
+							} else if (Type.isString(element.className)) {
+								// Element.className is around 15% faster then set/getAttribute
+								element.className += (element.className.length ? " " : "") + className;
+							} else {
+								// Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
+								var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+
+								element.setAttribute("class", currentClass + (currentClass ? " " : "") + className);
+							}
 						}
 					},
 					removeClass: function(element, className) {
-						if (element.classList) {
-							element.classList.remove(className);
-						} else {
-							element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
+						if (element) {
+							if (element.classList) {
+								element.classList.remove(className);
+							} else if (Type.isString(element.className)) {
+								// Element.className is around 15% faster then set/getAttribute
+								// TODO: Need some jsperf tests on performance - can we get rid of the regex and maybe use split / array manipulation?
+								element.className = element.className.toString().replace(new RegExp("(^|\\s)" + className.split(" ").join("|") + "(\\s|$)", "gi"), " ");
+							} else {
+								// Work around for IE strict mode animating SVG - and anything else that doesn't behave correctly - the same way jQuery does it
+								var currentClass = element.getAttribute(IE <= 7 ? "className" : "class") || "";
+
+								element.setAttribute("class", currentClass.replace(new RegExp("(^|\s)" + className.split(" ").join("|") + "(\s|$)", "gi"), " "));
+							}
 						}
 					}
 				},
@@ -6966,12 +9099,12 @@
 					/* Get property value. If an element set was passed in, only return the value for the first element. */
 					if (arg3 === undefined) {
 						if (value === undefined) {
-							value = Velocity.CSS.getPropertyValue(element, arg2);
+							value = CSS.getPropertyValue(element, arg2);
 						}
 						/* Set property value. */
 					} else {
 						/* sPV returns an array of the normalized propertyName/propertyValue pair used to update the DOM. */
-						var adjustedSet = Velocity.CSS.setPropertyValue(element, arg2, arg3);
+						var adjustedSet = CSS.setPropertyValue(element, arg2, arg3);
 
 						/* Transform properties don't automatically set. They have to be flushed to the DOM. */
 						if (adjustedSet[0] === "transform") {
@@ -7042,55 +9175,6 @@
 					elements = syntacticSugar ? (arguments[0].elements || arguments[0].e) : arguments[0];
 				}
 
-				elements = sanitizeElements(elements);
-
-				if (!elements) {
-					return;
-				}
-
-				if (syntacticSugar) {
-					propertiesMap = arguments[0].properties || arguments[0].p;
-					options = arguments[0].options || arguments[0].o;
-				} else {
-					propertiesMap = arguments[argumentIndex];
-					options = arguments[argumentIndex + 1];
-				}
-
-				/* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
-				 single raw DOM element is passed in (which doesn't contain a length property). */
-				var elementsLength = elements.length,
-						elementsIndex = 0;
-
-				/***************************
-				 Argument Overloading
-				 ***************************/
-
-				/* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]).
-				 Overloading is detected by checking for the absence of an object being passed into options. */
-				/* Note: The stop and finish actions do not accept animation options, and are therefore excluded from this check. */
-				if (!/^(stop|finish|finishAll)$/i.test(propertiesMap) && !$.isPlainObject(options)) {
-					/* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
-					var startingArgumentPosition = argumentIndex + 1;
-
-					options = {};
-
-					/* Iterate through all options arguments */
-					for (var i = startingArgumentPosition; i < arguments.length; i++) {
-						/* Treat a number as a duration. Parse it out. */
-						/* Note: The following RegEx will return true if passed an array with a number as its first item.
-						 Thus, arrays are skipped from this check. */
-						if (!Type.isArray(arguments[i]) && (/^(fast|normal|slow)$/i.test(arguments[i]) || /^\d/.test(arguments[i]))) {
-							options.duration = arguments[i];
-							/* Treat strings and arrays as easings. */
-						} else if (Type.isString(arguments[i]) || Type.isArray(arguments[i])) {
-							options.easing = arguments[i];
-							/* Treat a function as a complete callback. */
-						} else if (Type.isFunction(arguments[i])) {
-							options.complete = arguments[i];
-						}
-					}
-				}
-
 				/***************
 				 Promises
 				 ***************/
@@ -7115,13 +9199,70 @@
 					});
 				}
 
+				if (syntacticSugar) {
+					propertiesMap = arguments[0].properties || arguments[0].p;
+					options = arguments[0].options || arguments[0].o;
+				} else {
+					propertiesMap = arguments[argumentIndex];
+					options = arguments[argumentIndex + 1];
+				}
+
+				elements = sanitizeElements(elements);
+
+				if (!elements) {
+					if (promiseData.promise) {
+						if (!propertiesMap || !options || options.promiseRejectEmpty !== false) {
+							promiseData.rejecter();
+						} else {
+							promiseData.resolver();
+						}
+					}
+					return;
+				}
+
+				/* The length of the element set (in the form of a nodeList or an array of elements) is defaulted to 1 in case a
+				 single raw DOM element is passed in (which doesn't contain a length property). */
+				var elementsLength = elements.length,
+						elementsIndex = 0;
+
+				/***************************
+				 Argument Overloading
+				 ***************************/
+
+				/* Support is included for jQuery's argument overloading: $.animate(propertyMap [, duration] [, easing] [, complete]).
+				 Overloading is detected by checking for the absence of an object being passed into options. */
+				/* Note: The stop/finish/pause/resume actions do not accept animation options, and are therefore excluded from this check. */
+				if (!/^(stop|finish|finishAll|pause|resume)$/i.test(propertiesMap) && !$.isPlainObject(options)) {
+					/* The utility function shifts all arguments one position to the right, so we adjust for that offset. */
+					var startingArgumentPosition = argumentIndex + 1;
+
+					options = {};
+
+					/* Iterate through all options arguments */
+					for (var i = startingArgumentPosition; i < arguments.length; i++) {
+						/* Treat a number as a duration. Parse it out. */
+						/* Note: The following RegEx will return true if passed an array with a number as its first item.
+						 Thus, arrays are skipped from this check. */
+						if (!Type.isArray(arguments[i]) && (/^(fast|normal|slow)$/i.test(arguments[i]) || /^\d/.test(arguments[i]))) {
+							options.duration = arguments[i];
+							/* Treat strings and arrays as easings. */
+						} else if (Type.isString(arguments[i]) || Type.isArray(arguments[i])) {
+							options.easing = arguments[i];
+							/* Treat a function as a complete callback. */
+						} else if (Type.isFunction(arguments[i])) {
+							options.complete = arguments[i];
+						}
+					}
+				}
+
 				/*********************
 				 Action Detection
 				 *********************/
 
 				/* Velocity's behavior is categorized into "actions": Elements can either be specially scrolled into view,
-				 or they can be started, stopped, or reversed. If a literal or referenced properties map is passed in as Velocity's
-				 first argument, the associated action is "start". Alternatively, "scroll", "reverse", or "stop" can be passed in instead of a properties map. */
+				 or they can be started, stopped, paused, resumed, or reversed . If a literal or referenced properties map is passed in as Velocity's
+				 first argument, the associated action is "start". Alternatively, "scroll", "reverse", "pause", "resume" or "stop" can be passed in 
+				 instead of a properties map. */
 				var action;
 
 				switch (propertiesMap) {
@@ -7132,6 +9273,125 @@
 					case "reverse":
 						action = "reverse";
 						break;
+
+					case "pause":
+
+						/*******************
+						 Action: Pause
+						 *******************/
+
+						var currentTime = (new Date()).getTime();
+
+						/* Handle delay timers */
+						$.each(elements, function(i, element) {
+							pauseDelayOnElement(element, currentTime);
+						});
+
+						/* Pause and Resume are call-wide (not on a per element basis). Thus, calling pause or resume on a 
+						 single element will cause any calls that containt tweens for that element to be paused/resumed
+						 as well. */
+
+						/* Iterate through all calls and pause any that contain any of our elements */
+						$.each(Velocity.State.calls, function(i, activeCall) {
+
+							var found = false;
+							/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
+							if (activeCall) {
+								/* Iterate through the active call's targeted elements. */
+								$.each(activeCall[1], function(k, activeElement) {
+									var queueName = (options === undefined) ? "" : options;
+
+									if (queueName !== true && (activeCall[2].queue !== queueName) && !(options === undefined && activeCall[2].queue === false)) {
+										return true;
+									}
+
+									/* Iterate through the calls targeted by the stop command. */
+									$.each(elements, function(l, element) {
+										/* Check that this call was applied to the target element. */
+										if (element === activeElement) {
+
+											/* Set call to paused */
+											activeCall[5] = {
+												resume: false
+											};
+
+											/* Once we match an element, we can bounce out to the next call entirely */
+											found = true;
+											return false;
+										}
+									});
+
+									/* Proceed to check next call if we have already matched */
+									if (found) {
+										return false;
+									}
+								});
+							}
+
+						});
+
+						/* Since pause creates no new tweens, exit out of Velocity. */
+						return getChain();
+
+					case "resume":
+
+						/*******************
+						 Action: Resume
+						 *******************/
+
+						/* Handle delay timers */
+						$.each(elements, function(i, element) {
+							resumeDelayOnElement(element, currentTime);
+						});
+
+						/* Pause and Resume are call-wide (not on a per elemnt basis). Thus, calling pause or resume on a 
+						 single element will cause any calls that containt tweens for that element to be paused/resumed
+						 as well. */
+
+						/* Iterate through all calls and pause any that contain any of our elements */
+						$.each(Velocity.State.calls, function(i, activeCall) {
+							var found = false;
+							/* Inactive calls are set to false by the logic inside completeCall(). Skip them. */
+							if (activeCall) {
+								/* Iterate through the active call's targeted elements. */
+								$.each(activeCall[1], function(k, activeElement) {
+									var queueName = (options === undefined) ? "" : options;
+
+									if (queueName !== true && (activeCall[2].queue !== queueName) && !(options === undefined && activeCall[2].queue === false)) {
+										return true;
+									}
+
+									/* Skip any calls that have never been paused */
+									if (!activeCall[5]) {
+										return true;
+									}
+
+									/* Iterate through the calls targeted by the stop command. */
+									$.each(elements, function(l, element) {
+										/* Check that this call was applied to the target element. */
+										if (element === activeElement) {
+
+											/* Flag a pause object to be resumed, which will occur during the next tick. In
+											 addition, the pause object will at that time be deleted */
+											activeCall[5].resume = true;
+
+											/* Once we match an element, we can bounce out to the next call entirely */
+											found = true;
+											return false;
+										}
+									});
+
+									/* Proceed to check next call if we have already matched */
+									if (found) {
+										return false;
+									}
+								});
+							}
+
+						});
+
+						/* Since resume creates no new tweens, exit out of Velocity. */
+						return getChain();
 
 					case "finish":
 					case "finishAll":
@@ -7317,7 +9577,7 @@
 
 							if (promiseData.promise) {
 								promiseData.rejecter(new Error(abortError));
-							} else {
+							} else if (window.console) {
 								console.log(abortError);
 							}
 
@@ -7393,15 +9653,39 @@
 					/* Note: Velocity rolls its own delay function since jQuery doesn't have a utility alias for $.fn.delay()
 					 (and thus requires jQuery element creation, which we avoid since its overhead includes DOM querying). */
 					if (parseFloat(opts.delay) && opts.queue !== false) {
-						$.queue(element, opts.queue, function(next) {
+						$.queue(element, opts.queue, function(next, clearQueue) {
+							if (clearQueue === true) {
+								/* Do not continue with animation queueing. */
+								return true;
+							}
+
 							/* This is a flag used to indicate to the upcoming completeCall() function that this queue entry was initiated by Velocity. See completeCall() for further details. */
 							Velocity.velocityQueueEntryFlag = true;
 
 							/* The ensuing queue item (which is assigned to the "next" argument that $.queue() automatically passes in) will be triggered after a setTimeout delay.
-							 The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command. */
+							 The setTimeout is stored so that it can be subjected to clearTimeout() if this animation is prematurely stopped via Velocity's "stop" command, and
+							 delayBegin/delayTime is used to ensure we can "pause" and "resume" a tween that is still mid-delay. */
+
+							/* Temporarily store delayed elements to facilite access for global pause/resume */
+							var callIndex = Velocity.State.delayedElements.count++;
+							Velocity.State.delayedElements[callIndex] = element;
+
+							var delayComplete = (function(index) {
+								return function() {
+									/* Clear the temporary element */
+									Velocity.State.delayedElements[index] = false;
+
+									/* Finally, issue the call */
+									next();
+								};
+							})(callIndex);
+
+
+							Data(element).delayBegin = (new Date()).getTime();
+							Data(element).delay = parseFloat(opts.delay);
 							Data(element).delayTimer = {
 								setTimeout: setTimeout(next, parseFloat(opts.delay)),
-								next: next
+								next: delayComplete
 							};
 						});
 					}
@@ -7719,6 +10003,11 @@
 							var parsePropertyValue = function(valueData, skipResolvingEasing) {
 								var endValue, easing, startValue;
 
+								/* If we have a function as the main argument then resolve it first, in case it returns an array that needs to be split */
+								if (Type.isFunction(valueData)) {
+									valueData = valueData.call(element, elementArrayIndex, elementsLength);
+								}
+
 								/* Handle the array format, which can be structured as one of three potential overloads:
 								 A) [ endValue, easing, startValue ], B) [ endValue, easing ], or C) [ endValue, startValue ] */
 								if (Type.isArray(valueData)) {
@@ -7730,14 +10019,14 @@
 									 start value since easings can only be non-hex strings or arrays. */
 									if ((!Type.isArray(valueData[1]) && /^[\d-]/.test(valueData[1])) || Type.isFunction(valueData[1]) || CSS.RegEx.isHex.test(valueData[1])) {
 										startValue = valueData[1];
-										/* Two or three-item array: If the second item is a non-hex string or an array, treat it as an easing. */
-									} else if ((Type.isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1])) || Type.isArray(valueData[1])) {
+										/* Two or three-item array: If the second item is a non-hex string easing name or an array, treat it as an easing. */
+									} else if ((Type.isString(valueData[1]) && !CSS.RegEx.isHex.test(valueData[1]) && Velocity.Easings[valueData[1]]) || Type.isArray(valueData[1])) {
 										easing = skipResolvingEasing ? valueData[1] : getEasing(valueData[1], opts.duration);
 
 										/* Don't bother validating startValue's value now since the ensuing property cycling logic inherently does that. */
-										if (valueData[2] !== undefined) {
-											startValue = valueData[2];
-										}
+										startValue = valueData[2];
+									} else {
+										startValue = valueData[1] || valueData[2];
 									}
 									/* Handle the single-value format. */
 								} else {
@@ -7763,67 +10052,19 @@
 								return [endValue || 0, easing, startValue];
 							};
 
-							/* Cycle through each property in the map, looking for shorthand color properties (e.g. "color" as opposed to "colorRed"). Inject the corresponding
-							 colorRed, colorGreen, and colorBlue RGB component tweens into the propertiesMap (which Velocity understands) and remove the shorthand property. */
-							$.each(propertiesMap, function(property, value) {
-								/* Find shorthand color properties that have been passed a hex string. */
-								if (RegExp("^" + CSS.Lists.colors.join("$|^") + "$").test(CSS.Names.camelCase(property))) {
-									/* Parse the value data for each shorthand. */
-									var valueData = parsePropertyValue(value, true),
-											endValue = valueData[0],
-											easing = valueData[1],
-											startValue = valueData[2];
+							var fixPropertyValue = function(property, valueData) {
+								/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
+								var rootProperty = CSS.Hooks.getRoot(property),
+										rootPropertyValue = false,
+										/* Parse out endValue, easing, and startValue from the property's data. */
+										endValue = valueData[0],
+										easing = valueData[1],
+										startValue = valueData[2],
+										pattern;
 
-									if (CSS.RegEx.isHex.test(endValue)) {
-										/* Convert the hex strings into their RGB component arrays. */
-										var colorComponents = ["Red", "Green", "Blue"],
-												endValueRGB = CSS.Values.hexToRgb(endValue),
-												startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
-
-										/* Inject the RGB component tweens into propertiesMap. */
-										for (var i = 0; i < colorComponents.length; i++) {
-											var dataArray = [endValueRGB[i]];
-
-											if (easing) {
-												dataArray.push(easing);
-											}
-
-											if (startValueRGB !== undefined) {
-												dataArray.push(startValueRGB[i]);
-											}
-
-											propertiesMap[CSS.Names.camelCase(property) + colorComponents[i]] = dataArray;
-										}
-
-										/* Remove the intermediary shorthand property entry now that we've processed it. */
-										delete propertiesMap[property];
-									}
-								}
-							});
-
-							/* Create a tween out of each property, and append its associated data to tweensContainer. */
-							for (var property in propertiesMap) {
-
-								if (!propertiesMap.hasOwnProperty(property)) {
-									continue;
-								}
 								/**************************
 								 Start Value Sourcing
 								 **************************/
-
-								/* Parse out endValue, easing, and startValue from the property's data. */
-								var valueData = parsePropertyValue(propertiesMap[property]),
-										endValue = valueData[0],
-										easing = valueData[1],
-										startValue = valueData[2];
-
-								/* Now that the original property name's format has been used for the parsePropertyValue() lookup above,
-								 we force the property to its camelCase styling to normalize it for manipulation. */
-								property = CSS.Names.camelCase(property);
-
-								/* In case this property is a hook, there are circumstances where we will intend to work on the hook's root property and not the hooked subproperty. */
-								var rootProperty = CSS.Hooks.getRoot(property),
-										rootPropertyValue = false;
 
 								/* Other than for the dummy tween property, properties that are not supported by the browser (and do not have an associated normalization) will
 								 inherently produce no style changes when set, so they are skipped in order to decrease animation tick overhead.
@@ -7834,7 +10075,7 @@
 									if (Velocity.debug) {
 										console.log("Skipping [" + rootProperty + "] due to a lack of browser support.");
 									}
-									continue;
+									return;
 								}
 
 								/* If the display option is being set to a non-"none" (e.g. "block") and opacity (filter on IE<=8) is being
@@ -7913,45 +10154,183 @@
 									return [numericValue, unitType];
 								};
 
-								/* Separate startValue. */
-								separatedValue = separateValue(property, startValue);
-								startValue = separatedValue[0];
-								startValueUnitType = separatedValue[1];
+								if (startValue !== endValue && Type.isString(startValue) && Type.isString(endValue)) {
+									pattern = "";
+									var iStart = 0, // index in startValue
+											iEnd = 0, // index in endValue
+											aStart = [], // array of startValue numbers
+											aEnd = [], // array of endValue numbers
+											inCalc = 0, // Keep track of being inside a "calc()" so we don't duplicate it
+											inRGB = 0, // Keep track of being inside an RGB as we can't use fractional values
+											inRGBA = 0; // Keep track of being inside an RGBA as we must pass fractional for the alpha channel
 
-								/* Separate endValue, and extract a value operator (e.g. "+=", "-=") if one exists. */
-								separatedValue = separateValue(property, endValue);
-								endValue = separatedValue[0].replace(/^([+-\/*])=/, function(match, subMatch) {
-									operator = subMatch;
+									startValue = CSS.Hooks.fixColors(startValue);
+									endValue = CSS.Hooks.fixColors(endValue);
+									while (iStart < startValue.length && iEnd < endValue.length) {
+										var cStart = startValue[iStart],
+												cEnd = endValue[iEnd];
 
-									/* Strip the operator off of the value. */
-									return "";
-								});
-								endValueUnitType = separatedValue[1];
+										if (/[\d\.-]/.test(cStart) && /[\d\.-]/.test(cEnd)) {
+											var tStart = cStart, // temporary character buffer
+													tEnd = cEnd, // temporary character buffer
+													dotStart = ".", // Make sure we can only ever match a single dot in a decimal
+													dotEnd = "."; // Make sure we can only ever match a single dot in a decimal
 
-								/* Parse float values from endValue and startValue. Default to 0 if NaN is returned. */
-								startValue = parseFloat(startValue) || 0;
-								endValue = parseFloat(endValue) || 0;
+											while (++iStart < startValue.length) {
+												cStart = startValue[iStart];
+												if (cStart === dotStart) {
+													dotStart = ".."; // Can never match two characters
+												} else if (!/\d/.test(cStart)) {
+													break;
+												}
+												tStart += cStart;
+											}
+											while (++iEnd < endValue.length) {
+												cEnd = endValue[iEnd];
+												if (cEnd === dotEnd) {
+													dotEnd = ".."; // Can never match two characters
+												} else if (!/\d/.test(cEnd)) {
+													break;
+												}
+												tEnd += cEnd;
+											}
+											var uStart = CSS.Hooks.getUnit(startValue, iStart), // temporary unit type
+													uEnd = CSS.Hooks.getUnit(endValue, iEnd); // temporary unit type
 
-								/***************************************
-								 Property-Specific Value Conversion
-								 ***************************************/
+											iStart += uStart.length;
+											iEnd += uEnd.length;
+											if (uStart === uEnd) {
+												// Same units
+												if (tStart === tEnd) {
+													// Same numbers, so just copy over
+													pattern += tStart + uStart;
+												} else {
+													// Different numbers, so store them
+													pattern += "{" + aStart.length + (inRGB ? "!" : "") + "}" + uStart;
+													aStart.push(parseFloat(tStart));
+													aEnd.push(parseFloat(tEnd));
+												}
+											} else {
+												// Different units, so put into a "calc(from + to)" and animate each side to/from zero
+												var nStart = parseFloat(tStart),
+														nEnd = parseFloat(tEnd);
 
-								/* Custom support for properties that don't actually accept the % unit type, but where pollyfilling is trivial and relatively foolproof. */
-								if (endValueUnitType === "%") {
-									/* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions),
-									 which is identical to the em unit's behavior, so we piggyback off of that. */
-									if (/^(fontSize|lineHeight)$/.test(property)) {
-										/* Convert % into an em decimal value. */
-										endValue = endValue / 100;
-										endValueUnitType = "em";
-										/* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */
-									} else if (/^scale/.test(property)) {
-										endValue = endValue / 100;
-										endValueUnitType = "";
-										/* For RGB components, take the defined percentage of 255 and strip off the unit type. */
-									} else if (/(Red|Green|Blue)$/i.test(property)) {
-										endValue = (endValue / 100) * 255;
-										endValueUnitType = "";
+												pattern += (inCalc < 5 ? "calc" : "") + "("
+														+ (nStart ? "{" + aStart.length + (inRGB ? "!" : "") + "}" : "0") + uStart
+														+ " + "
+														+ (nEnd ? "{" + (aStart.length + (nStart ? 1 : 0)) + (inRGB ? "!" : "") + "}" : "0") + uEnd
+														+ ")";
+												if (nStart) {
+													aStart.push(nStart);
+													aEnd.push(0);
+												}
+												if (nEnd) {
+													aStart.push(0);
+													aEnd.push(nEnd);
+												}
+											}
+										} else if (cStart === cEnd) {
+											pattern += cStart;
+											iStart++;
+											iEnd++;
+											// Keep track of being inside a calc()
+											if (inCalc === 0 && cStart === "c"
+													|| inCalc === 1 && cStart === "a"
+													|| inCalc === 2 && cStart === "l"
+													|| inCalc === 3 && cStart === "c"
+													|| inCalc >= 4 && cStart === "("
+													) {
+												inCalc++;
+											} else if ((inCalc && inCalc < 5)
+													|| inCalc >= 4 && cStart === ")" && --inCalc < 5) {
+												inCalc = 0;
+											}
+											// Keep track of being inside an rgb() / rgba()
+											if (inRGB === 0 && cStart === "r"
+													|| inRGB === 1 && cStart === "g"
+													|| inRGB === 2 && cStart === "b"
+													|| inRGB === 3 && cStart === "a"
+													|| inRGB >= 3 && cStart === "("
+													) {
+												if (inRGB === 3 && cStart === "a") {
+													inRGBA = 1;
+												}
+												inRGB++;
+											} else if (inRGBA && cStart === ",") {
+												if (++inRGBA > 3) {
+													inRGB = inRGBA = 0;
+												}
+											} else if ((inRGBA && inRGB < (inRGBA ? 5 : 4))
+													|| inRGB >= (inRGBA ? 4 : 3) && cStart === ")" && --inRGB < (inRGBA ? 5 : 4)) {
+												inRGB = inRGBA = 0;
+											}
+										} else {
+											inCalc = 0;
+											// TODO: changing units, fixing colours
+											break;
+										}
+									}
+									if (iStart !== startValue.length || iEnd !== endValue.length) {
+										if (Velocity.debug) {
+											console.error("Trying to pattern match mis-matched strings [\"" + endValue + "\", \"" + startValue + "\"]");
+										}
+										pattern = undefined;
+									}
+									if (pattern) {
+										if (aStart.length) {
+											if (Velocity.debug) {
+												console.log("Pattern found \"" + pattern + "\" -> ", aStart, aEnd, "[" + startValue + "," + endValue + "]");
+											}
+											startValue = aStart;
+											endValue = aEnd;
+											endValueUnitType = startValueUnitType = "";
+										} else {
+											pattern = undefined;
+										}
+									}
+								}
+
+								if (!pattern) {
+									/* Separate startValue. */
+									separatedValue = separateValue(property, startValue);
+									startValue = separatedValue[0];
+									startValueUnitType = separatedValue[1];
+
+									/* Separate endValue, and extract a value operator (e.g. "+=", "-=") if one exists. */
+									separatedValue = separateValue(property, endValue);
+									endValue = separatedValue[0].replace(/^([+-\/*])=/, function(match, subMatch) {
+										operator = subMatch;
+
+										/* Strip the operator off of the value. */
+										return "";
+									});
+									endValueUnitType = separatedValue[1];
+
+									/* Parse float values from endValue and startValue. Default to 0 if NaN is returned. */
+									startValue = parseFloat(startValue) || 0;
+									endValue = parseFloat(endValue) || 0;
+
+									/***************************************
+									 Property-Specific Value Conversion
+									 ***************************************/
+
+									/* Custom support for properties that don't actually accept the % unit type, but where pollyfilling is trivial and relatively foolproof. */
+									if (endValueUnitType === "%") {
+										/* A %-value fontSize/lineHeight is relative to the parent's fontSize (as opposed to the parent's dimensions),
+										 which is identical to the em unit's behavior, so we piggyback off of that. */
+										if (/^(fontSize|lineHeight)$/.test(property)) {
+											/* Convert % into an em decimal value. */
+											endValue = endValue / 100;
+											endValueUnitType = "em";
+											/* For scaleX and scaleY, convert the value into its decimal format and strip off the unit type. */
+										} else if (/^scale/.test(property)) {
+											endValue = endValue / 100;
+											endValueUnitType = "";
+											/* For RGB components, take the defined percentage of 255 and strip off the unit type. */
+										} else if (/(Red|Green|Blue)$/i.test(property)) {
+											endValue = (endValue / 100) * 255;
+											endValueUnitType = "";
+										}
 									}
 								}
 
@@ -7986,8 +10365,8 @@
 										position: CSS.getPropertyValue(element, "position"), /* GET */
 										fontSize: CSS.getPropertyValue(element, "fontSize") /* GET */
 									},
-									/* Determine if the same % ratio can be used. % is based on the element's position value and its parent's width and height dimensions. */
-									samePercentRatio = ((sameRatioIndicators.position === callUnitConversionData.lastPosition) && (sameRatioIndicators.myParent === callUnitConversionData.lastParent)),
+											/* Determine if the same % ratio can be used. % is based on the element's position value and its parent's width and height dimensions. */
+											samePercentRatio = ((sameRatioIndicators.position === callUnitConversionData.lastPosition) && (sameRatioIndicators.myParent === callUnitConversionData.lastParent)),
 											/* Determine if the same em ratio can be used. em is relative to the element's fontSize. */
 											sameEmRatio = (sameRatioIndicators.fontSize === callUnitConversionData.lastFontSize);
 
@@ -8170,10 +10549,59 @@
 									unitType: endValueUnitType,
 									easing: easing
 								};
+								if (pattern) {
+									tweensContainer[property].pattern = pattern;
+								}
 
 								if (Velocity.debug) {
 									console.log("tweensContainer (" + property + "): " + JSON.stringify(tweensContainer[property]), element);
 								}
+							};
+
+							/* Create a tween out of each property, and append its associated data to tweensContainer. */
+							for (var property in propertiesMap) {
+
+								if (!propertiesMap.hasOwnProperty(property)) {
+									continue;
+								}
+								/* The original property name's format must be used for the parsePropertyValue() lookup,
+								 but we then use its camelCase styling to normalize it for manipulation. */
+								var propertyName = CSS.Names.camelCase(property),
+										valueData = parsePropertyValue(propertiesMap[property]);
+
+								/* Find shorthand color properties that have been passed a hex string. */
+								/* Would be quicker to use CSS.Lists.colors.includes() if possible */
+								if (_inArray(CSS.Lists.colors, propertyName)) {
+									/* Parse the value data for each shorthand. */
+									var endValue = valueData[0],
+											easing = valueData[1],
+											startValue = valueData[2];
+
+									if (CSS.RegEx.isHex.test(endValue)) {
+										/* Convert the hex strings into their RGB component arrays. */
+										var colorComponents = ["Red", "Green", "Blue"],
+												endValueRGB = CSS.Values.hexToRgb(endValue),
+												startValueRGB = startValue ? CSS.Values.hexToRgb(startValue) : undefined;
+
+										/* Inject the RGB component tweens into propertiesMap. */
+										for (var i = 0; i < colorComponents.length; i++) {
+											var dataArray = [endValueRGB[i]];
+
+											if (easing) {
+												dataArray.push(easing);
+											}
+
+											if (startValueRGB !== undefined) {
+												dataArray.push(startValueRGB[i]);
+											}
+
+											fixPropertyValue(propertyName + colorComponents[i], dataArray);
+										}
+										/* If we have replaced a shortcut color value then don't update the standard property name */
+										continue;
+									}
+								}
+								fixPropertyValue(propertyName, valueData);
 							}
 
 							/* Along with its property data, store a reference to the element itself onto tweensContainer. */
@@ -8212,7 +10640,7 @@
 							if (elementsIndex === elementsLength - 1) {
 								/* Add the current call plus its associated metadata (the element set and the call's options) onto the global call container.
 								 Anything on this call container is subjected to tick() processing. */
-								Velocity.State.calls.push([call, elements, opts, null, promiseData.resolver]);
+								Velocity.State.calls.push([call, elements, opts, null, promiseData.resolver, null, 0]);
 
 								/* If the animation tick isn't running, start it. (Velocity shuts it off when there are no active calls to process.) */
 								if (Velocity.State.isTicking === false) {
@@ -8232,7 +10660,27 @@
 						/* Since this buildQueue call doesn't respect the element's existing queue (which is where a delay option would have been appended),
 						 we manually inject the delay property here with an explicit setTimeout. */
 						if (opts.delay) {
-							setTimeout(buildQueue, opts.delay);
+
+							/* Temporarily store delayed elements to facilitate access for global pause/resume */
+							var callIndex = Velocity.State.delayedElements.count++;
+							Velocity.State.delayedElements[callIndex] = element;
+
+							var delayComplete = (function(index) {
+								return function() {
+									/* Clear the temporary element */
+									Velocity.State.delayedElements[index] = false;
+
+									/* Finally, issue the call */
+									buildQueue();
+								};
+							})(callIndex);
+
+							Data(element).delayBegin = (new Date()).getTime();
+							Data(element).delay = parseFloat(opts.delay);
+							Data(element).delayTimer = {
+								setTimeout: setTimeout(buildQueue, parseFloat(opts.delay)),
+								next: delayComplete
+							};
 						} else {
 							buildQueue();
 						}
@@ -8352,7 +10800,7 @@
 			 devices to avoid wasting battery power on inactive tabs. */
 			/* Note: Tab focus detection doesn't work on older versions of IE, but that's okay since they don't support rAF to begin with. */
 			if (!Velocity.State.isMobile && document.hidden !== undefined) {
-				document.addEventListener("visibilitychange", function() {
+				var updateTicker = function() {
 					/* Reassign the rAF function (which the global tick() function uses) based on the tab's focus state. */
 					if (document.hidden) {
 						ticker = function(callback) {
@@ -8367,7 +10815,13 @@
 					} else {
 						ticker = window.requestAnimationFrame || rAFShim;
 					}
-				});
+				};
+
+				/* Page could be sitting in the background at this time (i.e. opened as new tab) so making sure we use correct ticker from the start */
+				updateTicker();
+
+				/* And then run check again every time visibility changes */
+				document.addEventListener("visibilitychange", updateTicker);
 			}
 
 			/************
@@ -8383,9 +10837,10 @@
 				 the first RAF tick pass so that elements being immediately consecutively animated -- instead of simultaneously animated
 				 by the same Velocity call -- are properly batched into the same initial RAF tick and consequently remain in sync thereafter. */
 				if (timestamp) {
-					/* We ignore RAF's high resolution timestamp since it can be significantly offset when the browser is
-					 under high stress; we opt for choppiness over allowing the browser to drop huge chunks of frames. */
-					var timeCurrent = (new Date()).getTime();
+					/* We normally use RAF's high resolution timestamp but as it can be significantly offset when the browser is
+					 under high stress we give the option for choppiness over allowing the browser to drop huge chunks of frames.
+					 We use performance.now() and shim it if it doesn't exist for when the tab is hidden. */
+					var timeCurrent = Velocity.timestamp && timestamp !== true ? timestamp : performance.now();
 
 					/********************
 					 Call Iteration
@@ -8416,8 +10871,12 @@
 								call = callContainer[0],
 								opts = callContainer[2],
 								timeStart = callContainer[3],
-								firstTick = !!timeStart,
-								tweenDummyValue = null;
+								firstTick = !timeStart,
+								tweenDummyValue = null,
+								pauseObject = callContainer[5],
+								millisecondsEllapsed = callContainer[6];
+
+
 
 						/* If timeStart is undefined, then this is the first time that this call has been processed by tick().
 						 We assign timeStart now so that its value is as close to the real animation start time as possible.
@@ -8431,10 +10890,25 @@
 							timeStart = Velocity.State.calls[i][3] = timeCurrent - 16;
 						}
 
+						/* If a pause object is present, skip processing unless it has been set to resume */
+						if (pauseObject) {
+							if (pauseObject.resume === true) {
+								/* Update the time start to accomodate the paused completion amount */
+								timeStart = callContainer[3] = Math.round(timeCurrent - millisecondsEllapsed - 16);
+
+								/* Remove pause object after processing */
+								callContainer[5] = null;
+							} else {
+								continue;
+							}
+						}
+
+						millisecondsEllapsed = callContainer[6] = timeCurrent - timeStart;
+
 						/* The tween's completion percentage is relative to the tween's start time, not the tween's start value
 						 (which would result in unpredictable tween durations since JavaScript's timers are not particularly accurate).
 						 Accordingly, we ensure that percentComplete does not exceed 1. */
-						var percentComplete = Math.min((timeCurrent - timeStart) / opts.duration, 1);
+						var percentComplete = Math.min((millisecondsEllapsed) / opts.duration, 1);
 
 						/**********************
 						 Element Iteration
@@ -8446,7 +10920,7 @@
 									element = tweensContainer.element;
 
 							/* Check to see if this element has been deleted midway through the animation by checking for the
-							 continued existence of its data cache. If it's gone, skip animating this element. */
+							 continued existence of its data cache. If it's gone, or the element is currently paused, skip animating this element. */
 							if (!Data(element)) {
 								continue;
 							}
@@ -8494,19 +10968,35 @@
 									 Current Value Calculation
 									 ******************************/
 
-									/* If this is the last tick pass (if we've reached 100% completion for this tween),
-									 ensure that currentValue is explicitly set to its target endValue so that it's not subjected to any rounding. */
-									if (percentComplete === 1) {
-										currentValue = tween.endValue;
-										/* Otherwise, calculate currentValue based on the current delta from startValue. */
-									} else {
-										var tweenDelta = tween.endValue - tween.startValue;
-										currentValue = tween.startValue + (tweenDelta * easing(percentComplete, opts, tweenDelta));
+									if (Type.isString(tween.pattern)) {
+										var patternReplace = percentComplete === 1 ?
+												function($0, index, round) {
+													var result = tween.endValue[index];
 
+													return round ? Math.round(result) : result;
+												} :
+												function($0, index, round) {
+													var startValue = tween.startValue[index],
+															tweenDelta = tween.endValue[index] - startValue,
+															result = startValue + (tweenDelta * easing(percentComplete, opts, tweenDelta));
+
+													return round ? Math.round(result) : result;
+												};
+
+										currentValue = tween.pattern.replace(/{(\d+)(!)?}/g, patternReplace);
+									} else if (percentComplete === 1) {
+										/* If this is the last tick pass (if we've reached 100% completion for this tween),
+										 ensure that currentValue is explicitly set to its target endValue so that it's not subjected to any rounding. */
+										currentValue = tween.endValue;
+									} else {
+										/* Otherwise, calculate currentValue based on the current delta from startValue. */
+										var tweenDelta = tween.endValue - tween.startValue;
+
+										currentValue = tween.startValue + (tweenDelta * easing(percentComplete, opts, tweenDelta));
 										/* If no value change is occurring, don't proceed with DOM updating. */
-										if (!firstTick && (currentValue === tween.currentValue)) {
-											continue;
-										}
+									}
+									if (!firstTick && (currentValue === tween.currentValue)) {
+										continue;
 									}
 
 									tween.currentValue = currentValue;
@@ -8544,7 +11034,7 @@
 										/* Note: To solve an IE<=8 positioning bug, the unit type is dropped when setting a property value of 0. */
 										var adjustedSetData = CSS.setPropertyValue(element, /* SET */
 												property,
-												tween.currentValue + (parseFloat(currentValue) === 0 ? "" : tween.unitType),
+												tween.currentValue + (IE < 9 && parseFloat(currentValue) === 0 ? "" : tween.unitType),
 												tween.rootPropertyValue,
 												tween.scrollData);
 
@@ -8828,8 +11318,8 @@
 					var opts = $.extend({}, options),
 							begin = opts.begin,
 							complete = opts.complete,
-							computedValues = {height: "", marginTop: "", marginBottom: "", paddingTop: "", paddingBottom: ""},
-					inlineValues = {};
+							inlineValues = {},
+							computedValues = {height: "", marginTop: "", marginBottom: "", paddingTop: "", paddingBottom: ""};
 
 					if (opts.display === undefined) {
 						/* Show the element before slideDown begins and hide the element after slideUp completes. */
@@ -8839,7 +11329,7 @@
 
 					opts.begin = function() {
 						/* If the user passed in a begin callback, fire it now. */
-						if (begin) {
+						if (elementsIndex === 0 && begin) {
 							begin.call(elements, elements);
 						}
 
@@ -8852,7 +11342,7 @@
 
 							/* For slideDown, use forcefeeding to animate all vertical properties from 0. For slideUp,
 							 use forcefeeding to start from computed values and animate down to 0. */
-							var propertyValue = Velocity.CSS.getPropertyValue(element, property);
+							var propertyValue = CSS.getPropertyValue(element, property);
 							computedValues[property] = (direction === "Down") ? [propertyValue, 0] : [0, propertyValue];
 						}
 
@@ -8870,11 +11360,13 @@
 						}
 
 						/* If the user passed in a complete callback, fire it now. */
-						if (complete) {
-							complete.call(elements, elements);
-						}
-						if (promiseData) {
-							promiseData.resolver(elements);
+						if (elementsIndex === elementsSize - 1) {
+							if (complete) {
+								complete.call(elements, elements);
+							}
+							if (promiseData) {
+								promiseData.resolver(elements);
+							}
 						}
 					};
 
@@ -8886,19 +11378,21 @@
 			$.each(["In", "Out"], function(i, direction) {
 				Velocity.Redirects["fade" + direction] = function(element, options, elementsIndex, elementsSize, elements, promiseData) {
 					var opts = $.extend({}, options),
-							originalComplete = opts.complete,
+							complete = opts.complete,
 							propertiesMap = {opacity: (direction === "In") ? 1 : 0};
 
 					/* Since redirects are triggered individually for each element in the animated set, avoid repeatedly triggering
 					 callbacks by firing them only when the final element has been reached. */
+					if (elementsIndex !== 0) {
+						opts.begin = null;
+					}
 					if (elementsIndex !== elementsSize - 1) {
-						opts.complete = opts.begin = null;
+						opts.complete = null;
 					} else {
 						opts.complete = function() {
-							if (originalComplete) {
-								originalComplete.call(elements, elements);
+							if (complete) {
+								complete.call(elements, elements);
 							}
-
 							if (promiseData) {
 								promiseData.resolver(elements);
 							}
@@ -8916,7 +11410,7 @@
 			});
 
 			return Velocity;
-		}((window.jQuery || window.Zepto || window), window, document);
+		}((window.jQuery || window.Zepto || window), window, (window ? window.document : undefined));
 	}));
 
 	/******************
@@ -8928,12 +11422,12 @@
 	 will produce an inaccurate conversion value. The same issue exists with the cx/cy attributes of SVG circles and ellipses. */
 
 
-/***/ },
-/* 17 */
+/***/ }),
+/* 18 */
 /*!*****************************************!*\
   !*** ./src/client/js/services/modal.js ***!
   \*****************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -8941,13 +11435,13 @@
 	// Imports //
 	//---------//
 
-	var $ = __webpack_require__(/*! ../external/domtastic.custom */ 5),
-	    duration = __webpack_require__(/*! ../constants/duration */ 13),
-	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 7),
-	    render = __webpack_require__(/*! ../services/render */ 18),
-	    tabbable = __webpack_require__(/*! tabbable */ 21),
-	    utils = __webpack_require__(/*! ../utils */ 12),
-	    velocity = __webpack_require__(/*! velocity-animate */ 16);
+	var $ = __webpack_require__(/*! ../external/domtastic.custom */ 6),
+	    duration = __webpack_require__(/*! ../constants/duration */ 14),
+	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 8),
+	    render = __webpack_require__(/*! ../services/render */ 19),
+	    tabbable = __webpack_require__(/*! tabbable */ 22),
+	    utils = __webpack_require__(/*! ../utils */ 13),
+	    velocity = __webpack_require__(/*! velocity-animate */ 17);
 
 	//------//
 	// Init //
@@ -9079,12 +11573,12 @@
 
 	module.exports = exportMe;
 
-/***/ },
-/* 18 */
+/***/ }),
+/* 19 */
 /*!******************************************!*\
   !*** ./src/client/js/services/render.js ***!
   \******************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -9092,9 +11586,9 @@
 	// Imports //
 	//---------//
 
-	var nunjucksSlim = __webpack_require__(/*! nunjucks/browser/nunjucks-slim */ 19),
-	    precompiledTemplates = __webpack_require__(/*! ../precompiled-templates */ 20),
-	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 7);
+	var nunjucksSlim = __webpack_require__(/*! nunjucks/browser/nunjucks-slim */ 20),
+	    precompiledTemplates = __webpack_require__(/*! ../precompiled-templates */ 21),
+	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 8);
 
 	//------//
 	// Main //
@@ -9123,12 +11617,12 @@
 
 	module.exports = render;
 
-/***/ },
-/* 19 */
+/***/ }),
+/* 20 */
 /*!*********************************************!*\
   !*** ./~/nunjucks/browser/nunjucks-slim.js ***!
   \*********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*! Browser bundle of nunjucks 2.5.2 (slim, only works with precompiled templates) */
 	(function webpackUniversalModuleDefinition(root, factory) {
@@ -11830,12 +14324,12 @@
 	});
 	;
 
-/***/ },
-/* 20 */
+/***/ }),
+/* 21 */
 /*!************************************************!*\
   !*** ./src/client/js/precompiled-templates.js ***!
   \************************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	"use strict";
 
@@ -12358,30 +14852,59 @@
 	  };
 	}();
 
-/***/ },
-/* 21 */
+/***/ }),
+/* 22 */
 /*!*****************************!*\
   !*** ./~/tabbable/index.js ***!
   \*****************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-	module.exports = function(el) {
+	module.exports = function(el, options) {
+	  options = options || {};
+
+	  var elementDocument = el.ownerDocument || el;
 	  var basicTabbables = [];
 	  var orderedTabbables = [];
-	  var isHidden = createIsHidden();
 
-	  var candidates = el.querySelectorAll('input, select, a[href], textarea, button, [tabindex]');
+	  // A node is "available" if
+	  // - it's computed style
+	  var isUnavailable = createIsUnavailable(elementDocument);
 
-	  var candidate, candidateIndex;
+	  var candidateSelectors = [
+	    'input',
+	    'select',
+	    'a[href]',
+	    'textarea',
+	    'button',
+	    '[tabindex]',
+	  ];
+
+	  var candidates = el.querySelectorAll(candidateSelectors.join(','));
+
+	  if (options.includeContainer) {
+	    var matches = Element.prototype.matches || Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+
+	    if (
+	      candidateSelectors.some(function(candidateSelector) {
+	        return matches.call(el, candidateSelector);
+	      })
+	    ) {
+	      candidates = Array.prototype.slice.apply(candidates);
+	      candidates.unshift(el);
+	    }
+	  }
+
+	  var candidate, candidateIndexAttr, candidateIndex;
 	  for (var i = 0, l = candidates.length; i < l; i++) {
 	    candidate = candidates[i];
-	    candidateIndex = candidate.tabIndex;
+	    candidateIndexAttr = parseInt(candidate.getAttribute('tabindex'), 10)
+	    candidateIndex = isNaN(candidateIndexAttr) ? candidate.tabIndex : candidateIndexAttr;
 
 	    if (
 	      candidateIndex < 0
 	      || (candidate.tagName === 'INPUT' && candidate.type === 'hidden')
 	      || candidate.disabled
-	      || isHidden(candidate)
+	      || isUnavailable(candidate, elementDocument)
 	    ) {
 	      continue;
 	    }
@@ -12390,6 +14913,7 @@
 	      basicTabbables.push(candidate);
 	    } else {
 	      orderedTabbables.push({
+	        index: i,
 	        tabIndex: candidateIndex,
 	        node: candidate,
 	      });
@@ -12398,7 +14922,7 @@
 
 	  var tabbableNodes = orderedTabbables
 	    .sort(function(a, b) {
-	      return a.tabIndex - b.tabIndex;
+	      return a.tabIndex === b.tabIndex ? a.index - b.index : a.tabIndex - b.tabIndex;
 	    })
 	    .map(function(a) {
 	      return a.node
@@ -12409,40 +14933,57 @@
 	  return tabbableNodes;
 	}
 
-	function createIsHidden() {
+	function createIsUnavailable(elementDocument) {
 	  // Node cache must be refreshed on every check, in case
 	  // the content of the element has changed
-	  var nodeCache = [];
+	  var isOffCache = [];
 
-	  return function isHidden(node) {
-	    if (node === document.documentElement) return false;
+	  // "off" means `display: none;`, as opposed to "hidden",
+	  // which means `visibility: hidden;`. getComputedStyle
+	  // accurately reflects visiblity in context but not
+	  // "off" state, so we need to recursively check parents.
+
+	  function isOff(node, nodeComputedStyle) {
+	    if (node === elementDocument.documentElement) return false;
 
 	    // Find the cached node (Array.prototype.find not available in IE9)
-	    for (var i = 0, length = nodeCache.length; i < length; i++) {
-	      if (nodeCache[i][0] === node) return nodeCache[i][1];
+	    for (var i = 0, length = isOffCache.length; i < length; i++) {
+	      if (isOffCache[i][0] === node) return isOffCache[i][1];
 	    }
+
+	    nodeComputedStyle = nodeComputedStyle || elementDocument.defaultView.getComputedStyle(node);
 
 	    var result = false;
-	    var style = window.getComputedStyle(node);
-	    if (style.visibility === 'hidden' || style.display === 'none') {
+
+	    if (nodeComputedStyle.display === 'none') {
 	      result = true;
 	    } else if (node.parentNode) {
-	      result = isHidden(node.parentNode);
+	      result = isOff(node.parentNode);
 	    }
 
-	    nodeCache.push([node, result]);
+	    isOffCache.push([node, result]);
 
 	    return result;
+	  }
+
+	  return function isUnavailable(node) {
+	    if (node === elementDocument.documentElement) return false;
+
+	    var computedStyle = elementDocument.defaultView.getComputedStyle(node);
+
+	    if (isOff(node, computedStyle)) return true;
+
+	    return computedStyle.visibility === 'hidden';
 	  }
 	}
 
 
-/***/ },
-/* 22 */
+/***/ }),
+/* 23 */
 /*!**************************************!*\
   !*** ./src/client/js/views/index.js ***!
   \**************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -12456,8 +14997,8 @@
 	// Imports //
 	//---------//
 
-	var r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 7),
-	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 8);
+	var r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 8),
+	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 9);
 
 	//------//
 	// Init //
@@ -12467,7 +15008,7 @@
 
 
 	var views = {
-	  home: __webpack_require__(/*! ./home.js */ 23)
+	  home: __webpack_require__(/*! ./home.js */ 24)
 	};
 
 	//------//
@@ -12490,12 +15031,12 @@
 
 	module.exports = exportMe;
 
-/***/ },
-/* 23 */
+/***/ }),
+/* 24 */
 /*!*************************************!*\
   !*** ./src/client/js/views/home.js ***!
   \*************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -12512,20 +15053,19 @@
 	// Imports //
 	//---------//
 
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-	var $ = __webpack_require__(/*! ../external/domtastic.custom */ 5),
-	    duration = __webpack_require__(/*! ../constants/duration */ 13),
-	    formData = __webpack_require__(/*! ../services/form-data */ 24),
-	    modal = __webpack_require__(/*! ../services/modal */ 17),
-	    modalForms = __webpack_require__(/*! ../modal-forms */ 25),
-	    request = __webpack_require__(/*! ../services/request */ 36),
-	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 7),
-	    render = __webpack_require__(/*! ../services/render */ 18),
-	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 8),
-	    schemas = __webpack_require__(/*! ../../../shared/schemas */ 29),
-	    utils = __webpack_require__(/*! ../utils */ 12),
-	    velocity = __webpack_require__(/*! velocity-animate */ 16);
+	var $ = __webpack_require__(/*! ../external/domtastic.custom */ 6),
+	    dedent = __webpack_require__(/*! dedent */ 25),
+	    duration = __webpack_require__(/*! ../constants/duration */ 14),
+	    formData = __webpack_require__(/*! ../services/form-data */ 26),
+	    modal = __webpack_require__(/*! ../services/modal */ 18),
+	    modalForms = __webpack_require__(/*! ../modal-forms */ 27),
+	    request = __webpack_require__(/*! ../services/request */ 38),
+	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 8),
+	    render = __webpack_require__(/*! ../services/render */ 19),
+	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 9),
+	    schemas = __webpack_require__(/*! ../../../shared/schemas */ 31),
+	    utils = __webpack_require__(/*! ../utils */ 13),
+	    velocity = __webpack_require__(/*! velocity-animate */ 17);
 
 	//------//
 	// Init //
@@ -13073,29 +15613,23 @@
 	        });
 	      }).catch(function (err) {
 	        if (r.path(['response', 'data', 'id'], err) === 'brewery_no_longer_exists') {
-	          var _ret = function () {
-	            var breweryData = getItemData({ id: brewery_id, itemType: 'brewery' }),
-	                breweryDt = viewDt.find('[data-item-id="' + brewery_id + '"]');
+	          var breweryData = getItemData({ id: brewery_id, itemType: 'brewery' }),
+	              breweryDt = viewDt.find('[data-item-id="' + brewery_id + '"]');
 
-	            return {
-	              v: modal.dialog.show({
-	                ctx: {
-	                  title: 'No Longer Exists',
-	                  content: '<p>The brewery ' + spanItem(breweryData.name) + ' has been deleted ' + 'by someone else so you are unable to edit its beer.  This ' + 'application doesn\'t support real-time notifications, so a ' + 'page refresh is necessary to see edits made by others.</p><p>' + 'The brewery ' + spanItem(breweryData.name) + ' will now be deleted.</p>',
-	                  btns: [{ text: 'Sounds good', action: 'ok' }]
-	                },
-	                cbs: {
-	                  ok: function ok() {
-	                    return modal.dialog.hide().then(function () {
-	                      return deleteItem(breweryDt, 'brewery', brewery_id);
-	                    });
-	                  }
-	                }
-	              })
-	            };
-	          }();
-
-	          if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+	          return modal.dialog.show({
+	            ctx: {
+	              title: 'No Longer Exists',
+	              content: '<p>The brewery ' + spanItem(breweryData.name) + ' has been deleted ' + 'by someone else so you are unable to edit its beer.  This ' + 'application doesn\'t support real-time notifications, so a ' + 'page refresh is necessary to see edits made by others.</p><p>' + 'The brewery ' + spanItem(breweryData.name) + ' will now be deleted.</p>',
+	              btns: [{ text: 'Sounds good', action: 'ok' }]
+	            },
+	            cbs: {
+	              ok: function ok() {
+	                return modal.dialog.hide().then(function () {
+	                  return deleteItem(breweryDt, 'brewery', brewery_id);
+	                });
+	              }
+	            }
+	          });
 	        } else if (r.path(['response', 'status'], err) === 404) {
 	          return modal.dialog.show({
 	            ctx: {
@@ -13126,7 +15660,7 @@
 	        return modal.dialog.show({
 	          ctx: {
 	            title: 'No Longer Exists',
-	            content: '<p>The brewery ' + spanItem(breweryData.name) + ' has been deleted ' + 'by someone else so you are unable to add a beer to it.  This ' + 'application doesn\'t support real-time notifications, so a ' + 'page refresh is necessary to see edits made by others.</p><p>' + 'The brewery ' + spanItem(breweryData.name) + ' will now be deleted.</p>',
+	            content: dedent('\n                <p>\n                  The brewery ' + spanItem(breweryData.name) + ' has been deleted by\n                  someone else so you are unable to add a beer to it.  This\n                  application doesn\'t support real-time notifications, so a page\n                  refresh is necessary to see edits made by others.\n                </p>\n                <p>\n                  The brewery ' + spanItem(breweryData.name) + ' will now be deleted.\n                </p>\n              '),
 	            btns: [{ text: 'Sounds good', action: 'ok' }]
 	          },
 	          cbs: {
@@ -13229,12 +15763,80 @@
 
 	module.exports = { run: run };
 
-/***/ },
-/* 24 */
+/***/ }),
+/* 25 */
+/*!*********************************!*\
+  !*** ./~/dedent/dist/dedent.js ***!
+  \*********************************/
+/***/ (function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	function dedent(strings) {
+
+	  var raw = void 0;
+	  if (typeof strings === "string") {
+	    // dedent can be used as a plain function
+	    raw = [strings];
+	  } else {
+	    raw = strings.raw;
+	  }
+
+	  // first, perform interpolation
+	  var result = "";
+	  for (var i = 0; i < raw.length; i++) {
+	    result += raw[i].
+	    // join lines when there is a suppressed newline
+	    replace(/\\\n[ \t]*/g, "").
+
+	    // handle escaped backticks
+	    replace(/\\`/g, "`");
+
+	    if (i < (arguments.length <= 1 ? 0 : arguments.length - 1)) {
+	      result += arguments.length <= i + 1 ? undefined : arguments[i + 1];
+	    }
+	  }
+
+	  // now strip indentation
+	  var lines = result.split("\n");
+	  var mindent = null;
+	  lines.forEach(function (l) {
+	    var m = l.match(/^(\s+)\S+/);
+	    if (m) {
+	      var indent = m[1].length;
+	      if (!mindent) {
+	        // this is the first indented line
+	        mindent = indent;
+	      } else {
+	        mindent = Math.min(mindent, indent);
+	      }
+	    }
+	  });
+
+	  if (mindent !== null) {
+	    result = lines.map(function (l) {
+	      return l[0] === " " ? l.slice(mindent) : l;
+	    }).join("\n");
+	  }
+
+	  // dedent eats leading and trailing whitespace too
+	  result = result.trim();
+
+	  // handle escaped newlines at the end to ensure they don't get stripped too
+	  return result.replace(/\\n/g, "\n");
+	}
+
+	if (true) {
+	  module.exports = dedent;
+	}
+
+
+/***/ }),
+/* 26 */
 /*!*********************************************!*\
   !*** ./src/client/js/services/form-data.js ***!
   \*********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13242,7 +15844,7 @@
 	// Imports //
 	//---------//
 
-	var rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 8);
+	var rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 9);
 
 	//------//
 	// Init //
@@ -13276,26 +15878,26 @@
 
 	module.exports = exportMe;
 
-/***/ },
-/* 25 */
+/***/ }),
+/* 27 */
 /*!********************************************!*\
   !*** ./src/client/js/modal-forms/index.js ***!
   \********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	module.exports = {
-	  beer: __webpack_require__(/*! ./beer */ 26),
-	  brewery: __webpack_require__(/*! ./brewery */ 35)
+	  beer: __webpack_require__(/*! ./beer */ 28),
+	  brewery: __webpack_require__(/*! ./brewery */ 37)
 	};
 
-/***/ },
-/* 26 */
+/***/ }),
+/* 28 */
 /*!*******************************************!*\
   !*** ./src/client/js/modal-forms/beer.js ***!
   \*******************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13303,8 +15905,8 @@
 	// Imports //
 	//---------//
 
-	var styleList = __webpack_require__(/*! ../../../shared/style-list */ 27),
-	    helpers = __webpack_require__(/*! ./helpers */ 28);
+	var styleList = __webpack_require__(/*! ../../../shared/style-list */ 29),
+	    helpers = __webpack_require__(/*! ./helpers */ 30);
 
 	//------//
 	// Main //
@@ -13328,44 +15930,21 @@
 	  };
 	};
 
-/***/ },
-/* 27 */
+/***/ }),
+/* 29 */
 /*!************************************!*\
   !*** ./src/shared/style-list.json ***!
   \************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-	module.exports = [
-		"Ale",
-		"Amber",
-		"Belgian",
-		"Blonde",
-		"Bock",
-		"Brown",
-		"Cream",
-		"Golden",
-		"Hefeweizen",
-		"IPA",
-		"Kolsch",
-		"Lager",
-		"Light",
-		"Oktoberfest",
-		"Pale Ale",
-		"Pilsner",
-		"Porter",
-		"Rauchbier",
-		"Red",
-		"Saison",
-		"Stout",
-		"Witbier"
-	];
+	module.exports = ["Ale","Amber","Belgian","Blonde","Bock","Brown","Cream","Golden","Hefeweizen","IPA","Kolsch","Lager","Light","Oktoberfest","Pale Ale","Pilsner","Porter","Rauchbier","Red","Saison","Stout","Witbier"]
 
-/***/ },
-/* 28 */
+/***/ }),
+/* 30 */
 /*!**********************************************!*\
   !*** ./src/client/js/modal-forms/helpers.js ***!
   \**********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13373,10 +15952,10 @@
 	// Imports //
 	//---------//
 
-	var r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 7),
-	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 8),
-	    schemas = __webpack_require__(/*! ../../../shared/schemas */ 29),
-	    startCase = __webpack_require__(/*! lodash.startcase */ 34);
+	var r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 8),
+	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 9),
+	    schemas = __webpack_require__(/*! ../../../shared/schemas */ 31),
+	    startCase = __webpack_require__(/*! lodash.startcase */ 36);
 
 	//------//
 	// Init //
@@ -13422,26 +16001,26 @@
 	  }
 	};
 
-/***/ },
-/* 29 */
+/***/ }),
+/* 31 */
 /*!*************************************!*\
   !*** ./src/shared/schemas/index.js ***!
   \*************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	module.exports = {
-	  beer: __webpack_require__(/*! ./beer */ 30),
-	  brewery: __webpack_require__(/*! ./brewery */ 32)
+	  beer: __webpack_require__(/*! ./beer */ 32),
+	  brewery: __webpack_require__(/*! ./brewery */ 34)
 	};
 
-/***/ },
-/* 30 */
+/***/ }),
+/* 32 */
 /*!************************************!*\
   !*** ./src/shared/schemas/beer.js ***!
   \************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13449,9 +16028,9 @@
 	// Imports //
 	//---------//
 
-	var schema = __webpack_require__(/*! ../schema */ 31),
-	    r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 7),
-	    styleList = __webpack_require__(/*! ../style-list */ 27);
+	var schema = __webpack_require__(/*! ../schema */ 33),
+	    r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 8),
+	    styleList = __webpack_require__(/*! ../style-list */ 29);
 
 	//------//
 	// Init //
@@ -13492,12 +16071,12 @@
 	  keys: r.keys(definition)
 	};
 
-/***/ },
-/* 31 */
+/***/ }),
+/* 33 */
 /*!******************************!*\
   !*** ./src/shared/schema.js ***!
   \******************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13526,8 +16105,8 @@
 	// Imports //
 	//---------//
 
-	var r = __webpack_require__(/*! ../../lib/external/ramda.custom */ 7),
-	    rUtils = __webpack_require__(/*! ../../lib/r-utils */ 8);
+	var r = __webpack_require__(/*! ../../lib/external/ramda.custom */ 8),
+	    rUtils = __webpack_require__(/*! ../../lib/r-utils */ 9);
 
 	//------//
 	// Init //
@@ -13626,12 +16205,12 @@
 	  fns: fns
 	};
 
-/***/ },
-/* 32 */
+/***/ }),
+/* 34 */
 /*!***************************************!*\
   !*** ./src/shared/schemas/brewery.js ***!
   \***************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -13639,9 +16218,9 @@
 	// Imports //
 	//---------//
 
-	var schema = __webpack_require__(/*! ../schema */ 31),
-	    r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 7),
-	    stateList = __webpack_require__(/*! ../state-list */ 33);
+	var schema = __webpack_require__(/*! ../schema */ 33),
+	    r = __webpack_require__(/*! ../../../lib/external/ramda.custom */ 8),
+	    stateList = __webpack_require__(/*! ../state-list */ 35);
 
 	//------//
 	// Init //
@@ -13679,73 +16258,21 @@
 	  keys: r.pipe(r.reject(schema.isIgnored), r.keys)(definition)
 	};
 
-/***/ },
-/* 33 */
+/***/ }),
+/* 35 */
 /*!************************************!*\
   !*** ./src/shared/state-list.json ***!
   \************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
-	module.exports = [
-		"AL",
-		"AK",
-		"AZ",
-		"AR",
-		"CA",
-		"CO",
-		"CT",
-		"DE",
-		"DC",
-		"FL",
-		"GA",
-		"HI",
-		"ID",
-		"IL",
-		"IN",
-		"IA",
-		"KS",
-		"KY",
-		"LA",
-		"ME",
-		"MD",
-		"MA",
-		"MI",
-		"MN",
-		"MS",
-		"MO",
-		"MT",
-		"NE",
-		"NV",
-		"NH",
-		"NJ",
-		"NM",
-		"NY",
-		"NC",
-		"ND",
-		"OH",
-		"OK",
-		"OR",
-		"PA",
-		"RI",
-		"SC",
-		"SD",
-		"TN",
-		"TX",
-		"UT",
-		"VT",
-		"VA",
-		"WA",
-		"WV",
-		"WI",
-		"WY"
-	];
+	module.exports = ["AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"]
 
-/***/ },
-/* 34 */
+/***/ }),
+/* 36 */
 /*!*************************************!*\
   !*** ./~/lodash.startcase/index.js ***!
   \*************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
 	 * lodash (Custom Build) <https://lodash.com/>
@@ -14330,12 +16857,12 @@
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
-/***/ },
-/* 35 */
+/***/ }),
+/* 37 */
 /*!**********************************************!*\
   !*** ./src/client/js/modal-forms/brewery.js ***!
   \**********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -14343,8 +16870,8 @@
 	// Imports //
 	//---------//
 
-	var stateList = __webpack_require__(/*! ../../../shared/state-list */ 33),
-	    helpers = __webpack_require__(/*! ./helpers */ 28);
+	var stateList = __webpack_require__(/*! ../../../shared/state-list */ 35),
+	    helpers = __webpack_require__(/*! ./helpers */ 30);
 
 	//------//
 	// Main //
@@ -14368,12 +16895,12 @@
 	  };
 	};
 
-/***/ },
-/* 36 */
+/***/ }),
+/* 38 */
 /*!*******************************************!*\
   !*** ./src/client/js/services/request.js ***!
   \*******************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -14381,9 +16908,9 @@
 	// Imports //
 	//---------//
 
-	var axios = __webpack_require__(/*! axios */ 37),
-	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 7),
-	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 8);
+	var axios = __webpack_require__(/*! axios */ 39),
+	    r = __webpack_require__(/*! ../../../../lib/external/ramda.custom */ 8),
+	    rUtils = __webpack_require__(/*! ../../../../lib/r-utils */ 9);
 
 	//------//
 	// Init //
@@ -14439,27 +16966,27 @@
 
 	module.exports = exportMe;
 
-/***/ },
-/* 37 */
+/***/ }),
+/* 39 */
 /*!**************************!*\
   !*** ./~/axios/index.js ***!
   \**************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(/*! ./lib/axios */ 38);
+	module.exports = __webpack_require__(/*! ./lib/axios */ 40);
 
-/***/ },
-/* 38 */
+/***/ }),
+/* 40 */
 /*!******************************!*\
   !*** ./~/axios/lib/axios.js ***!
   \******************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./utils */ 39);
-	var bind = __webpack_require__(/*! ./helpers/bind */ 40);
-	var Axios = __webpack_require__(/*! ./core/Axios */ 41);
+	var utils = __webpack_require__(/*! ./utils */ 41);
+	var bind = __webpack_require__(/*! ./helpers/bind */ 42);
+	var Axios = __webpack_require__(/*! ./core/Axios */ 43);
 
 	/**
 	 * Create an instance of Axios
@@ -14495,7 +17022,7 @@
 	axios.all = function all(promises) {
 	  return Promise.all(promises);
 	};
-	axios.spread = __webpack_require__(/*! ./helpers/spread */ 58);
+	axios.spread = __webpack_require__(/*! ./helpers/spread */ 60);
 
 	module.exports = axios;
 
@@ -14503,16 +17030,16 @@
 	module.exports.default = axios;
 
 
-/***/ },
-/* 39 */
+/***/ }),
+/* 41 */
 /*!******************************!*\
   !*** ./~/axios/lib/utils.js ***!
   \******************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var bind = __webpack_require__(/*! ./helpers/bind */ 40);
+	var bind = __webpack_require__(/*! ./helpers/bind */ 42);
 
 	/*global toString:true*/
 
@@ -14811,12 +17338,12 @@
 	};
 
 
-/***/ },
-/* 40 */
+/***/ }),
+/* 42 */
 /*!*************************************!*\
   !*** ./~/axios/lib/helpers/bind.js ***!
   \*************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -14831,21 +17358,21 @@
 	};
 
 
-/***/ },
-/* 41 */
+/***/ }),
+/* 43 */
 /*!***********************************!*\
   !*** ./~/axios/lib/core/Axios.js ***!
   \***********************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var defaults = __webpack_require__(/*! ./../defaults */ 42);
-	var utils = __webpack_require__(/*! ./../utils */ 39);
-	var InterceptorManager = __webpack_require__(/*! ./InterceptorManager */ 44);
-	var dispatchRequest = __webpack_require__(/*! ./dispatchRequest */ 45);
-	var isAbsoluteURL = __webpack_require__(/*! ./../helpers/isAbsoluteURL */ 56);
-	var combineURLs = __webpack_require__(/*! ./../helpers/combineURLs */ 57);
+	var defaults = __webpack_require__(/*! ./../defaults */ 44);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
+	var InterceptorManager = __webpack_require__(/*! ./InterceptorManager */ 46);
+	var dispatchRequest = __webpack_require__(/*! ./dispatchRequest */ 47);
+	var isAbsoluteURL = __webpack_require__(/*! ./../helpers/isAbsoluteURL */ 58);
+	var combineURLs = __webpack_require__(/*! ./../helpers/combineURLs */ 59);
 
 	/**
 	 * Create a new instance of Axios
@@ -14925,17 +17452,17 @@
 	module.exports = Axios;
 
 
-/***/ },
-/* 42 */
+/***/ }),
+/* 44 */
 /*!*********************************!*\
   !*** ./~/axios/lib/defaults.js ***!
   \*********************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./utils */ 39);
-	var normalizeHeaderName = __webpack_require__(/*! ./helpers/normalizeHeaderName */ 43);
+	var utils = __webpack_require__(/*! ./utils */ 41);
+	var normalizeHeaderName = __webpack_require__(/*! ./helpers/normalizeHeaderName */ 45);
 
 	var PROTECTION_PREFIX = /^\)\]\}',?\n/;
 	var DEFAULT_CONTENT_TYPE = {
@@ -15006,16 +17533,16 @@
 	};
 
 
-/***/ },
-/* 43 */
+/***/ }),
+/* 45 */
 /*!****************************************************!*\
   !*** ./~/axios/lib/helpers/normalizeHeaderName.js ***!
   \****************************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ../utils */ 39);
+	var utils = __webpack_require__(/*! ../utils */ 41);
 
 	module.exports = function normalizeHeaderName(headers, normalizedName) {
 	  utils.forEach(headers, function processHeader(value, name) {
@@ -15027,16 +17554,16 @@
 	};
 
 
-/***/ },
-/* 44 */
+/***/ }),
+/* 46 */
 /*!************************************************!*\
   !*** ./~/axios/lib/core/InterceptorManager.js ***!
   \************************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
 
 	function InterceptorManager() {
 	  this.handlers = [];
@@ -15088,17 +17615,17 @@
 	module.exports = InterceptorManager;
 
 
-/***/ },
-/* 45 */
+/***/ }),
+/* 47 */
 /*!*********************************************!*\
   !*** ./~/axios/lib/core/dispatchRequest.js ***!
   \*********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
-	var transformData = __webpack_require__(/*! ./transformData */ 46);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
+	var transformData = __webpack_require__(/*! ./transformData */ 48);
 
 	/**
 	 * Dispatch a request to the server using whichever adapter
@@ -15139,10 +17666,10 @@
 	    adapter = config.adapter;
 	  } else if (typeof XMLHttpRequest !== 'undefined') {
 	    // For browsers use XHR adapter
-	    adapter = __webpack_require__(/*! ../adapters/xhr */ 47);
+	    adapter = __webpack_require__(/*! ../adapters/xhr */ 49);
 	  } else if (typeof process !== 'undefined') {
 	    // For node use HTTP adapter
-	    adapter = __webpack_require__(/*! ../adapters/http */ 47);
+	    adapter = __webpack_require__(/*! ../adapters/http */ 49);
 	  }
 
 	  return Promise.resolve(config)
@@ -15171,18 +17698,18 @@
 	    });
 	};
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/process/browser.js */ 3)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../../process/browser.js */ 4)))
 
-/***/ },
-/* 46 */
+/***/ }),
+/* 48 */
 /*!*******************************************!*\
   !*** ./~/axios/lib/core/transformData.js ***!
   \*******************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
 
 	/**
 	 * Transform the data for a request or a response
@@ -15202,22 +17729,22 @@
 	};
 
 
-/***/ },
-/* 47 */
+/***/ }),
+/* 49 */
 /*!*************************************!*\
   !*** ./~/axios/lib/adapters/xhr.js ***!
   \*************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
-	var settle = __webpack_require__(/*! ./../core/settle */ 48);
-	var buildURL = __webpack_require__(/*! ./../helpers/buildURL */ 51);
-	var parseHeaders = __webpack_require__(/*! ./../helpers/parseHeaders */ 52);
-	var isURLSameOrigin = __webpack_require__(/*! ./../helpers/isURLSameOrigin */ 53);
-	var createError = __webpack_require__(/*! ../core/createError */ 49);
-	var btoa = (typeof window !== 'undefined' && window.btoa) || __webpack_require__(/*! ./../helpers/btoa */ 54);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
+	var settle = __webpack_require__(/*! ./../core/settle */ 50);
+	var buildURL = __webpack_require__(/*! ./../helpers/buildURL */ 53);
+	var parseHeaders = __webpack_require__(/*! ./../helpers/parseHeaders */ 54);
+	var isURLSameOrigin = __webpack_require__(/*! ./../helpers/isURLSameOrigin */ 55);
+	var createError = __webpack_require__(/*! ../core/createError */ 51);
+	var btoa = (typeof window !== 'undefined' && window.btoa) || __webpack_require__(/*! ./../helpers/btoa */ 56);
 
 	module.exports = function xhrAdapter(config) {
 	  return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -15311,7 +17838,7 @@
 	    // This is only done if running in a standard browser environment.
 	    // Specifically not if we're in a web worker, or react-native.
 	    if (utils.isStandardBrowserEnv()) {
-	      var cookies = __webpack_require__(/*! ./../helpers/cookies */ 55);
+	      var cookies = __webpack_require__(/*! ./../helpers/cookies */ 57);
 
 	      // Add xsrf header
 	      var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
@@ -15372,18 +17899,18 @@
 	  });
 	};
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./~/process/browser.js */ 3)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(/*! ./../../../process/browser.js */ 4)))
 
-/***/ },
-/* 48 */
+/***/ }),
+/* 50 */
 /*!************************************!*\
   !*** ./~/axios/lib/core/settle.js ***!
   \************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var createError = __webpack_require__(/*! ./createError */ 49);
+	var createError = __webpack_require__(/*! ./createError */ 51);
 
 	/**
 	 * Resolve or reject a Promise based on response status.
@@ -15408,16 +17935,16 @@
 	};
 
 
-/***/ },
-/* 49 */
+/***/ }),
+/* 51 */
 /*!*****************************************!*\
   !*** ./~/axios/lib/core/createError.js ***!
   \*****************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var enhanceError = __webpack_require__(/*! ./enhanceError */ 50);
+	var enhanceError = __webpack_require__(/*! ./enhanceError */ 52);
 
 	/**
 	 * Create an Error with the specified message, config, error code, and response.
@@ -15434,12 +17961,12 @@
 	};
 
 
-/***/ },
-/* 50 */
+/***/ }),
+/* 52 */
 /*!******************************************!*\
   !*** ./~/axios/lib/core/enhanceError.js ***!
   \******************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -15462,16 +17989,16 @@
 	};
 
 
-/***/ },
-/* 51 */
+/***/ }),
+/* 53 */
 /*!*****************************************!*\
   !*** ./~/axios/lib/helpers/buildURL.js ***!
   \*****************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
 
 	function encode(val) {
 	  return encodeURIComponent(val).
@@ -15539,16 +18066,16 @@
 	};
 
 
-/***/ },
-/* 52 */
+/***/ }),
+/* 54 */
 /*!*********************************************!*\
   !*** ./~/axios/lib/helpers/parseHeaders.js ***!
   \*********************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
 
 	/**
 	 * Parse headers into an object
@@ -15585,16 +18112,16 @@
 	};
 
 
-/***/ },
-/* 53 */
+/***/ }),
+/* 55 */
 /*!************************************************!*\
   !*** ./~/axios/lib/helpers/isURLSameOrigin.js ***!
   \************************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
 
 	module.exports = (
 	  utils.isStandardBrowserEnv() ?
@@ -15662,12 +18189,12 @@
 	);
 
 
-/***/ },
-/* 54 */
+/***/ }),
+/* 56 */
 /*!*************************************!*\
   !*** ./~/axios/lib/helpers/btoa.js ***!
   \*************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -15707,16 +18234,16 @@
 	module.exports = btoa;
 
 
-/***/ },
-/* 55 */
+/***/ }),
+/* 57 */
 /*!****************************************!*\
   !*** ./~/axios/lib/helpers/cookies.js ***!
   \****************************************/
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var utils = __webpack_require__(/*! ./../utils */ 39);
+	var utils = __webpack_require__(/*! ./../utils */ 41);
 
 	module.exports = (
 	  utils.isStandardBrowserEnv() ?
@@ -15769,12 +18296,12 @@
 	);
 
 
-/***/ },
-/* 56 */
+/***/ }),
+/* 58 */
 /*!**********************************************!*\
   !*** ./~/axios/lib/helpers/isAbsoluteURL.js ***!
   \**********************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -15792,12 +18319,12 @@
 	};
 
 
-/***/ },
-/* 57 */
+/***/ }),
+/* 59 */
 /*!********************************************!*\
   !*** ./~/axios/lib/helpers/combineURLs.js ***!
   \********************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -15813,12 +18340,12 @@
 	};
 
 
-/***/ },
-/* 58 */
+/***/ }),
+/* 60 */
 /*!***************************************!*\
   !*** ./~/axios/lib/helpers/spread.js ***!
   \***************************************/
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -15849,6 +18376,6 @@
 	};
 
 
-/***/ }
+/***/ })
 /******/ ]);
 //# sourceMappingURL=index.js.map
