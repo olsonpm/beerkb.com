@@ -93,7 +93,7 @@ function serve(isDev_) {
         if (err || stats.hasErrors()) return;
 
         // no errors, good to go
-        requestListener = reload('../release/index.pack').getRequestListener(internalS2r.port);
+        requestListener = reload('../release/index.pack').getRequestListener(internalS2r.port, '', isDev);
         console.log('webpack finished building');
         global.refresh.reload();
       });

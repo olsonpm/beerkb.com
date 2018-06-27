@@ -67,11 +67,25 @@ const joinAdjacentArrays = feed(
   , []
 );
 
-const pairAdjacentElements = feed(
-  r.flip(r.append)
-  , r.pair
-  , []
-);
+function pairAdjacentElements(anArray) {
+  const result = []
+
+  let currentPair = [],
+    i = 0
+
+  for (const item of anArray) {
+    currentPair.push(item)
+    if (i % 2 === 1) {
+      result.push(currentPair)
+      currentPair = []
+    }
+    i += 1
+  }
+
+  if (currentPair.length) result.push(currentPair)
+
+  return result
+}
 
 const keycodes = {
   esc: 27

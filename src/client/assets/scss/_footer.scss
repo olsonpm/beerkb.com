@@ -31,18 +31,25 @@
   }
 
   .designed-by
-  , .other-credits {
+  , .other-credits
+  , .github {
+    @include per-size(('height', 'line-height'), 84, 86, 116, 118, 118, 'px');
+
     display: inline-block;
+  }
+
+  .designed-by
+  , .other-credits {
     vertical-align: top;
     text-align: right;
-    @include per-size(('height', 'line-height'), 84, 86, 116, 118, 118, 'px');
-    @include res-aware-font-size('xs');
   }
 
   .octicon {
-    vertical-align: top;
-    @include per-size('height', 60, 60, 90, 90, 90, 'px');
+    @include per-size('height', 50, 50, 70, 70, 70, 'px');
     @include res-aware-element-spacing(('margin-top', 'margin-bottom'), 'sm');
+
+    display: inline-block;
+    vertical-align: middle;
 
     path {
       fill: $tertiary;

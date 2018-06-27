@@ -14,6 +14,7 @@
 //---------//
 
 const $ = require('../external/domtastic.custom')
+  , dedent = require('dedent')
   , duration = require('../constants/duration')
   , formData = require('../services/form-data')
   , modal = require('../services/modal')
@@ -641,11 +642,17 @@ function getSendRequest() {
           return modal.dialog.show({
             ctx: {
               title: 'No Longer Exists'
-              , content: '<p>The brewery ' + spanItem(breweryData.name) + ' has been deleted '
-                 + 'by someone else so you are unable to add a beer to it.  This '
-                 + 'application doesn\'t support real-time notifications, so a '
-                 + 'page refresh is necessary to see edits made by others.</p><p>'
-                 + 'The brewery ' + spanItem(breweryData.name) + ' will now be deleted.</p>'
+              , content: dedent(`
+                <p>
+                  The brewery ${spanItem(breweryData.name)} has been deleted by
+                  someone else so you are unable to add a beer to it.  This
+                  application doesn't support real-time notifications, so a page
+                  refresh is necessary to see edits made by others.
+                </p>
+                <p>
+                  The brewery ${spanItem(breweryData.name)} will now be deleted.
+                </p>
+              `)
               , btns: [{ text: 'Sounds good', action: 'ok' }]
             }
             , cbs: { ok() {

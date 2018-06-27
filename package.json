@@ -75,5 +75,8 @@
     "presets": [
       "es2015"
     ]
+  },
+  "dependencies": {
+    "dedent": "^0.7.0"
   }
 }
